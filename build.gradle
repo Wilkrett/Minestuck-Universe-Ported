@@ -109,6 +109,12 @@ dependencies {
     // BranchLifecycleEvents call net.commoble.infiniverse.api directly (dynamic dimension creation
     // for parallel timeline branches), not just relying on Minestuck's own internal use of it.
     implementation "net.commoble:infiniverse-1.21:${infiniverse_version}"
+    // Minestuck depends on this at runtime (Consort/Frog rendering, etc. - already present in run/mods/
+    // as a transitive runtime dependency), but nothing in this project referenced GeckoLib types directly
+    // until consort.ConsortHatEvents needed ConsortEntity's full type hierarchy (it implements
+    // software.bernie.geckolib.animatable.GeoEntity) to resolve at compile time. compileOnly since we
+    // never call into GeckoLib ourselves, only need it on the classpath for that.
+    compileOnly "software.bernie.geckolib:geckolib-neoforge-1.21.1:${geckolib_version}"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

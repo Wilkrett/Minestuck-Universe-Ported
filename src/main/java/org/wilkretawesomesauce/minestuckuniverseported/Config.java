@@ -1,8 +1,5 @@
 package org.wilkretawesomesauce.minestuckuniverseported;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.config.ModConfigEvent;
@@ -10,22 +7,10 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-// An example config class. This is not required, but it's a good idea to have one to keep your config organized.
-// Demonstrates how to use Neo's config APIs
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
-
-    private static final ModConfigSpec.BooleanValue LOG_DIRT_BLOCK = BUILDER.comment("Whether to log the dirt block on common setup").define("logDirtBlock", true);
-
-    private static final ModConfigSpec.IntValue MAGIC_NUMBER = BUILDER.comment("A magic number").defineInRange("magicNumber", 42, 0, Integer.MAX_VALUE);
-
-    public static final ModConfigSpec.ConfigValue<String> MAGIC_NUMBER_INTRODUCTION = BUILDER.comment("What you want the introduction message to be for the magic number").define("magicNumberIntroduction", "The magic number is... ");
-
-    // a list of strings that are treated as resource locations for items
-    private static final ModConfigSpec.ConfigValue<List<? extends String>> ITEM_STRINGS = BUILDER.comment("A list of items to log on common setup.").defineListAllowEmpty("items", List.of("minecraft:iron_ingot"), Config::validateItemName);
 
     // ================================================================================================
     // Strife - ported from MinestuckUniverse (1.12.2)'s MSUConfig "Strife" category. NeoForge configs
@@ -35,12 +20,24 @@ public class Config {
 
     private static final ModConfigSpec.IntValue ABSTRATA_SWITCHER_RUNG;
     private static final ModConfigSpec.IntValue REQUIRED_RUNG_TO_GT;
+    private static final ModConfigSpec.IntValue QUEST_BED_SPAWN_DISTANCE;
+    private static final ModConfigSpec.IntValue QUEST_BED_SPAWN_AREA;
     private static final ModConfigSpec.IntValue TIMELINE_HISTORY_TICKS;
     private static final ModConfigSpec.DoubleValue TIMELINE_DOOM_POINTS_PER_TICK;
     private static final ModConfigSpec.IntValue TIMELINE_REWIND_PLAYBACK_SPEED;
     private static final ModConfigSpec.IntValue TIMELINE_CLONE_REPLAY_SPEED;
     private static final ModConfigSpec.IntValue TIMELINE_BRANCH_IDLE_PRUNE_TICKS;
     private static final ModConfigSpec.IntValue TIMELINE_BRANCH_PRUNE_SWEEP_INTERVAL;
+    private static final ModConfigSpec.IntValue TIME_LOOP_MAX_DURATION_TICKS;
+    private static final ModConfigSpec.IntValue TIME_LOOP_WINDOW_TICKS;
+    private static final ModConfigSpec.DoubleValue TIME_LOOP_RADIUS;
+    private static final ModConfigSpec.IntValue RETROCOGNITION_OBSERVE_TICKS;
+    private static final ModConfigSpec.DoubleValue RETROCOGNITION_OVERLAY_RADIUS;
+    private static final ModConfigSpec.DoubleValue TIME_REQUEST_DOOM_PER_TICK_BASE;
+    private static final ModConfigSpec.DoubleValue TIME_REQUEST_DOOM_MULTIPLIER_CAP;
+    private static final ModConfigSpec.IntValue TIME_REQUEST_DOOM_CHECK_INTERVAL;
+    private static final ModConfigSpec.IntValue TIME_REQUEST_EVENT_COOLDOWN_TICKS;
+    private static final ModConfigSpec.IntValue TIME_REQUEST_COOLDOWN_TICKS;
     private static final ModConfigSpec.BooleanValue COMBAT_OVERHAUL;
     private static final ModConfigSpec.BooleanValue KEEP_PORTFOLIO_ON_DEATH;
     private static final ModConfigSpec.BooleanValue RESTRICTED_STRIFE;
@@ -128,14 +125,22 @@ public class Config {
                         "NOTE: the original also required standing in your own Land on terrain matching your aspect; that part isn't ported yet, so ascension currently only checks this rung requirement (and having a Title assigned).")
                 .defineInRange("requiredRungToGT", 8, -1, 100);
 
+        QUEST_BED_SPAWN_DISTANCE = BUILDER
+                .comment("Determines how far away the Quest Bed can spawn from the center of a player's Land (see godtier.MediumData).")
+                .defineInRange("questBedSpawnDistance", 2500, 0, Integer.MAX_VALUE);
+
+        QUEST_BED_SPAWN_AREA = BUILDER
+                .comment("Determines the size of the area within which the Quest Bed can spawn on a player's Land.")
+                .defineInRange("questBedSpawnArea", 2500, 1, Integer.MAX_VALUE);
+
         BUILDER.pop();
 
         BUILDER.push("timeline");
 
         TIMELINE_HISTORY_TICKS = BUILDER
-                .comment("Max ticks of world history each dimension keeps, for both destructive rewinding and non-destructive past-observing. 600 = 30 seconds.",
-                        "Recording is now always-on for every loaded level regardless of who's using Time abilities, so this bounds real ongoing memory use, not just a niche cost.")
-                .defineInRange("timelineHistoryTicks", 600, 20, 6000);
+                .comment("Max ticks of world history each dimension keeps, for both destructive rewinding and non-destructive Retrocognition. 6000 = 5 minutes.",
+                        "Recording is always-on for every loaded level regardless of who's using Time abilities, so this bounds real ongoing memory use, not just a niche cost - defaulted to the full 5-minute max specifically so Retrocognition's own retrocognitionObserveTicks default (also 5 minutes) actually has that much history available, a deliberate ~10x baseline cost increase over the previous 30-second default, accepted for that reason.")
+                .defineInRange("timelineHistoryTicks", 6000, 20, 6000);
 
         TIMELINE_DOOM_POINTS_PER_TICK = BUILDER
                 .comment("How many Doom Points (DP) are added per tick rewound/traveled.",
@@ -161,24 +166,78 @@ public class Config {
                 .comment("How often (in ticks) the server checks for idle branches to prune. 1200 = once a minute. Doesn't need to run every tick.")
                 .defineInRange("timelineBranchPruneSweepInterval", 1200, 20, 72000);
 
+        TIME_LOOP_MAX_DURATION_TICKS = BUILDER
+                .comment("Max ticks a Time Loop zone (TechTimeLoop/TechTimeLoopNested) can be charged to *last* - i.e. how long it keeps repeating before it ends. 600 = 30 seconds, 1200 = 60 seconds.",
+                        "Actual duration is however long the ability was charged, clamped to this - deliberately separate from timeLoopWindowTicks below (how much history each individual pass replays). Conflating the two was a real bug: a loop whose duration equalled its window length only ever played through once instead of repeating.")
+                .defineInRange("timeLoopMaxDurationTicks", 600, 20, 1200);
+
+        TIME_LOOP_WINDOW_TICKS = BUILDER
+                .comment("How many ticks of recorded history each individual Time Loop pass replays before resetting and playing again. 100 = 5 seconds. Not charge-scaled - every loop replays the same window length regardless of how long it was charged to last.",
+                        "Clamped to however much history is actually recorded at cast time, same as a rewind's requested length.")
+                .defineInRange("timeLoopWindowTicks", 100, 20, 600);
+
+        TIME_LOOP_RADIUS = BUILDER
+                .comment("Radius (in blocks) of a Time Loop zone - flat, not charge-scaled.")
+                .defineInRange("timeLoopRadius", 30.0, 4.0, 50.0);
+
+        RETROCOGNITION_OBSERVE_TICKS = BUILDER
+                .comment("How many ticks back Retrocognition's vision reaches, and how long (in real time) the vision lasts before it catches up to \"now\" and ends. 6000 = 5 minutes.",
+                        "Clamped to however much history is actually recorded at cast time (see timelineHistoryTicks) regardless of this setting.")
+                .defineInRange("retrocognitionObserveTicks", 6000, 20, 6000);
+
+        RETROCOGNITION_OVERLAY_RADIUS = BUILDER
+                .comment("Radius (in blocks) around the observing player's current, live position that Retrocognition's past-block/entity overlay covers - recomputed every tick as they move, not fixed at cast time.")
+                .defineInRange("retrocognitionOverlayRadius", 24.0, 4.0, 64.0);
+
+        BUILDER.pop();
+
+        BUILDER.push("timeRequest");
+
+        TIME_REQUEST_DOOM_PER_TICK_BASE = BUILDER
+                .comment("Base Doom Points/tick each individually open time-borrow request accrues, before the simultaneous-requests multiplier below.")
+                .defineInRange("timeRequestDoomPerTickBase", 0.02, 0.0, 100.0);
+
+        TIME_REQUEST_DOOM_MULTIPLIER_CAP = BUILDER
+                .comment("Caps how much having multiple requests open at once multiplies each request's own DP accrual rate (the design doc's \"1 request = 1x, 2 = 2x, 3 = 3x\" idea) - stacking requests should be risky, not an unbounded spiral.")
+                .defineInRange("timeRequestDoomMultiplierCap", 4.0, 1.0, 100.0);
+
+        TIME_REQUEST_DOOM_CHECK_INTERVAL = BUILDER
+                .comment("How often (in ticks) Doom Points accrue and Doom Events get a chance to fire for players with open requests. 200 = 10 seconds.")
+                .defineInRange("timeRequestDoomCheckInterval", 200, 20, 12000);
+
+        TIME_REQUEST_EVENT_COOLDOWN_TICKS = BUILDER
+                .comment("Minimum ticks before the same Doom Event (by id) can fire again for the same player, so a high, steady DP total doesn't just repeat the same event every check.")
+                .defineInRange("timeRequestEventCooldownTicks", 400, 0, Integer.MAX_VALUE);
+
+        TIME_REQUEST_COOLDOWN_TICKS = BUILDER
+                .comment("Minimum ticks between uses of the future-item-borrowing Abilitech itself, so it can't be spammed for free progression-appropriate gear.")
+                .defineInRange("timeRequestCooldownTicks", 1200, 0, Integer.MAX_VALUE);
+
         BUILDER.pop();
     }
 
     static final ModConfigSpec SPEC = BUILDER.build();
 
-    public static boolean logDirtBlock;
-    public static int magicNumber;
-    public static String magicNumberIntroduction;
-    public static Set<Item> items;
-
     public static int abstrataSwitcherRung;
     public static int requiredRungToGT;
+    public static int questBedSpawnDistance;
+    public static int questBedSpawnArea;
     public static int timelineHistoryTicks;
     public static double timelineDoomPointsPerTick;
     public static int timelineRewindPlaybackSpeed;
     public static int timelineCloneReplaySpeed;
     public static int timelineBranchIdlePruneTicks;
     public static int timelineBranchPruneSweepInterval;
+    public static int timeLoopMaxDurationTicks;
+    public static int timeLoopWindowTicks;
+    public static double timeLoopRadius;
+    public static int retrocognitionObserveTicks;
+    public static double retrocognitionOverlayRadius;
+    public static double timeRequestDoomPerTickBase;
+    public static double timeRequestDoomMultiplierCap;
+    public static int timeRequestDoomCheckInterval;
+    public static int timeRequestEventCooldownTicks;
+    public static int timeRequestCooldownTicks;
     public static boolean combatOverhaul;
     public static boolean keepPortfolioOnDeath;
     public static boolean restrictedStrife;
@@ -188,31 +247,32 @@ public class Config {
     public static int strifeDeckMaxSize;
     public static double weaponAttackMultiplier;
 
-    private static boolean validateItemName(final Object obj) {
-        return obj instanceof String itemName && BuiltInRegistries.ITEM.containsKey(ResourceLocation.parse(itemName));
-    }
-
     private static boolean validateNonBlankString(final Object obj) {
         return obj instanceof String str && !str.isBlank();
     }
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
-        logDirtBlock = LOG_DIRT_BLOCK.get();
-        magicNumber = MAGIC_NUMBER.get();
-        magicNumberIntroduction = MAGIC_NUMBER_INTRODUCTION.get();
-
-        // convert the list of strings into a set of items
-        items = ITEM_STRINGS.get().stream().map(itemName -> BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemName))).collect(Collectors.toSet());
-
         abstrataSwitcherRung = ABSTRATA_SWITCHER_RUNG.get();
         requiredRungToGT = REQUIRED_RUNG_TO_GT.get();
+        questBedSpawnDistance = QUEST_BED_SPAWN_DISTANCE.get();
+        questBedSpawnArea = QUEST_BED_SPAWN_AREA.get();
         timelineHistoryTicks = TIMELINE_HISTORY_TICKS.get();
         timelineDoomPointsPerTick = TIMELINE_DOOM_POINTS_PER_TICK.get();
         timelineRewindPlaybackSpeed = TIMELINE_REWIND_PLAYBACK_SPEED.get();
         timelineCloneReplaySpeed = TIMELINE_CLONE_REPLAY_SPEED.get();
         timelineBranchIdlePruneTicks = TIMELINE_BRANCH_IDLE_PRUNE_TICKS.get();
         timelineBranchPruneSweepInterval = TIMELINE_BRANCH_PRUNE_SWEEP_INTERVAL.get();
+        timeLoopMaxDurationTicks = TIME_LOOP_MAX_DURATION_TICKS.get();
+        timeLoopWindowTicks = TIME_LOOP_WINDOW_TICKS.get();
+        timeLoopRadius = TIME_LOOP_RADIUS.get();
+        retrocognitionObserveTicks = RETROCOGNITION_OBSERVE_TICKS.get();
+        retrocognitionOverlayRadius = RETROCOGNITION_OVERLAY_RADIUS.get();
+        timeRequestDoomPerTickBase = TIME_REQUEST_DOOM_PER_TICK_BASE.get();
+        timeRequestDoomMultiplierCap = TIME_REQUEST_DOOM_MULTIPLIER_CAP.get();
+        timeRequestDoomCheckInterval = TIME_REQUEST_DOOM_CHECK_INTERVAL.get();
+        timeRequestEventCooldownTicks = TIME_REQUEST_EVENT_COOLDOWN_TICKS.get();
+        timeRequestCooldownTicks = TIME_REQUEST_COOLDOWN_TICKS.get();
         combatOverhaul = COMBAT_OVERHAUL.get();
         keepPortfolioOnDeath = KEEP_PORTFOLIO_ON_DEATH.get();
         restrictedStrife = RESTRICTED_STRIFE.get();

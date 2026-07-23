@@ -1,0 +1,13 @@
+{
+    "parent": "item/generated",
+    "textures": {
+        "layer0": "minestuckuniverseported:items/shirt/default_shirt",
+        "layer1": "minestuckuniverseported:items/blank",
+        "layer2": "minestuckuniverseported:items/blank",
+        "layer3": "minestuckuniverseported:items/blank",
+        "layer4": "minestuckuniverseported:items/blank",
+        "layer5": "minestuckuniverseported:items/blank",
+        "layer6": "minestuckuniverseported:items/blank",
+        "layer7": "minestuckuniverseported:items/shirt/shirt_symbol"
+    }
+}

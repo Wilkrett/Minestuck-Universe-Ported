@@ -1,0 +1,4 @@
+{
+  "_comment": "Example: extends the code-registered 'sword' kind with an extra keyword, purely via data. This file is optional and just demonstrates the format - delete or edit freely.",
+  "keywords": ["claymore"]
+}
