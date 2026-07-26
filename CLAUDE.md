@@ -167,6 +167,257 @@ Overlord) and real `GodTierData` badge/skill-level tracking. **Two permanent, co
 `AreaEffectCloud` has no color method), and `TechThief`'s stolen lock effect can still be
 milk-cured (modern `MobEffectInstance` has no curative-item override point).
 
+### `capabilities` folder audit + close-out pass + restructure
+Full field-by-field audit of every original 1.12.2 `capabilities.*` package (excluding `godTier`,
+deliberately out of scope for *new feature work* below - the restructure still relocates its one
+data class for structural consistency) against this project's NeoForge Data Attachment equivalents
+(`util.MSUAttachments`). Result: `consortCosmetics`, `beam`, `strife`, `keyStates`, `mediumData`,
+and `game` were already fully and faithfully ported; `badgeEffects`' ~20 fields were already
+faithfully redistributed across `AbilitechLoadout` and dedicated marker `MobEffect`s (documented
+gaps only, no silent drops) **except three concrete techs that were never ported at all**, since
+they're generic (`Abilitech -> TechBoondollarCost` directly, no `TechHeroAspect`/`TechHeroClass` in
+between) and so fell outside every earlier aspect/class-by-class pass:
+- `skills.abilitech.TechDragonAura` ("Draconic Aura") - heal-over-time/food-drain while held,
+  retaliation nova + `GodTierLockEffect` on `LivingDamageEvent.Post` while active (a plain
+  `AbilitechLoadout#isDragonAuraActive()` scratch flag, not a registered `MobEffect` - a later backend
+  pass found it was the one truly single-consumer "marker effect" tech in the whole project, with zero
+  other code ever querying it, unlike every sibling marker-effect tech which turned out to have a real
+  second consumer; real `MSUItems#DRAGON_GEL` unlock-gate item).
+- `skills.abilitech.TechReturn` ("Return Jump") - hold to teleport back to your own Land. Real
+  substitute for the original's dead Skaianet API: `SburbPlayerData#getLandDimensionIfEntered()`.
+  **Real bugfix, found via a live player report**: destination position originally used the target
+  Land's own `getSharedSpawnPos()` (no modern `getRandomizedSpawnPoint()` equivalent exists) - this
+  was landing everyone at the Land's raw dimension origin (0,0,0-ish), not anywhere near their real
+  base, because Minestuck's actual Land-entry code (`com.mraof.minestuck.entry.EntryProcess`,
+  confirmed via `javap`) copies the player's Overworld structure into the Land at a computed offset
+  and teleports them there directly - it never sets the level's own shared spawn at all. Real fix:
+  `AbilitechLoadout` gained a new persisted `landEntryPos`/`landEntryDim` pair (see that class's own
+  doc comment), recorded by a new `TechReturn#onEntry` listener on Minestuck's real
+  `com.mraof.minestuck.event.OnEntryEvent` the instant entry finishes (that event only carries the
+  player, not a position, and nothing in Minestuck exposes "where did entry actually put me" any
+  other way) - `getSharedSpawnPos()` is now only a last-resort fallback for a player who entered
+  before this fix ever ran once.
+- `skills.abilitech.TechSling` ("Sylladex Sling") - hold to FOV-zoom (`SlingChargeEffect` +
+  `client.SlingZoomEvents`, a real `ViewportEvent.ComputeFov` hook), release to throw your
+  Captchalogue Modus's top item via `entity.MSUThrowableEntity` (new, generic `ThrowableItemProjectile`
+  infrastructure - real "plain hit" damage path only, no `IPropertyThrowable` weapon-property hooks,
+  since none of this project's still-partial Strife weapon-property system was needed here - see
+  that entity's own doc comment for the full scope note).
+
+Also closed a real, separately-flagged gap while here: **`badges.BadgeBuilder`** (the 5th badge,
+previously just "still real, ready future work" in `badges.Badge`'s own doc comment) is now real -
+real cost (`battlepickOfZillydew` + 20000 Build grist, using the same `GristCache` API
+`BadgeKarma` established), and a real drag-select cuboid block-fill tool
+(`client.BadgeBuilderClientEvents` + `network.BadgeBuilderFillPacket`) usable outside Minestuck's
+own Edit Mode. Needed the project's first-ever client-side badge-state signal
+(`network.BuilderBadgeSyncPacket`/`client.BuilderBadgeClientState`), since `MSUAttachments#GOD_TIER`
+itself still isn't synced to the client and every other badge only ever needed server-side reads.
+**Known gaps, both documented on the relevant class**: the original's own Edit-Mode-specific
+per-deploy-list-entry grist gate isn't reproduced (reflection into a private Minestuck field, not
+worth it for a peripheral bonus check); `battlepickOfZillydew`'s real Blockbench model references
+10 texture files that don't exist anywhere in this project's resources (genuine missing art, same
+category as `temporal_sendificator`'s) - it's a plain `PickaxeItem` with a vanilla diamond-pickaxe
+texture standing in for now, real stats via a new `MSUToolTiers` (approximate 1.12.2 parity, not
+exact - see that class's own doc comment for why exactness doesn't matter for what's now purely an
+unlock-gate item). Every badge in this project (not just the new one) is still only reachable via
+`/msu godtier badge <id>` - `SkillShopScreen` has never listed badges, a pre-existing gap this pass
+didn't expand scope to fix.
+
+**Structural follow-up, same pass**: a real `capabilities` package now exists
+(`capabilities.{badgeEffects,beam,consortCosmetics,game,godTier,keyStates,mediumData,strife}`),
+mirroring the original's own `capabilities.*` layout - a prior session had eliminated this package
+entirely (scattering its contents by feature area instead, e.g. `BeamData` living directly under
+`beam`, `GodTierData` under `godtier`), which was never restored until now. Moved back:
+`Beam`/`BeamData` (from `beam`), `StrifePortfolio` (from `strife` - the original's own separate,
+non-capability `strife` package stays exactly where it was, only the one class that was genuinely
+part of `capabilities.strife` moved), `GodTierData` (from `godtier`, moved for structural
+consistency even though new *feature* work there is still out of scope) and `MediumData` (also from
+`godtier`, into its own `mediumData` subpackage - two different original capabilities that
+happened to share a modern folder), `ItemVoidData` (from
+`gui.itemvoid`, into `game` - the modern name for the original's `GameData`), and `AbilitechKey`/
+`AbilitechKeyState` (from `skills.abilitech`, into `keyStates` - the original's nested
+`SkillKeyStates.Key`/`SkillKeyStates.KeyState` enums). The actual key-state *machine logic* stays on
+`AbilitechLoadout` (a deliberate merge with `GodTierData`'s own tech-equip-slot half - see that
+class's own doc comment), not un-merged back into a standalone `SkillKeyStates` class - only the two
+enums round-tripped back to a real file location. `badgeEffects` had no surviving 1:1 class at this
+point in the session (a real `BadgeEffects` class was added in a later pass - see that entry further
+down). Every other file that referenced a moved class via same-package access before (no import
+needed) got a real new `import` line added - this was a straight mechanical move, not a re-design;
+nothing about any of these classes' actual behavior
+changed.
+
+**Follow-up in the same session**: `AbilitechLoadout` turned out to be a real three-way merge, not
+just the keyStates one described above - it also absorbed `GodTierData`'s own tech-equip-slot half
+(equipped techs, per-slot passive toggle, the real unlock-tracking set) and several individual
+`IBadgeEffects` scratch fields. The tech-equip-slot half moved back to `capabilities.godTier
+.GodTierData` (its real original home) - `equipped[]`/`passiveEnabled[]`/`unlockedTechs` and their
+accessors (`getTech`/`getTechSlots`/`isTechEquipped`/`isPassiveEnabledFor`/`equipTech`/`unequipTech`/
+`isPassiveEnabled`/`setPassiveEnabled`/`isUnlocked`/`markUnlocked`/`revokeUnlocked`/
+`clearUnlockedTechs`) now live on `GodTierData`, which gained its own `TECH_SLOTS = 3` constant
+(deliberately not shared with `AbilitechLoadout.SLOTS` - two independent attachments that just happen
+to agree on the same small number, not worth a cross-package dependency to deduplicate). Touched
+~20 files across GUI/command/network/tech code - every call site either fully switched to
+`MSUAttachments.GOD_TIER` or (where a single method genuinely needed both attachments, e.g.
+`TechSeerDodge`'s passive-check-plus-cooldown-tracking) fetches both. `network.AbilitechLoadoutSyncPacket`
+now carries two `CompoundTag`s instead of one (kept as a single combined packet rather than building
+`GodTierData` its own separate sync path - see that packet's own doc comment) since `GodTierData`
+itself still isn't NeoForge-auto-synced and several client screens (`MSUAbilitechScreen`,
+`SkillShopScreen`) read the moved fields. The badgeEffects-derived scratch fields (`externalTech`,
+`lastSeerDodgeTick`, `cloakType`, `warpPointPos/Dim`, `manipulatedPos1/2`, `savingGraceTargets`) and
+the key-input state machine itself stayed on `AbilitechLoadout` - only the tech-equip-slot half moved
+this round.
+
+**Second follow-up, same session**: `ConsortHatCooldown` (the pickup-delay-only class from the first
+restructure above) is gone, replaced by a real, full `ConsortHatsData`/`IConsortHatsData` pair -
+exact original names, exact original file count (2), and the worn hat itself is real capability data
+again (an `ItemStack` field), not a vanilla equipment slot. The equipment-slot approach was an
+earlier session's deliberate modernization (documented reasoning: "free" vanilla sync/death-drop) -
+that reasoning didn't actually hold up, since Consorts/Frogs render via a custom GeckoLib model that
+never consumed the vanilla equipment slot into anything visible anyway, so the "free" benefit was
+never real. Reverted for real: `network.ConsortHatSyncPacket` (new, mirrors the original's own
+`MSUPacket.Type.UPDATE_HATS`) broadcasts the worn hat to trackers on change and to a player the
+instant they start tracking an already-hatted entity; `client.ConsortHatClientState` is the client-side
+cache. **No longer a permanent gap** - see "Real Consort/Frog hat render layer" further down for the
+render layer that now actually consumes this cache. The wizard hat's magic-damage-resist handler, previously
+folded into the old `consort.ConsortHatEvents` (a class it had no real original connection to), moved
+to a new, correctly-named `events.handlers.ArmorEventHandler` (the real original package/class) -
+only the wizard hat's own check is ported; the original's sibling spiked-helmet/archmage-hat checks
+aren't, since neither item is registered in this project yet.
+
+### Real Consort/Frog hat render layer (`client.render` package)
+Closes the render-side gap `ConsortHatsData`'s own doc comment called out. **Two real wrong attempts before
+this one, both caught the hard way (real screenshots, not reasoning)**: a first version rendered the worn
+`ItemStack` directly via GeckoLib's `BlockAndItemGeoLayer`/`ItemDisplayContext.HEAD`, which produces a flat,
+camera-facing GUI-style icon for a plain `ArmorItem` (no special head-context model exists for ordinary
+armor, only for vanilla skulls) - a floating helmet, not a worn one. A second version switched to GeckoLib's
+own `ItemArmorGeoLayer` (its built-in vanilla-armor-on-a-bone layer, chosen because the real original 1.12.2
+source - `client.layers.LayerConsortCosmetics`, read directly, not from memory - renders every worn hat's
+real *armor* head model, since every entry in `ConsortHatsData#HAT_SPAWN_POOL` is an `ItemArmor`) - but that
+rendered nothing at all; its internal branching (whole-model-vs-`GeoArmorRenderer` detection,
+`IClientItemExtensions`-routed model resolution) is built around GeckoLib's own animated-armor-item
+ecosystem and never produced visible output for a plain vanilla `ArmorItem` here, and the exact failure
+point wasn't worth fully reverse-engineering.
+- `ConsortHatGeoLayer`/`ConsortHatRenderEvents`: real fix, third attempt - extends the bare `GeoRenderLayer`
+base directly (no GeckoLib armor-layer indirection at all) and manually renders vanilla's own generic
+`ModelLayers#PLAYER_OUTER_ARMOR` head shape, baked once, at the bone's position via GeckoLib's own real
+`RenderUtil#translateAndRotateMatrixForBone` utility (the same one `BlockAndItemGeoLayer`/
+`ItemArmorGeoLayer` use internally, confirmed via `javap`), textured with the item's real `ArmorMaterial`
+outer-layer texture - full manual control, same technique `FrogHatLayer` (below) already used successfully.
+Attached via GeckoLib's real `GeoRenderEvent.Entity.CompileRenderLayers` extension point - confirmed via
+`javap` this fires on `NeoForge.EVENT_BUS` (the GAME bus) exactly once per `GeoEntityRenderer` construction,
+i.e. once per Consort species at client startup, not per-frame. Targets the `"head"` bone, confirmed present
+under that exact name in all four real Consort species geo models
+(`assets/minestuck/geo/entity/consort/*.geo.json` - iguana/nakagator/salamander/turtle all read directly,
+not assumed from one).
+- `FrogHatLayer`: Frogs render through a plain vanilla `MobRenderer`/`FrogModel`
+(`com.mraof.minestuck.client.renderer.entity.frog.FrogRenderer` - confirmed via `javap` it does NOT extend
+GeckoLib's `GeoEntityRenderer` like `ConsortRenderer` does), so no GeckoLib extension point applies at all;
+real vanilla `RenderLayer<FrogEntity, FrogModel<FrogEntity>>` added via `EntityRenderersEvent.AddLayers` in
+`client.MSUClientSetup` instead. Vanilla's own `HumanoidArmorLayer` can't be reused directly either
+(hard-bound to a `RenderLayerParent<T, ? extends HumanoidModel<T>>` parent, and `FrogModel` is a
+`HierarchicalModel`, not a `HumanoidModel`) - same real, deliberately-scoped substitute as
+`ConsortHatGeoLayer` above: bakes vanilla's own generic `ModelLayers#PLAYER_OUTER_ARMOR` head shape once
+(via the `EntityModelSet` `AddLayers` already provides) and renders it fitted at the Frog's real `"head"`
+bone (confirmed via the class's own bytecode constant pool, not guessed) using vanilla's own
+`ModelPart#translateAndRotate` instead of GeckoLib's bone utility, textured with the item's real
+`ArmorMaterial` outer-layer texture - same real vanilla armor asset, just without trim/dye/glint layering
+(vanilla's own trim/dye pipeline lives entirely inside `HumanoidArmorLayer`'s private methods, not reusable
+standalone, and no entry in `HAT_SPAWN_POOL` uses either anyway).
+**Known gap, honestly stated**: Frogs never wore hats in the original 1.12.2 mod at all (Consort-only
+there), so `FrogHatLayer`'s approach has no original numbers to match - a reasonable, self-consistent
+"fit vanilla's own generic armor head shape onto a small mob" call, not a port.
+
+**Fourth real bug, same category**: the hat rendered the correct shape/texture but upside-down on Consorts
+(Frog wasn't reported broken). Root cause confirmed via `javap` against GeckoLib's own (otherwise unused
+here) `ItemArmorGeoLayer`: it applies a `poseStack.scale(-1, -1, 1)` correction before touching a vanilla
+`HumanoidModel` part, because GeckoLib bone space is mirrored on X/Y relative to vanilla `ModelPart` space -
+`ConsortHatGeoLayer#renderForBone` now applies the same correction. `FrogHatLayer` needed no equivalent fix
+since it positions itself via vanilla's own `ModelPart#translateAndRotate`, not a GeckoLib bone, so there's
+no coordinate-space mismatch there to begin with.
+
+**Real, deliberate, project-original quirk (no original 1.12.2 counterpart)**: a 0.1% chance, rolled once
+per real hat equip (`ConsortHatsData#equip`, not a per-frame roll), for a given wearer's hat to render
+upside-down on purpose - `IConsortHatsData#isHatUpsideDown`/`setHatUpsideDown`, persisted, synced via the
+now-3-field `network.ConsortHatSyncPacket`, cached client-side in `client.ConsortHatClientState`. On
+Consorts this is implemented by *skipping* the coordinate-space correction above (reproduces exactly the
+look the third bug accidentally had); on Frogs (no correction to skip) it's implemented by *adding* the
+same `scale(-1, -1, 1)` flip instead. Given three real rendering bugs already caught only via screenshots in
+this one feature, treat all of this - orientation fix included - as unconfirmed until actually seen in a
+real client, for both Consorts and Frogs, ideally with a `/msu` debug way to force-roll the rare case rather
+than waiting on real 1-in-1000 odds (no such command exists yet).
+
+**User-applied follow-up, directly in `ConsortHatGeoLayer` (not this session's own edit - noted for the
+record, not re-derived)**: two real changes on top of the above. First, a small cosmetic tilt -
+`poseStack.mulPose(Axis.XP.rotationDegrees(15.0F))`, inserted right after
+`RenderUtil#translateAndRotateMatrixForBone` and before the mirroring correction, so the tilt itself isn't
+affected by which branch (normal vs. upside-down) runs after it. Second, a real retarget of which bone each
+variant renders on: the normal case now renders on the `"face"` bone (previously `"head"`) with the same
+`scale(-1, -1, 1)` correction as before; the upside-down variant now renders on a `"waist"` bone instead,
+using a `poseStack.translate(0, 0.25F, 0)` offset in place of the mirroring scale (no longer skipping a
+correction - it's a genuinely different bone/positioning path now, not just an unflipped render of the same
+one). **Known gap worth flagging**: of the four real Consort species geo models read earlier in this same
+section (`assets/minestuck/geo/entity/consort/*.geo.json`), only `turtle.geo.json` actually has a `"waist"`
+bone - iguana/nakagator/salamander don't. Since `renderForBone` only proceeds when the bone name matches the
+selected target, the upside-down variant as currently wired will only ever actually render on Turtle
+Consorts; on the other three species a wearer that rolls the rare case will simply show no hat at all
+(silent, not a crash) until either a species-appropriate bone is chosen or this is intentional and accepted
+as-is.
+
+**Third follow-up, same session**: the last real merge left inside `AbilitechLoadout` is gone too - a
+real `capabilities.badgeEffects.BadgeEffects`/`IBadgeEffects` pair now exists, holding the handful of
+`AbilitechLoadout`-hosted fields that were genuine ports of the original's own (much larger, ~40-method)
+`IBadgeEffects`: per-slot tethers (`getTether`/`setTether`/`clearTether`, matching the original's real
+`tether(int slot)` field - not the same thing as `AbilitechLoadout`'s own still-remaining `slotHistory`,
+which is genuinely new, no original counterpart), external-tech borrowing, the seer-dodge cooldown, the
+mind-cloak type, the space warp point, the matter-manipulator corner selection, and saving-grace
+targets. Deliberately scoped, not a full revert: the already-redistributed marker-`MobEffect`-based
+fields (conceal, time-stop, rage, mindflayer, soul-shock, soul-link, FOV, tick-up stacks, movement
+puppeting, power-particle tracking) stay exactly as they were, real synced effects, not pulled back
+into this class - see `IBadgeEffects`'s own doc comment for the full accounting. Touched ~28 files;
+`AbilitechLoadout` itself is now left with only the key-input state machine and `slotHistory` - its
+`serializeNBT`/`deserializeNBT` are now permanently empty (nothing left to persist), so
+`network.AbilitechLoadoutSyncPacket` (despite its name) now carries only `GodTierData`'s NBT, not
+`AbilitechLoadout`'s - see that packet's own doc comment for why the name wasn't churned along with it.
+
+**Fourth follow-up, same session - closes out `AbilitechLoadout`'s merges entirely**: the key-input
+state machine itself (not just its two enums) moved to a real `capabilities.keyStates.SkillKeyStates`,
+a new `MSUAttachments#SKILL_KEY_STATES` attachment. Unlike the previous three moves, this one also
+restored real behavior the merged version had silently dropped: the original's own `SkillKeyStates`
+had real `writeToNBT`/`readFromNBT` persistence, but `AbilitechLoadout`'s merged version unconditionally
+called `resetKeyStates()` on every `deserializeNBT` regardless of what NBT it was handed - real
+persistence is back (matching every other attachment in `util.MSUAttachments`, all real
+`.serializable()`, no exceptions), though the original's own `onWorldJoin` handler *also* unconditionally
+resets on every level join regardless of what was just loaded, so the observable behavior is unchanged
+either way - restored for consistency with the rest of this project's attachments, not because it
+changes what a player experiences. Touched 3 files (`AbilitechKeyPacket`, `AbilitechEvents`,
+`TechMageStudy`). `AbilitechLoadout` is now down to exactly one field, `slotHistory` - the one piece of
+this whole three-original-capability merge that was genuinely new all along, with no original
+counterpart to move back to.
+
+**Final sweep, same session - closes out the `capabilities` restructure entirely**: a file-by-file diff
+against the real extracted 1.12.2 source (not memory) turned up two more real gaps the earlier passes
+missed. **Two class-name mismatches**, same category as the earlier `ConsortHatCooldown` one:
+`StrifePortfolio` renamed to `StrifeData` (matching the original's real `capabilities.strife.StrifeData`;
+its own `strife` package - `KindAbstratus`/`StrifeSpecibus`/etc. - is a genuinely separate original
+package and wasn't touched), and `ItemVoidData` renamed to `GameData` (matching
+`capabilities.game.GameData`). Both touched ~15-20 files each, all mechanical `\bTypeName\b`-bounded
+renames (protects sibling classes that merely contain the old name as a substring, e.g.
+`StrifePortfolioEvents`/`MSUStrifePortfolioScreen`, which are real, separate, correctly-named classes of
+their own, not the thing being renamed). **Five missing interfaces added**: `IStrifeData`, `IGameData`,
+`IBeamData`, `IMediumData`, `ISkillKeyStates` - each declaring only the real, currently-implemented
+method set (adapted signatures where a modern API genuinely needs an explicit `Level`/`ServerLevel`
+parameter the original didn't - see each interface's own doc comment), not the original's full method
+list where parts of it were already known-dead in the original itself. `godTier/IGodTierData` is still
+missing - `godTier` stays explicitly out of scope. **One genuinely missing method restored**:
+`StrifeData#canDropCards(ServerPlayer)`, the original's real mob-kill strife-card-drop cap - its config
+option (`Config.strifeCardMobDrops`) already existed with a code comment noting it "wasn't wired up
+yet"; the method is real now but still has no caller (nothing in this project currently drops a
+`StrifeCardItem` from a mob kill at all). **One confirmed dead end, not ported**:
+`badgeEffects/IBadgeEffect.java` (singular - a generic tagged-union value-boxing type backing
+`IBadgeEffects#receive(String, IBadgeEffect)`) - grepped the original's own real source and confirmed no
+tech anywhere ever calls `receive()`; unused infrastructure in the original itself, not a hole in this
+port.
+
 ### Dedicated-server crash fix
 `AbilitechnosynthBlock`/`StrifeCardItem` used to inline a client-only `Screen` reference in common
 code, crashing dedicated-server class-loading regardless of the `isClientSide()` runtime guard
@@ -186,9 +437,16 @@ convention. **Standing exceptions - do not "fix" these**: `gui.itemvoid` stays n
 
 ### Real particle system (`util.MSUParticles` + `client.particles.PowerParticle`/`InkParticle`)
 Real custom `ParticleType`s (not the vanilla `ENTITY_EFFECT` swirl stand-in), ported from the
-original's actual particle source, broadcast server-side via `ServerLevel#sendParticles`. Art for
-both is new, procedurally-generated placeholder (original pixel art wasn't available).
-`InkParticle` has no current caller anywhere in the project yet (ready infrastructure).
+original's actual particle source, broadcast server-side via `ServerLevel#sendParticles`.
+`PowerParticle`'s art was originally a hand-authored placeholder (a guess at "real pixel art wasn't
+available"), but that guess turned out to be unnecessary: the original's `setParticleTextureIndex(160 +
+...)` referenced a region of 1.12.2's shared particle atlas that's vanilla's own real firework-spark
+sprite (confirmed by matching the checkerboard-cross pattern against a real gameplay screenshot of the
+original mod) - this project now references vanilla's actual `minecraft:spark_0`-`spark_7` textures
+directly (`particles/power.json`) instead of placeholder art, since the original almost certainly reused
+that same shared-atlas region rather than drawing new frames. `InkParticle` still has no current caller
+anywhere in the project (ready infrastructure) and still uses its own placeholder texture - no equivalent
+real-vanilla-asset match was found for it.
 
 ### Resource-reference bug sweep
 Found and fixed two classes of broken texture/model references across every actually-registered
@@ -302,18 +560,27 @@ All of these nest under the shared `/msu` root - see "Real skills/boondollar unl
 "/msu command restructure" note above for why (this list was written before that restructure and is
 corrected here, not re-describing a separate later change).
 
+Debug/testing-only commands (`itemvoid`, `juju`, `shop`, `streak`, `unlock`) were moved a second time,
+under a real `/msu debug` sub-literal - a later, separate user-requested restructure, splitting them out
+from the two that stayed direct `/msu` children (`abilitech`, `godtier` - neither was named in that
+request).
+
 `/msu timeline rewind <seconds>` - gradual destructive rewind + doomed clone.
 `/msu timeline travel backwards <seconds>` - instant destructive rewind, no clone.
-`/msu itemvoid` - opens the real Item Void GUI (`gui.itemvoid.ItemVoidMenu`) - see that package's own
+`/msu debug itemvoid` - opens the real Item Void GUI (`gui.itemvoid.ItemVoidMenu`) - see that package's own
 CLAUDE.md section for why a command, not a block, is the real trigger here.
-`/msu juju link` / `/msu juju unlink` / `/msu juju stash` - link to the nearest player with an unlinked
-Juju Modus, break an existing link, or open the real GUI showing (and letting you withdraw from)
-your linked partner's stash - see the `juju` package's own CLAUDE.md section.
-`/msu streak toggle` - plain on/off toggle (unaffected by the rest of this bullet).
-`/msu streak toggle <name>` - a real shortcut added later: picking a trail name that's already the
+`/msu debug juju link` / `/msu debug juju unlink` / `/msu debug juju stash` - link to the nearest player
+with an unlinked Juju Modus, break an existing link, or open the real GUI showing (and letting you
+withdraw from) your linked partner's stash - see the `juju` package's own CLAUDE.md section.
+`/msu debug streak toggle` - plain on/off toggle (unaffected by the rest of this bullet).
+`/msu debug streak toggle <name>` - a real shortcut added later: picking a trail name that's already the
 active, enabled one turns the effect off entirely (a genuine toggle); picking any other registered
 name switches to it and turns the effect on. Combines what used to require a separate toggle call
-plus `/msu streak flavour <name>` into one command - both of those still work unchanged on their own.
+plus `/msu debug streak flavour <name>` into one command - both of those still work unchanged on their own.
+`/msu debug shop` - opens the real Skill Shop screen directly (see `command.SkillShopCommand`'s own doc
+comment - also the real Consort dialogue trigger target).
+`/msu debug unlock <tech>` / `/msu debug unlock all` - debug-grants boondollar-gated unlock(s) without
+actually spending currency.
 
 ## Suggested next steps (not started, roughly in order of "probably wanted next")
 
@@ -369,9 +636,11 @@ plus `/msu streak flavour <name>` into one command - both of those still work un
 12. Build the real Quest Bed structure (`godtier.MediumData` is ready, nothing calls it yet) and/or a
     Locator Eye-equivalent item - this project has no world-gen structure infrastructure at all yet,
     a genuinely new skill area for this project, not a quick follow-up.
-13. Build a real GeckoLib render layer for worn Consort/Frog hats (`consort.ConsortHatEvents`' own
-    doc comment) - the item/mechanic side is real, only the visible worn model is missing, same
-    category as God Tier's own worn-armor-model gap.
+13. ~~Build a real GeckoLib render layer for worn Consort/Frog hats~~ - done, see "Real Consort/Frog hat
+    render layer" above. Not yet visually verified in a real client (place/confirm a wizard hat and a
+    frog hat actually appear positioned on the head for all four Consort species and for a Frog, at a
+    reasonable scale, and that they track head rotation correctly) - needs a real client, same reasoning
+    as this project's other manual-verification items below.
 14. Consider building more `beam.IPropertyBeam` weapon variants reusing the now-real `Beam`/`BeamData`
     infrastructure (the original had several: laser pointer, lit glitter beam transistor, thorn of
     Oglogoth, archmage daggers) - `beam.BeamWeaponItem`'s doc comment has the full list of siblings
@@ -457,3 +726,15 @@ plus `/msu streak flavour <name>` into one command - both of those still work un
     via a real `gradlew runServer`), and the real Power/Ink particle system in a real client - none of
     this was driven end-to-end this session for the same reason as the other manual-verification items
     above.
+27. Manually verify the `capabilities` close-out pass's new content in a real client (compiles clean, not
+    driven end-to-end for the same reason as the other manual-verification items above - needs a real
+    creative-mode/cheats-enabled player and equipped Abilitech key presses): confirm `TechDragonAura`'s
+    retaliation nova/lock actually fires and its unlock gate genuinely requires holding Dragon Gel;
+    confirm `TechReturn` actually lands on the real recorded entry point (not just "somewhere in the
+    Land") across a real dimension change, including after a relog (tests the new persisted
+    `AbilitechLoadout#landEntryPos`); confirm `TechSling`'s FOV zoom is visible and the thrown `MSUThrowableEntity` renders,
+    damages, and drops/breaks correctly; confirm `/msu godtier badge builder_badge` genuinely requires
+    the real grist+item cost, and that holding a block item afterward lets a drag-select cuboid actually
+    place blocks (survival stack-count limit, creative 256-block cap, outline renders, normal single
+    right-click placement is fully replaced not doubled) both via the badge and via real Minestuck Edit
+    Mode.

@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifePortfolio;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 
 /**
  * Sent server -> client to sync a player's own strife portfolio (all specibi and their contents).
@@ -33,7 +33,7 @@ public record StrifePortfolioSyncPacket(CompoundTag portfolioNbt) implements MSP
 
 	public static StrifePortfolioSyncPacket create(Player player)
 	{
-		StrifePortfolio portfolio = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+		StrifeData portfolio = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 		return new StrifePortfolioSyncPacket(portfolio.serializeNBT(player.registryAccess()));
 	}
 
@@ -41,7 +41,7 @@ public record StrifePortfolioSyncPacket(CompoundTag portfolioNbt) implements MSP
 	public void execute(IPayloadContext context)
 	{
 		Player player = context.player();
-		StrifePortfolio portfolio = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+		StrifeData portfolio = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 		portfolio.deserializeNBT(player.registryAccess(), portfolioNbt);
 	}
 

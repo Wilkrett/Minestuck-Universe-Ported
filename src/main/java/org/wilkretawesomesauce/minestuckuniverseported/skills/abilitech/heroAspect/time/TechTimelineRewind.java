@@ -6,8 +6,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUTechType;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.timeline.TimelineManager;
 
@@ -29,7 +30,7 @@ public class TechTimelineRewind extends TechHeroAspect
 
 	public TechTimelineRewind()
 	{
-		super(Minestuckuniverseported.id("timeline_rewind"), EnumAspect.TIME, 0, MSUTechType.UTILITY); // new tech, no original cost to port - see class doc comment
+		super(Minestuckuniverseported.id("timeline_rewind"), EnumAspect.TIME, 60000, MSUTechType.UTILITY); // new tech, no original cost to port - picked to fit this project's own cost spread, see class doc comment
 		setIcon("default");
 	}
 
@@ -37,7 +38,12 @@ public class TechTimelineRewind extends TechHeroAspect
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
 		if(state == AbilitechKeyState.HELD || state == AbilitechKeyState.PRESS)
-			return time < MAX_CHARGE_TICKS;
+		{
+			if(time >= MAX_CHARGE_TICKS)
+				return false;
+			MSUAbilitechParticles.burst(level, player, EnumAspect.TIME, 6);
+			return true;
+		}
 
 		if(state != AbilitechKeyState.RELEASED)
 			return false;
@@ -67,6 +73,7 @@ public class TechTimelineRewind extends TechHeroAspect
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - cost);
 
 		player.displayClientMessage(Component.translatable("status.minestuckuniverseported.timeline.rewinding", actualTicks / 20F), true);
+		MSUAbilitechParticles.oneshot(level, player, EnumAspect.TIME, 30);
 		return true;
 	}
 }

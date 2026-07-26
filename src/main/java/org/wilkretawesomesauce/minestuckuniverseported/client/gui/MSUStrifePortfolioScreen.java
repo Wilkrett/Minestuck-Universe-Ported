@@ -11,7 +11,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.network.MSUStrifeRequestPackets;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.KindAbstratus;
-import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifePortfolio;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifeSpecibus;
 
 import java.util.ArrayList;

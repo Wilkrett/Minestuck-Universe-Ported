@@ -1,10 +1,12 @@
 package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.Skill;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 
 /**
  * Ported from MinestuckUniverse (1.12.2)'s {@code skills.abilitech.Abilitech}. Properly extends

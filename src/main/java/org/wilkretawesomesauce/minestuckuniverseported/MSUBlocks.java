@@ -8,7 +8,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.wilkretawesomesauce.minestuckuniverseported.block.ChloroballBlock;
 import org.wilkretawesomesauce.minestuckuniverseported.block.TemporalSendificatorBlock;
-import org.wilkretawesomesauce.minestuckuniverseported.blocks.AbilitechnosynthBlock;
+import org.wilkretawesomesauce.minestuckuniverseported.block.AbilitechnosynthBlock;
 
 public final class MSUBlocks
 {

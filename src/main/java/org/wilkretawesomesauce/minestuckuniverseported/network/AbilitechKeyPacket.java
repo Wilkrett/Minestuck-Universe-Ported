@@ -10,15 +10,15 @@ import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechKey;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKey;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.SkillKeyStates;
 
 /**
  * Ported from the client -> server half of MinestuckUniverse's {@code SkillKeyStates} flow: the raw
  * press/release edge for one of the 3 activation keys. Sent only when the key's down-state actually
  * changes (see {@code client.MSUAbilitechClient}), not every tick - the actual {@link
- * org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechKeyState} state machine advancement
- * happens entirely server-side in {@link AbilitechLoadout#tickKeyStates()}.
+ * org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState} state machine advancement
+ * happens entirely server-side in {@link SkillKeyStates#tickKeyStates()}.
  */
 public record AbilitechKeyPacket(AbilitechKey key, boolean pressed) implements MSPacket.PlayToServer
 {
@@ -32,8 +32,8 @@ public record AbilitechKeyPacket(AbilitechKey key, boolean pressed) implements M
 	@Override
 	public void execute(IPayloadContext context, ServerPlayer player)
 	{
-		AbilitechLoadout loadout = player.getData(MSUAttachments.ABILITECH_LOADOUT);
-		loadout.updateKeyState(key, pressed);
+		SkillKeyStates keyStates = player.getData(MSUAttachments.SKILL_KEY_STATES);
+		keyStates.updateKeyState(key, pressed);
 	}
 
 	@Override

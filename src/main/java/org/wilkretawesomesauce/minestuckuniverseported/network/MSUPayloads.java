@@ -69,5 +69,19 @@ public final class MSUPayloads
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 		registrar.playToServer(SkillShopRequestPackets.Purchase.ID, SkillShopRequestPackets.Purchase.STREAM_CODEC,
 				(payload, context) -> payload.execute(context, (net.minecraft.server.level.ServerPlayer) context.player()));
+
+		registrar.playToServer(BadgeBuilderFillPacket.ID, BadgeBuilderFillPacket.STREAM_CODEC,
+				(payload, context) -> payload.execute(context, (net.minecraft.server.level.ServerPlayer) context.player()));
+		registrar.playToClient(BuilderBadgeSyncPacket.ID, BuilderBadgeSyncPacket.STREAM_CODEC,
+				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
+
+		registrar.playToClient(ConsortHatSyncPacket.ID, ConsortHatSyncPacket.STREAM_CODEC,
+				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
+
+		registrar.playToClient(ConsortChestSyncPacket.ID, ConsortChestSyncPacket.STREAM_CODEC,
+				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
+
+		registrar.playToClient(ManipulatorSelectionSyncPacket.ID, ManipulatorSelectionSyncPacket.STREAM_CODEC,
+				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 	}
 }

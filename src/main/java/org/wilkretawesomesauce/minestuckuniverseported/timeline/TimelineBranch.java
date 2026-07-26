@@ -19,7 +19,7 @@ import java.util.UUID;
  * can otherwise be forked from any other branch, forming an arbitrary tree, not just a flat list.
  * <p>
  * Not itself an {@code INBTSerializable} attachment - {@link #toNBT()}/{@link #fromNBT(CompoundTag)}
- * are called by {@link TimelineBranchRegistry}'s own (de)serialization, matching how {@code StrifePortfolio}
+ * are called by {@link TimelineBranchRegistry}'s own (de)serialization, matching how {@code StrifeData}
  * hand-rolls a {@code ListTag} of per-element {@code CompoundTag}s rather than using a Codec.
  */
 public final class TimelineBranch

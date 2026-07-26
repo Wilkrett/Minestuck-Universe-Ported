@@ -1,4 +1,5 @@
 package org.wilkretawesomesauce.minestuckuniverseported.strife;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 
 import com.mraof.minestuck.player.Echeladder;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,7 +12,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.items.StrifeCardItem;
+import org.wilkretawesomesauce.minestuckuniverseported.item.StrifeCardItem;
 import org.wilkretawesomesauce.minestuckuniverseported.network.MSUStrifePackets;
 
 /**
@@ -20,7 +21,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.network.MSUStrifePackets;
  * <p>
  * The login/respawn sync was missing entirely, which was the cause of the "portfolio shows empty after
  * reloading the world, but starts working again as soon as you add another card" bug: data attachments
- * aren't automatically network-synced in NeoForge (see the note on {@link StrifePortfolio}), so without
+ * aren't automatically network-synced in NeoForge (see the note on {@link StrifeData}), so without
  * an explicit sync the client's copy of the attachment just stays at its freshly-constructed empty
  * default from the moment the player object is created, until some other mutation (like adding a card)
  * happens to trigger {@code StrifePortfolioHandler}'s own sync calls. The server-side data was never
@@ -78,7 +79,7 @@ public final class StrifePortfolioEvents
 		if(!(event.getEntity() instanceof ServerPlayer player))
 			return;
 
-		StrifePortfolio cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+		StrifeData cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 		for(StrifeSpecibus specibus : cap.getPortfolio())
 		{
 			if(specibus != null && specibus.isAssigned())
@@ -109,7 +110,7 @@ public final class StrifePortfolioEvents
 
 	private static void checkAbstrataSwitcherUnlock(ServerPlayer player)
 	{
-		StrifePortfolio cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+		StrifeData cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 		boolean shouldUnlock = Config.abstrataSwitcherRung < 0 || Echeladder.get(player).getRung() >= Config.abstrataSwitcherRung;
 
 		if(cap.abstrataSwitcherUnlocked() != shouldUnlock)
@@ -127,7 +128,7 @@ public final class StrifePortfolioEvents
 
 	private static void checkArmed(ServerPlayer player)
 	{
-		StrifePortfolio cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+		StrifeData cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 		if(!cap.isArmed())
 			return;
 

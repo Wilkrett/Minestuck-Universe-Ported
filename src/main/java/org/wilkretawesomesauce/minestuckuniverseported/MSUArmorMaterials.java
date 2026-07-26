@@ -46,6 +46,17 @@ public final class MSUArmorMaterials
 			0.0F
 	));
 
+	/** Same cosmetic, zero-defense treatment - worn exclusively by {@code util.MSUConsorts}' skill-shop-seller Consorts. */
+	public static final Holder<ArmorMaterial> ARCHMAGE_HAT = REGISTER.register("archmage_hat", () -> new ArmorMaterial(
+			Map.of(ArmorItem.Type.HELMET, 0),
+			0,
+			SoundEvents.ARMOR_EQUIP_LEATHER,
+			() -> Ingredient.EMPTY,
+			List.of(new ArmorMaterial.Layer(Minestuckuniverseported.id("archmage_hat"))),
+			0.0F,
+			0.0F
+	));
+
 	public static final Holder<ArmorMaterial> FROG_HAT = REGISTER.register("frog_hat", () -> new ArmorMaterial(
 			Map.of(ArmorItem.Type.HELMET, 0),
 			0,

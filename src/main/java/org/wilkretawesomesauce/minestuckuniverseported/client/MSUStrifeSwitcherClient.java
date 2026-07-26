@@ -18,7 +18,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.network.MSUStrifeRequestPackets;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.KindAbstratus;
-import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifePortfolio;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifePortfolioHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifeSpecibus;
 
@@ -127,7 +127,7 @@ public final class MSUStrifeSwitcherClient
 		if(direction == 0)
 			return;
 
-		StrifePortfolio cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+		StrifeData cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 		StrifeSpecibus[] nonEmpty = cap.getNonEmptyPortfolio();
 		if(nonEmpty.length == 0)
 			return;
@@ -160,7 +160,7 @@ public final class MSUStrifeSwitcherClient
 		return 0;
 	}
 
-	private static boolean canUseAbstrataSwitcher(StrifePortfolio cap)
+	private static boolean canUseAbstrataSwitcher(StrifeData cap)
 	{
 		return cap.abstrataSwitcherUnlocked();
 	}
@@ -177,7 +177,7 @@ public final class MSUStrifeSwitcherClient
 		int screenWidth = guiGraphics.guiWidth();
 		int screenHeight = guiGraphics.guiHeight();
 
-		StrifePortfolio cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+		StrifeData cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 		boolean isDown = offhandMode != null && offhandMode ? MSUKeyMappings.swapOffhandStrifeKey.isDown() : MSUKeyMappings.strifeKey.isDown();
 
 		if(isDown != strifeDown && isDown)
@@ -234,7 +234,7 @@ public final class MSUStrifeSwitcherClient
 			renderWeaponRow(guiGraphics, mc, cap, selSpecibusIndex, selWeaponIndex, screenWidth, screenHeight);
 	}
 
-	private static void renderSpecibusRow(GuiGraphics guiGraphics, Minecraft mc, StrifePortfolio cap, StrifeSpecibus[] portfolio,
+	private static void renderSpecibusRow(GuiGraphics guiGraphics, Minecraft mc, StrifeData cap, StrifeSpecibus[] portfolio,
 			int selSpecibusIndex, int screenWidth, int screenHeight)
 	{
 		int toDisplay = (int) Math.min(5, Math.ceil((portfolio.length - 1) / 2f) * 2);
@@ -258,7 +258,7 @@ public final class MSUStrifeSwitcherClient
 		}
 	}
 
-	private static void renderWeaponRow(GuiGraphics guiGraphics, Minecraft mc, StrifePortfolio cap, int selSpecibusIndex, int selWeaponIndex,
+	private static void renderWeaponRow(GuiGraphics guiGraphics, Minecraft mc, StrifeData cap, int selSpecibusIndex, int selWeaponIndex,
 			int screenWidth, int screenHeight)
 	{
 		StrifeSpecibus selected = cap.getPortfolio()[selSpecibusIndex];

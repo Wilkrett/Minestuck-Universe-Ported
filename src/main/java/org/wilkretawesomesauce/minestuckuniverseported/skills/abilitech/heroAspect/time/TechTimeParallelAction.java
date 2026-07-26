@@ -13,8 +13,8 @@ import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.entity.player.Player;
@@ -24,11 +24,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechKeyState;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUTechType;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
-import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifePortfolio;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifeSpecibus;
 import org.wilkretawesomesauce.minestuckuniverseported.timeline.DoomedTimelineClone;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUFakePlayer;
@@ -47,7 +48,9 @@ import java.util.UUID;
  * deliberate gap). It now actually fights: every tick (driven straight out of the existing
  * {@code onUseTick} call in {@code AbilitechEvents#onPlayerTick}, which already runs every player-tick
  * regardless of key state - no separate driver needed), {@link #tickCombat} looks for the nearest
- * {@link Monster} within {@link #GUARD_RADIUS} of the spot the clone spawned at, walks toward it if out
+ * hostile (any {@link LivingEntity} implementing vanilla's {@code Enemy} marker interface - see
+ * {@link #tickCombat}'s own doc comment for a real bug this used to have with Minestuck's own Underlings)
+ * within {@link #GUARD_RADIUS} of the spot the clone spawned at, walks toward it if out
  * of {@link #ATTACK_RANGE} and swings at it (real damage, via {@link Player#attack}) on a fixed cooldown
  * once in range. The guard point is fixed at the clone's spawn position, not wherever it currently is -
  * this is a stationary guardian, not something that chases targets across the map.
@@ -118,15 +121,15 @@ public class TechTimeParallelAction extends TechHeroAspect
 
 	public TechTimeParallelAction()
 	{
-		super(Minestuckuniverseported.id("parallel_action"), EnumAspect.TIME, 0, MSUTechType.UTILITY); // new tech, no original cost to port - see class doc comment
+		super(Minestuckuniverseported.id("parallel_action"), EnumAspect.TIME, 12000, MSUTechType.UTILITY); // new tech, no original cost to port - picked to fit this project's own cost spread, see class doc comment
 		setIcon("default");
 	}
 
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout loadout = player.getData(MSUAttachments.ABILITECH_LOADOUT);
-		Entity existing = loadout.getSlotTether(techSlot);
+		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		Entity existing = badgeEffects.getTether(techSlot);
 
 		if(state != AbilitechKeyState.PRESS)
 		{
@@ -139,7 +142,7 @@ public class TechTimeParallelAction extends TechHeroAspect
 				// longer alive" exactly like "duration expired" so a clone that gets killed in a real fight
 				// is cleaned up immediately instead of turning into a stuck zombie entity.
 				if(!fake.isAlive() || fake.tickCount > DURATION_TICKS)
-					despawn(level, loadout, techSlot, fake);
+					despawn(level, badgeEffects, techSlot, fake);
 				else if(level instanceof ServerLevel serverLevel)
 					tickCombat(serverLevel, fake);
 			}
@@ -148,7 +151,7 @@ public class TechTimeParallelAction extends TechHeroAspect
 
 		if(existing instanceof MSUFakePlayer fake)
 		{
-			despawn(level, loadout, techSlot, fake);
+			despawn(level, badgeEffects, techSlot, fake);
 			return true;
 		}
 
@@ -180,10 +183,11 @@ public class TechTimeParallelAction extends TechHeroAspect
 		packetTargets.broadcastAll(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fakePlayer));
 		serverLevel.addNewPlayer(fakePlayer);
 		DoomedTimelineClone.playGearsEffect(serverLevel, fakePlayer);
+		MSUAbilitechParticles.oneshot(level, fakePlayer, EnumAspect.TIME, 30);
 
 		activeClones.put(fakePlayer.getUUID(), new CloneAi(fakePlayer.position()));
 
-		loadout.setSlotTether(techSlot, fakePlayer);
+		badgeEffects.setTether(techSlot, fakePlayer);
 
 		if(!player.isCreative())
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - ENERGY_USE);
@@ -205,7 +209,7 @@ public class TechTimeParallelAction extends TechHeroAspect
 	{
 		List<ItemStack> candidates = new ArrayList<>();
 
-		StrifePortfolio portfolio = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+		StrifeData portfolio = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 		for(StrifeSpecibus specibus : portfolio.getNonEmptyPortfolio())
 			if(!specibus.getContents().isEmpty())
 				candidates.add(specibus.getContents().getFirst().copy());
@@ -219,7 +223,7 @@ public class TechTimeParallelAction extends TechHeroAspect
 		return candidates.get(player.level().getRandom().nextInt(candidates.size()));
 	}
 
-	/** Guards {@link CloneAi#home}: fights the nearest {@link Monster} within {@link #GUARD_RADIUS} of it, otherwise walks back home. See this class's own doc comment for the movement/attack simplifications. */
+	/** Guards {@link CloneAi#home}: fights the nearest hostile within {@link #GUARD_RADIUS} of it, otherwise walks back home. See this class's own doc comment for the movement/attack simplifications. */
 	private static void tickCombat(ServerLevel level, MSUFakePlayer fake)
 	{
 		CloneAi ai = activeClones.get(fake.getUUID());
@@ -231,11 +235,16 @@ public class TechTimeParallelAction extends TechHeroAspect
 
 		AABB guardBox = new AABB(ai.home.x - GUARD_RADIUS, ai.home.y - GUARD_RADIUS, ai.home.z - GUARD_RADIUS,
 				ai.home.x + GUARD_RADIUS, ai.home.y + GUARD_RADIUS, ai.home.z + GUARD_RADIUS);
-		List<Monster> nearby = level.getEntitiesOfClass(Monster.class, guardBox, Monster::isAlive);
+		// Real bug fix, confirmed via javap: Minestuck's own UnderlingEntity (Imps, etc.) extends
+		// AttackingAnimatedEntity implementing Enemy, NOT vanilla Monster - filtering on Monster.class here
+		// silently never matched a single Underling. Enemy is the shared marker interface both vanilla
+		// Monster and Minestuck's Underlings implement, so filtering on that covers both uniformly.
+		List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class, guardBox,
+				e -> e.isAlive() && e instanceof net.minecraft.world.entity.monster.Enemy);
 
-		Monster target = null;
+		LivingEntity target = null;
 		double closestSqr = Double.MAX_VALUE;
-		for(Monster candidate : nearby)
+		for(LivingEntity candidate : nearby)
 		{
 			double distSqr = candidate.distanceToSqr(fake);
 			if(distSqr < closestSqr)
@@ -287,23 +296,24 @@ public class TechTimeParallelAction extends TechHeroAspect
 		fake.broadcastMovement();
 	}
 
-	private static void despawn(Level level, AbilitechLoadout loadout, int techSlot, ServerPlayer fake)
+	private static void despawn(Level level, AbilitechLoadout badgeEffects, int techSlot, ServerPlayer fake)
 	{
 		if(level instanceof ServerLevel serverLevel)
 		{
 			serverLevel.getServer().getPlayerList().broadcastAll(new ClientboundPlayerInfoRemovePacket(List.of(fake.getUUID())));
 			DoomedTimelineClone.playGearsEffect(serverLevel, fake);
+			MSUAbilitechParticles.oneshot(level, fake, EnumAspect.TIME, 20);
 		}
 		activeClones.remove(fake.getUUID());
 		fake.remove(Entity.RemovalReason.KILLED);
-		loadout.setSlotTether(techSlot, null);
+		badgeEffects.setTether(techSlot, null);
 	}
 
 	@Override
 	public void onUnequipped(Level level, Player player, int techSlot)
 	{
-		AbilitechLoadout loadout = player.getData(MSUAttachments.ABILITECH_LOADOUT);
-		if(loadout.getSlotTether(techSlot) instanceof ServerPlayer fake && fake.isAlive())
-			despawn(level, loadout, techSlot, fake);
+		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		if(badgeEffects.getTether(techSlot) instanceof ServerPlayer fake && fake.isAlive())
+			despawn(level, badgeEffects, techSlot, fake);
 	}
 }

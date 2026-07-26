@@ -1,4 +1,5 @@
 package org.wilkretawesomesauce.minestuckuniverseported.godtier;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 
 import com.mraof.minestuck.player.Echeladder;
 import com.mraof.minestuck.player.Title;
@@ -76,6 +77,6 @@ public final class GodTierEvents
 
 	private static boolean isGodTierArmor(ItemStack stack)
 	{
-		return stack.has(MSUItemComponents.GOD_TIER_TITLE) || stack.getItem() instanceof org.wilkretawesomesauce.minestuckuniverseported.items.GodTierArmorItem;
+		return stack.has(MSUItemComponents.GOD_TIER_TITLE) || stack.getItem() instanceof org.wilkretawesomesauce.minestuckuniverseported.item.GodTierArmorItem;
 	}
 }

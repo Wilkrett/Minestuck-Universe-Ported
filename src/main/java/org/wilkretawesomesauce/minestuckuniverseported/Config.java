@@ -167,7 +167,7 @@ public class Config {
                 .defineInRange("timelineBranchPruneSweepInterval", 1200, 20, 72000);
 
         TIME_LOOP_MAX_DURATION_TICKS = BUILDER
-                .comment("Max ticks a Time Loop zone (TechTimeLoop/TechTimeLoopNested) can be charged to *last* - i.e. how long it keeps repeating before it ends. 600 = 30 seconds, 1200 = 60 seconds.",
+                .comment("Max ticks a Time Loop zone (TechTimeLoopAlpha/TechTimeLoopBeta) can be charged to *last* - i.e. how long it keeps repeating before it ends. 600 = 30 seconds, 1200 = 60 seconds.",
                         "Actual duration is however long the ability was charged, clamped to this - deliberately separate from timeLoopWindowTicks below (how much history each individual pass replays). Conflating the two was a real bug: a loop whose duration equalled its window length only ever played through once instead of repeating.")
                 .defineInRange("timeLoopMaxDurationTicks", 600, 20, 1200);
 
@@ -177,8 +177,8 @@ public class Config {
                 .defineInRange("timeLoopWindowTicks", 100, 20, 600);
 
         TIME_LOOP_RADIUS = BUILDER
-                .comment("Radius (in blocks) of a Time Loop zone - flat, not charge-scaled.")
-                .defineInRange("timeLoopRadius", 30.0, 4.0, 50.0);
+                .comment("Radius (in blocks) of a Time Loop zone - flat, not charge-scaled. Default 15 matches both Timeloop α's and Timeloop β's real designed radius.")
+                .defineInRange("timeLoopRadius", 15.0, 4.0, 50.0);
 
         RETROCOGNITION_OBSERVE_TICKS = BUILDER
                 .comment("How many ticks back Retrocognition's vision reaches, and how long (in real time) the vision lasts before it catches up to \"now\" and ends. 6000 = 5 minutes.",

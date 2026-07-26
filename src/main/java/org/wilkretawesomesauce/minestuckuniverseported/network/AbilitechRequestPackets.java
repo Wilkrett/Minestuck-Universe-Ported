@@ -10,8 +10,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
 
 /**
@@ -43,20 +43,20 @@ public final class AbilitechRequestPackets
 			if(tech == null)
 				return;
 
-			AbilitechLoadout loadout = player.getData(MSUAttachments.ABILITECH_LOADOUT);
-			if(loadout.isTechEquipped(tech))
+			GodTierData godTier = player.getData(MSUAttachments.GOD_TIER);
+			if(godTier.isTechEquipped(tech))
 				return;
 
 			// Real gate, matching the original's own "equip only from what you already own" split - see
 			// abilitech.TechBoondollarCost/the real unlock economy this project now has. Unlocking itself
 			// happens through the real shop screen (once built) or, in the interim, the creative-only
 			// /msu unlock debug command.
-			if(!loadout.isUnlocked(tech))
+			if(!godTier.isUnlocked(tech))
 				return;
 
-			if(loadout.getTech(slot) != null)
-				loadout.unequipTech(player.level(), player, slot);
-			loadout.equipTech(player.level(), player, tech, slot);
+			if(godTier.getTech(slot) != null)
+				godTier.unequipTech(player.level(), player, slot);
+			godTier.equipTech(player.level(), player, tech, slot);
 			MSUAbilitechPackets.sendLoadoutSync(player);
 		}
 
@@ -78,7 +78,7 @@ public final class AbilitechRequestPackets
 		@Override
 		public void execute(IPayloadContext context, ServerPlayer player)
 		{
-			player.getData(MSUAttachments.ABILITECH_LOADOUT).unequipTech(player.level(), player, slot);
+			player.getData(MSUAttachments.GOD_TIER).unequipTech(player.level(), player, slot);
 			MSUAbilitechPackets.sendLoadoutSync(player);
 		}
 
@@ -100,13 +100,13 @@ public final class AbilitechRequestPackets
 		@Override
 		public void execute(IPayloadContext context, ServerPlayer player)
 		{
-			AbilitechLoadout loadout = player.getData(MSUAttachments.ABILITECH_LOADOUT);
-			Abilitech tech = loadout.getTech(slot);
+			GodTierData godTier = player.getData(MSUAttachments.GOD_TIER);
+			Abilitech tech = godTier.getTech(slot);
 			if(tech == null)
 				return;
 
-			boolean enabled = !loadout.isPassiveEnabled(slot);
-			loadout.setPassiveEnabled(slot, enabled);
+			boolean enabled = !godTier.isPassiveEnabled(slot);
+			godTier.setPassiveEnabled(slot, enabled);
 			tech.onPassiveToggle(player.level(), player, enabled);
 			MSUAbilitechPackets.sendLoadoutSync(player);
 		}

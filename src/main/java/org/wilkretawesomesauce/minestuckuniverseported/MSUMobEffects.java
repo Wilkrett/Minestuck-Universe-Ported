@@ -4,6 +4,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.effect.MobEffect;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.SlingChargeEffect;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.blood.BleedingEffect;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.WindFormedEffect;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.doom.BuildInhibitEffect;
@@ -53,6 +54,7 @@ public final class MSUMobEffects
 	public static final DeferredHolder<MobEffect, GodTierComebackEffect> GOD_TIER_COMEBACK = REGISTER.register("god_tier_comeback", GodTierComebackEffect::new);
 	public static final DeferredHolder<MobEffect, AcceleratingEffect> ACCELERATING = REGISTER.register("accelerating", AcceleratingEffect::new);
 	public static final DeferredHolder<MobEffect, DecayproofEffect> DECAYPROOF = REGISTER.register("decayproof", DecayproofEffect::new);
+	public static final DeferredHolder<MobEffect, SlingChargeEffect> SLING_CHARGE = REGISTER.register("sling_charge", SlingChargeEffect::new);
 
 	private MSUMobEffects()
 	{

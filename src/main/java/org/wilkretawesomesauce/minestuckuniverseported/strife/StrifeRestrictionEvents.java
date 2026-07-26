@@ -1,4 +1,5 @@
 package org.wilkretawesomesauce.minestuckuniverseported.strife;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -61,7 +62,7 @@ public final class StrifeRestrictionEvents
 
 		if(mainHand.isEmpty())
 		{
-			StrifePortfolio cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+			StrifeData cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 			int sel = cap.getSelectedSpecibusIndex();
 			if(sel >= 0 && sel < cap.getPortfolio().length)
 			{

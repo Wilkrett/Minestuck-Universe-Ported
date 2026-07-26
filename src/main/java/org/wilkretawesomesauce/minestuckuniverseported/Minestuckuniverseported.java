@@ -49,12 +49,11 @@ public class Minestuckuniverseported {
                     .icon(() -> MSUItems.STRIFE_CARD.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(MSUItems.STRIFE_CARD.get());
-                        output.accept(MSUItems.GOD_TIER_HOOD.get());
-                        output.accept(MSUItems.GOD_TIER_SHIRT.get());
-                        output.accept(MSUItems.GOD_TIER_PANTS.get());
-                        output.accept(MSUItems.GOD_TIER_SHOES.get());
+                        // God Tier armor deliberately excluded - broken right now (see items.GodTierArmorItem's
+                        // own doc comment: no worn-appearance render at all yet), not to be re-added until fixed.
                         output.accept(MSUItems.WIZARD_HAT.get());
                         output.accept(MSUItems.FROG_HAT.get());
+                        output.accept(MSUItems.ARCHMAGE_HAT.get());
                         output.accept(MSUItems.NEEDLEWAND.get());
                         output.accept(MSUItems.MANIPULATED_MATTER.get());
                         output.accept(MSUItems.ABILITECHNOSYNTH.get());

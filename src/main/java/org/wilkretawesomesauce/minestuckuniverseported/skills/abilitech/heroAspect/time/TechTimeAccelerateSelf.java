@@ -12,13 +12,13 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechKeyState;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUTechType;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.network.StreakStateSyncPacket;
-import org.wilkretawesomesauce.minestuckuniverseported.streak.StreakFlavours;
-import org.wilkretawesomesauce.minestuckuniverseported.streak.StreakPreference;
+import org.wilkretawesomesauce.minestuckuniverseported.client.streak.StreakFlavours;
+import org.wilkretawesomesauce.minestuckuniverseported.client.streak.StreakPreference;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -99,7 +99,7 @@ public class TechTimeAccelerateSelf extends TechHeroAspect
 
 	public TechTimeAccelerateSelf()
 	{
-		super(Minestuckuniverseported.id("accelerate"), EnumAspect.TIME, 0, MSUTechType.UTILITY); // new tech, no original cost to port - see class doc comment
+		super(Minestuckuniverseported.id("accelerate"), EnumAspect.TIME, 1800, MSUTechType.UTILITY); // new tech, no original cost to port - picked to fit this project's own cost spread, see class doc comment
 		setIcon("default");
 	}
 

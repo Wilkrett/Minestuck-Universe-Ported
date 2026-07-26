@@ -1,4 +1,5 @@
 package org.wilkretawesomesauce.minestuckuniverseported.godtier;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -6,7 +7,7 @@ import net.neoforged.neoforge.common.util.INBTSerializable;
 
 /**
  * Ported from MinestuckUniverse (1.12.2)'s {@code capabilities.godTier.GodTierData}/{@code IGodTierData}
- * Forge capability - the ascension-only slice of it. Like {@code StrifePortfolio}, this is a data
+ * Forge capability - the ascension-only slice of it. Like {@code StrifeData}, this is a data
  * attachment (see {@link org.wilkretawesomesauce.minestuckuniverseported.MSUAttachments#GOD_TIER})
  * rather than a capability, since NeoForge 1.21.1 replaced entity capabilities with attachments.
  * <p>
@@ -15,7 +16,7 @@ import net.neoforged.neoforge.common.util.INBTSerializable;
  * "abilitech" equipment-slot loadout system, per-stat XP/leveling with attribute modifiers, karma,
  * consort type, and lunar sway - over 100 files worth, in the original. None of that is part of this
  * pass; this class is deliberately just the ascension state itself, matching how the Strife Specibus
- * port started with just {@code StrifePortfolio}/{@code StrifeSpecibus} before any handler, networking,
+ * port started with just {@code StrifeData}/{@code StrifeSpecibus} before any handler, networking,
  * or GUI layer existed.
  * <p>
  * One real behavioural simplification worth knowing about: in the original, {@code isGodTier()} isn't

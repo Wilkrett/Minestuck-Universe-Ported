@@ -16,7 +16,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.MSUItemComponents;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.KindAbstratus;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.MSUKindAbstrataRegistry;
-import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifePortfolio;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifePortfolioHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifeSpecibus;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifeSpecibusData;
@@ -45,7 +45,7 @@ public final class MSUStrifeRequestPackets
 		@Override
 		public void execute(IPayloadContext context, ServerPlayer player)
 		{
-			StrifePortfolio cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+			StrifeData cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 			if(isSpecibus)
 			{
 				cap.setSelectedSpecibusIndex(index);
@@ -139,7 +139,7 @@ public final class MSUStrifeRequestPackets
 				return;
 
 			ItemStack stack = player.getItemInHand(hand);
-			if(!(stack.getItem() instanceof org.wilkretawesomesauce.minestuckuniverseported.items.StrifeCardItem))
+			if(!(stack.getItem() instanceof org.wilkretawesomesauce.minestuckuniverseported.item.StrifeCardItem))
 				return;
 
 			stack.set(MSUItemComponents.STRIFE_SPECIBUS, StrifeSpecibusData.fromSpecibus(new StrifeSpecibus(kindAbstratus)));
@@ -198,7 +198,7 @@ public final class MSUStrifeRequestPackets
 		@Override
 		public void execute(IPayloadContext context, ServerPlayer player)
 		{
-			StrifePortfolio cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+			StrifeData cap = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 			cap.setSelectedSpecibusIndex(specibusIndex);
 			cap.setSelectedWeaponIndex(weaponIndex);
 		}

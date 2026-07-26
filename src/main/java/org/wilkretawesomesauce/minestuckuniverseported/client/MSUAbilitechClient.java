@@ -8,7 +8,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechKey;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKey;
 import org.wilkretawesomesauce.minestuckuniverseported.network.AbilitechKeyPacket;
 
 /**

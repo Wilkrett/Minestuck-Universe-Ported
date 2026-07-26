@@ -22,7 +22,7 @@ import java.util.UUID;
  * Timeline, always loaded whenever the server is up, which makes it a safe single source of truth
  * for the tree even while any individual branch's own {@code ServerLevel} is dormant/unregistered.
  * <p>
- * Follows {@code TimelineData}/{@code StrifePortfolio}'s existing manual-NBT convention (a hand-rolled
+ * Follows {@code TimelineData}/{@code StrifeData}'s existing manual-NBT convention (a hand-rolled
  * {@link ListTag} of per-branch {@link CompoundTag}s via {@link TimelineBranch#toNBT()}) rather than
  * introducing Codec-based (de)serialization, which nothing else in this attachment system uses.
  */

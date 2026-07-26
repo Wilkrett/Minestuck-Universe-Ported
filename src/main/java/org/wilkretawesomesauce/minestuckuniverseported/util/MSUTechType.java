@@ -1,7 +1,7 @@
-package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech;
+package org.wilkretawesomesauce.minestuckuniverseported.util;
 
 /** Ported from MinestuckUniverse (1.12.2)'s {@code util.EnumTechType}. */
-public enum EnumTechType
+public enum MSUTechType
 {
 	OFFENSE("techType.offense", 0xFFAA66),
 	DEFENSE("techType.defense", 0xC3D3D8),
@@ -12,7 +12,7 @@ public enum EnumTechType
 	public final String unloc;
 	public final int color;
 
-	EnumTechType(String unloc, int color)
+	MSUTechType(String unloc, int color)
 	{
 		this.unloc = unloc;
 		this.color = color;

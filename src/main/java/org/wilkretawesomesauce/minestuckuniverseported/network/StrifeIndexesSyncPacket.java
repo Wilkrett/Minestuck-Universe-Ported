@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifePortfolio;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 
 /**
  * Sent server -> client for the frequent, cheap updates: which specibus/weapon slot is selected, whether
@@ -34,7 +34,7 @@ public record StrifeIndexesSyncPacket(int selectedSpecibus, int selectedWeapon, 
 
 	public static StrifeIndexesSyncPacket create(Player player)
 	{
-		StrifePortfolio portfolio = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+		StrifeData portfolio = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 		return new StrifeIndexesSyncPacket(portfolio.getSelectedSpecibusIndex(), portfolio.getSelectedWeaponIndex(),
 				portfolio.isArmed(), portfolio.abstrataSwitcherUnlocked());
 	}
@@ -43,7 +43,7 @@ public record StrifeIndexesSyncPacket(int selectedSpecibus, int selectedWeapon, 
 	public void execute(IPayloadContext context)
 	{
 		Player player = context.player();
-		StrifePortfolio portfolio = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
+		StrifeData portfolio = player.getData(MSUAttachments.STRIFE_PORTFOLIO);
 		portfolio.setSelectedSpecibusIndex(selectedSpecibus);
 		portfolio.setSelectedWeaponIndex(selectedWeapon);
 		portfolio.setArmed(armed);

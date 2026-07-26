@@ -1,4 +1,5 @@
 package org.wilkretawesomesauce.minestuckuniverseported.strife;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -7,7 +8,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUItemComponents;
-import org.wilkretawesomesauce.minestuckuniverseported.items.StrifeCardItem;
+import org.wilkretawesomesauce.minestuckuniverseported.item.StrifeCardItem;
 import org.wilkretawesomesauce.minestuckuniverseported.network.MSUStrifePackets;
 
 /**
@@ -31,7 +32,7 @@ public final class StrifePortfolioHandler
 	{
 	}
 
-	private static StrifePortfolio portfolioOf(LivingEntity entity)
+	private static StrifeData portfolioOf(LivingEntity entity)
 	{
 		return entity.getData(MSUAttachments.STRIFE_PORTFOLIO);
 	}
@@ -59,7 +60,7 @@ public final class StrifePortfolioHandler
 	{
 		if(stack.isEmpty())
 			return false;
-		StrifePortfolio cap = portfolioOf(entity);
+		StrifeData cap = portfolioOf(entity);
 		if(!cap.isArmed() || cap.getSelectedSpecibusIndex() < 0 || cap.getSelectedWeaponIndex() < 0)
 			return false;
 
@@ -82,7 +83,7 @@ public final class StrifePortfolioHandler
 		if(entity.level().isClientSide())
 			return null;
 
-		StrifePortfolio cap = portfolioOf(entity);
+		StrifeData cap = portfolioOf(entity);
 		StrifeSpecibus selSpecibus = cap.getSelectedSpecibusIndex() >= 0 ? cap.getPortfolio()[cap.getSelectedSpecibusIndex()] : null;
 		if(selSpecibus == null)
 			return null;
@@ -123,7 +124,7 @@ public final class StrifePortfolioHandler
 		if(entity.level().isClientSide())
 			return false;
 
-		StrifePortfolio cap = portfolioOf(entity);
+		StrifeData cap = portfolioOf(entity);
 		StrifeSpecibus selSpecibus = cap.getSelectedSpecibusIndex() >= 0 ? cap.getPortfolio()[cap.getSelectedSpecibusIndex()] : null;
 
 		if(selSpecibus != null && selSpecibus.putItemStack(stack))
@@ -164,7 +165,7 @@ public final class StrifePortfolioHandler
 		if(specibus == null)
 			specibus = StrifeSpecibus.empty();
 
-		StrifePortfolio cap = portfolioOf(entity);
+		StrifeData cap = portfolioOf(entity);
 
 		if(cap.isPortfolioFull())
 		{
@@ -224,7 +225,7 @@ public final class StrifePortfolioHandler
 	 */
 	public static void retrieveCard(LivingEntity entity, int index)
 	{
-		StrifePortfolio cap = portfolioOf(entity);
+		StrifeData cap = portfolioOf(entity);
 
 		if(cap.isArmed() && cap.getSelectedSpecibusIndex() == index)
 			for(InteractionHand hand : InteractionHand.values())
@@ -250,7 +251,7 @@ public final class StrifePortfolioHandler
 
 	public static void retrieveWeapon(LivingEntity entity, int index, InteractionHand hand)
 	{
-		StrifePortfolio cap = portfolioOf(entity);
+		StrifeData cap = portfolioOf(entity);
 
 		ItemStack stack = ItemStack.EMPTY;
 		try
@@ -279,7 +280,7 @@ public final class StrifePortfolioHandler
 		}
 	}
 
-	private static boolean matchesSelectedWeapon(StrifePortfolio cap, ItemStack held)
+	private static boolean matchesSelectedWeapon(StrifeData cap, ItemStack held)
 	{
 		StrifeSpecibus[] portfolio = cap.getPortfolio();
 		int specibusIdx = cap.getSelectedSpecibusIndex();
@@ -292,7 +293,7 @@ public final class StrifePortfolioHandler
 
 	public static void swapOffhandWeapon(LivingEntity entity, int specibusIndex, int weaponIndex)
 	{
-		StrifePortfolio cap = portfolioOf(entity);
+		StrifeData cap = portfolioOf(entity);
 		ItemStack stack = ItemStack.EMPTY;
 
 		try
@@ -336,7 +337,7 @@ public final class StrifePortfolioHandler
 		if(entity.level().isClientSide())
 			return;
 
-		StrifePortfolio cap = portfolioOf(entity);
+		StrifeData cap = portfolioOf(entity);
 		int sel = cap.getSelectedSpecibusIndex();
 		if(sel < 0 || sel >= cap.getPortfolio().length || cap.getPortfolio()[sel] == null)
 			return;

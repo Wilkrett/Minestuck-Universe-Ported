@@ -25,16 +25,21 @@ public final class MSUCommands
 		// user-requested restructure. Each command's own getArgumentBuilder() previously baked its
 		// top-level name directly into its own Commands.literal(...) call, so those were changed to bare
 		// sub-literals ("timeline", "itemvoid", "juju", "streak") to nest cleanly here instead.
+		//
+		// itemvoid/juju/shop/streak/unlock moved a second time, under a real "debug" sub-literal - another
+		// explicit user-requested restructure, separating the clearly debug/testing-only commands from the
+		// two that stayed direct /msu children (abilitech, godtier - neither was named in that request).
 		dispatcher.register(Commands.literal("msu")
 				.then(Commands.literal("timeline")
 						.then(TimelineRewindCommand.getArgumentBuilder())
 						.then(TimelineTravelCommand.getArgumentBuilder())
 						.then(TimelineBranchCommand.getArgumentBuilder()))
-				.then(ItemVoidCommand.getArgumentBuilder())
-				.then(JujuCommand.getArgumentBuilder())
-				.then(StreakCommand.getArgumentBuilder())
-				.then(AbilitechUnlockCommand.getArgumentBuilder())
-				.then(SkillShopCommand.getArgumentBuilder())
+				.then(Commands.literal("debug")
+						.then(ItemVoidCommand.getArgumentBuilder())
+						.then(JujuCommand.getArgumentBuilder())
+						.then(StreakCommand.getArgumentBuilder())
+						.then(AbilitechUnlockCommand.getArgumentBuilder())
+						.then(SkillShopCommand.getArgumentBuilder()))
 				.then(GodTierDebugCommand.getArgumentBuilder())
 				.then(AbilitechUserCommand.getArgumentBuilder()));
 	}

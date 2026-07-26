@@ -8,9 +8,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechKeyState;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUTechType;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 
 /**
@@ -22,7 +23,7 @@ public class TechTimeSlow extends TechHeroAspect
 {
 	public TechTimeSlow()
 	{
-		super(Minestuckuniverseported.id("slow"), EnumAspect.TIME, 0, MSUTechType.OFFENSE); // new tech, no original cost to port - see class doc comment
+		super(Minestuckuniverseported.id("slow"), EnumAspect.TIME, 3000, MSUTechType.OFFENSE); // new tech, no original cost to port - picked to fit this project's own cost spread, see class doc comment
 		setIcon("default");
 	}
 
@@ -44,6 +45,8 @@ public class TechTimeSlow extends TechHeroAspect
 
 		target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 1, false, false));
 		target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 20, 1, false, false));
+
+		MSUAbilitechParticles.aura(level, target, EnumAspect.TIME, 5);
 
 		if(time % 20 == 0 && !player.isCreative())
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 1);

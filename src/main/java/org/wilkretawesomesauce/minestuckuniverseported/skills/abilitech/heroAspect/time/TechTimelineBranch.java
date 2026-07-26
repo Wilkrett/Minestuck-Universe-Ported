@@ -1,6 +1,7 @@
 package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time;
 
 import com.mraof.minestuck.player.EnumAspect;
+import com.mraof.minestuck.player.EnumClass;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -9,8 +10,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUTechType;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.timeline.BranchForker;
 import org.wilkretawesomesauce.minestuckuniverseported.timeline.TimelineBranch;
@@ -58,7 +60,7 @@ public class TechTimelineBranch extends TechHeroAspect
 
 	public TechTimelineBranch()
 	{
-		super(Minestuckuniverseported.id("timeline_branch"), EnumAspect.TIME, 0, MSUTechType.UTILITY); // new tech, no original cost to port - see class doc comment
+		super(Minestuckuniverseported.id("timeline_branch"), EnumAspect.TIME, 150000, MSUTechType.UTILITY, EnumClass.LORD);
 		setIcon("default");
 	}
 
@@ -66,7 +68,12 @@ public class TechTimelineBranch extends TechHeroAspect
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
 		if(state == AbilitechKeyState.PRESS || state == AbilitechKeyState.HELD)
-			return time < ALPHA_HOLD_TICKS;
+		{
+			if(time >= ALPHA_HOLD_TICKS)
+				return false;
+			MSUAbilitechParticles.burst(level, player, EnumAspect.TIME, 6);
+			return true;
+		}
 
 		if(state != AbilitechKeyState.RELEASED)
 			return false;
@@ -94,6 +101,7 @@ public class TechTimelineBranch extends TechHeroAspect
 		}
 
 		player.displayClientMessage(Component.translatable("status.minestuckuniverseported.timeline.branch_created", branch.getDisplayName()), true);
+		MSUAbilitechParticles.oneshot(level, player, EnumAspect.TIME, 30);
 		return true;
 	}
 
@@ -114,6 +122,7 @@ public class TechTimelineBranch extends TechHeroAspect
 
 		player.teleportTo(destination, player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
 		player.displayClientMessage(Component.translatable("status.minestuckuniverseported.timeline.branch_returned_to_parent"), true);
+		MSUAbilitechParticles.oneshot(level, player, EnumAspect.TIME, 30);
 		return true;
 	}
 
@@ -129,6 +138,7 @@ public class TechTimelineBranch extends TechHeroAspect
 		ServerLevel overworld = level.getServer().overworld();
 		player.teleportTo(overworld, player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
 		player.displayClientMessage(Component.translatable("status.minestuckuniverseported.timeline.branch_returned_to_alpha"), true);
+		MSUAbilitechParticles.oneshot(level, player, EnumAspect.TIME, 30);
 		return true;
 	}
 }

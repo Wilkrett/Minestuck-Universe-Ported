@@ -7,19 +7,21 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.wilkretawesomesauce.minestuckuniverseported.block.AbilitechnosynthBlock;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
 import org.wilkretawesomesauce.minestuckuniverseported.network.AbilitechRequestPackets;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Ported from MinestuckUniverse (1.12.2)'s {@code gui.GuiFraymachine} - the only way to manage the
- * abilitech loadout, opened from {@link org.wilkretawesomesauce.minestuckuniverseported.blocks.AbilitechnosynthBlock}.
+ * abilitech loadout, opened from {@link AbilitechnosynthBlock}.
  * <p>
  * The grid position formula, the {@code guiLeft} offset, the title position, and the equip-slot position
  * are all copied directly from the original's {@code drawScreen} - an earlier version of this screen used
@@ -30,14 +32,31 @@ import java.util.List;
  * {@code xSize}, for reasons not documented in the source - preserved anyway for pixel fidelity since nothing
  * about it looked accidental).
  * <p>
- * Structural difference from the original: the original used a full drag-and-drop interaction (pick up a
- * tech icon, carry it under the cursor, drop it on a slot). This uses click-to-select-then-click-to-place
- * instead - functionally equivalent (grid -> slot assignment either way) but a state machine I'm far more
- * confident I can implement correctly than hand-tracing a drag gesture blind. Right-click a slot to
- * unequip, shift+left-click a slot to toggle passive mode - the original used right-click for passive
- * toggle and drag-off-screen for unequip. Hit-testing also uses a plain 24x24 box instead of the
- * original's exact hexagon point-in-polygon test - a minor precision difference at the very corners of
- * each tile, not worth the added risk of porting the polygon math blind.
+ * <b>Real drag-and-drop now, replacing an earlier click-to-select-then-click-to-place stand-in</b>: the
+ * original used a full drag-and-drop interaction (pick up a tech icon, carry it under the cursor, drop it
+ * on a slot) - {@link #mouseClicked} now picks up {@link #draggedTech} (remembering
+ * {@link #draggedFromSlot} if it came from an already-equipped slot, {@code -1} if from the grid) and
+ * {@link #mouseReleased} resolves the drop: onto a different equip slot sends
+ * {@link AbilitechRequestPackets.Unequip} (only if it came from a slot) then
+ * {@link AbilitechRequestPackets.Equip}; dropped back on its own origin slot is a no-op; dropped anywhere
+ * else while it came from an equipped slot sends just {@code Unequip} (drag-off-to-remove, matching the
+ * original); dropped anywhere else after coming from the grid is a plain cancel (it was never equipped, so
+ * there's nothing to undo). {@link #render} draws the dragged icon following the cursor each frame. Right-
+ * click a slot to unequip, shift+left-click a slot to toggle passive mode - the original used right-click
+ * for passive toggle, matching here, but used the drag-off gesture above (not a dedicated right-click) for
+ * unequip; this port keeps right-click-to-unequip as a real, additional shortcut alongside the new drag-off
+ * behavior, not a replacement for it. Hit-testing also uses a plain 24x24 box instead of the original's
+ * exact hexagon point-in-polygon test - a minor precision difference at the very corners of each tile, not
+ * worth the added risk of porting the polygon math blind.
+ * <p>
+ * <b>Real bug fix</b>: {@link #init} used to list every registered {@link Abilitech} unconditionally
+ * (grabbing the whole {@code MSUAbilitechRegistry}), showing techs the player had never unlocked as
+ * selectable grid tiles - a real, reported bug. Confirmed against the real original
+ * ({@code GuiFraymachine#setupTech} calls {@code IGodTierData#getAllAbilitechs()}, whose own real
+ * implementation - read directly, not guessed - filters to only {@code Abilitech}s already present in the
+ * player's own unlocked-skills map): the original only ever showed techs you'd actually unlocked. Fixed by
+ * filtering on {@link GodTierData#isUnlocked}, matching the same real check {@code SkillShopScreen} already
+ * uses (there, to exclude what you already own; here, to include only what you do).
  */
 public class MSUAbilitechScreen extends Screen
 {
@@ -54,7 +73,8 @@ public class MSUAbilitechScreen extends Screen
 
 	private int guiLeft, guiTop;
 	private final List<Abilitech> allTechs = new ArrayList<>();
-	private Abilitech selected;
+	private Abilitech draggedTech;
+	private int draggedFromSlot = -1;
 	private int page = 0;
 
 	private Abilitech lastDescribedTech;
@@ -88,7 +108,14 @@ public class MSUAbilitechScreen extends Screen
 		guiTop = height / 2 - GUI_HEIGHT / 2;
 
 		allTechs.clear();
-		allTechs.addAll(MSUAbilitechRegistry.getAll());
+		GodTierData godTier = godTier();
+		for(Abilitech tech : MSUAbilitechRegistry.getAll())
+			if(godTier.isUnlocked(tech))
+				allTechs.add(tech);
+		// Real port of the original's own tech.sort(Comparator.comparingInt(Skill::getSortIndex)) - the
+		// sortIndex machinery itself (Skill#sortIndex/getSortIndex/compareTo) was already ported faithfully,
+		// this screen just never actually called it.
+		allTechs.sort(java.util.Comparator.comparingInt(org.wilkretawesomesauce.minestuckuniverseported.skills.Skill::getSortIndex));
 	}
 
 	@Override
@@ -97,9 +124,9 @@ public class MSUAbilitechScreen extends Screen
 		return false;
 	}
 
-	private AbilitechLoadout loadout()
+	private GodTierData godTier()
 	{
-		return minecraft.player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		return minecraft.player.getData(MSUAttachments.GOD_TIER);
 	}
 
 	private int pageCount()
@@ -151,7 +178,7 @@ public class MSUAbilitechScreen extends Screen
 			Abilitech tech = allTechs.get(base + i);
 			int x = gridX(i), y = gridY(i);
 
-			if(tech == selected)
+			if(tech == draggedTech && draggedFromSlot == -1)
 				guiGraphics.fill(x - 1, y - 1, x + SLOT_SIZE + 1, y + SLOT_SIZE + 1, 0x8000FF00);
 
 			guiGraphics.blit(iconFor(tech), x, y, 0, 0, 24, 24, 24, 24);
@@ -164,18 +191,21 @@ public class MSUAbilitechScreen extends Screen
 			}
 		}
 
-		AbilitechLoadout loadout = loadout();
-		int slots = loadout.getTechSlots();
+		GodTierData godTier = godTier();
+		int slots = godTier.getTechSlots();
 
 		for(int i = 0; i < slots; i++)
 		{
 			int x = equipX(i, slots), y = equipY();
 
-			Abilitech tech = loadout.getTech(i);
+			Abilitech tech = godTier.getTech(i);
 			if(tech != null)
 			{
-				guiGraphics.blit(iconFor(tech), x, y, 0, 0, 24, 24, 24, 24);
-				if(loadout.isPassiveEnabled(i))
+				// Skip drawing the icon in its own origin slot while it's being dragged out of it - drawn
+				// following the cursor instead, further down, matching a real "picked the icon up" feel.
+				if(i != draggedFromSlot)
+					guiGraphics.blit(iconFor(tech), x, y, 0, 0, 24, 24, 24, 24);
+				if(godTier.isPassiveEnabled(i))
 					drawBorder(guiGraphics, x, y, SLOT_SIZE, SLOT_SIZE, 0xFF00FF00);
 
 				if(isHovering(x, y, SLOT_SIZE, SLOT_SIZE, mouseX, mouseY))
@@ -202,6 +232,11 @@ public class MSUAbilitechScreen extends Screen
 			descOverflowLines = 0;
 			guiGraphics.blit(TEXTURE, guiLeft + 222, guiTop + 35, 38, 241, 10, 15);
 		}
+
+		// Real drag-and-drop: the picked-up icon follows the cursor, centered on it, drawn last so it's
+		// always on top of everything else.
+		if(draggedTech != null)
+			guiGraphics.blit(iconFor(draggedTech), mouseX - SLOT_SIZE / 2, mouseY - SLOT_SIZE / 2, 0, 0, 24, 24, 24, 24);
 	}
 
 	private record DescLine(FormattedCharSequence text, int color)
@@ -261,9 +296,20 @@ public class MSUAbilitechScreen extends Screen
 			Component aspectTag = Component.literal("[").append(heroAspectTech.getHeroAspect().asTextComponent()).append(Component.literal("]"));
 			lines.add(new DescLine(aspectTag.getVisualOrderText(), aspectColor(heroAspectTech.getHeroAspect())));
 
-			org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUTechType techType = heroAspectTech.getTechType();
+			MSUTechType techType = heroAspectTech.getTechType();
 			Component typeTag = Component.literal("[").append(Component.translatable(techType.unloc)).append(Component.literal("]"));
 			lines.add(new DescLine(typeTag.getVisualOrderText(), techType.color));
+
+			// Purely descriptive classpect "flavor" tags - see TechHeroAspect's own flavor-tagging
+			// constructor doc comment. Empty for every tech that doesn't opt in.
+			for(com.mraof.minestuck.player.EnumClass flavorClass : heroAspectTech.getFlavorClasses())
+			{
+				Component flavorTag = Component.literal("[")
+						.append(Component.translatable(org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUHeroClass.from(flavorClass).unloc))
+						.append(Component.literal("]"));
+				int[] flavorColor = org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors.get(flavorClass);
+				lines.add(new DescLine(flavorTag.getVisualOrderText(), flavorColor != null && flavorColor.length > 0 ? flavorColor[0] : 0xFFFFFF));
+			}
 		}
 		else if(tech instanceof org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass heroClassTech)
 		{
@@ -271,7 +317,7 @@ public class MSUAbilitechScreen extends Screen
 			int[] classColor = org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors.get(heroClassTech.getRealHeroClass());
 			lines.add(new DescLine(classTag.getVisualOrderText(), classColor != null && classColor.length > 0 ? classColor[0] : 0xFFFFFF));
 
-			for(org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUTechType type : heroClassTech.getTechTypes())
+			for(MSUTechType type : heroClassTech.getTechTypes())
 			{
 				Component typeTag = Component.literal("[").append(Component.translatable(type.unloc)).append(Component.literal("]"));
 				lines.add(new DescLine(typeTag.getVisualOrderText(), type.color));
@@ -339,8 +385,8 @@ public class MSUAbilitechScreen extends Screen
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button)
 	{
-		AbilitechLoadout loadout = loadout();
-		int slots = loadout.getTechSlots();
+		GodTierData godTier = godTier();
+		int slots = godTier.getTechSlots();
 
 		// pagination arrows
 		if(button == 0)
@@ -365,20 +411,26 @@ public class MSUAbilitechScreen extends Screen
 
 			if(button == 1)
 			{
-				if(loadout.getTech(i) != null)
+				if(godTier.getTech(i) != null)
 					PacketDistributor.sendToServer(new AbilitechRequestPackets.Unequip(i));
 				return true;
 			}
 			if(button == 0 && hasShiftDown())
 			{
-				if(loadout.getTech(i) != null)
+				if(godTier.getTech(i) != null)
 					PacketDistributor.sendToServer(new AbilitechRequestPackets.TogglePassive(i));
 				return true;
 			}
-			if(button == 0 && selected != null)
+			if(button == 0)
 			{
-				PacketDistributor.sendToServer(new AbilitechRequestPackets.Equip(selected.getId(), i));
-				selected = null;
+				// Pick the tech already in this slot back up, ready to be dropped elsewhere (or back here,
+				// a no-op) - see mouseReleased for how the drop itself is resolved.
+				Abilitech tech = godTier.getTech(i);
+				if(tech != null)
+				{
+					draggedTech = tech;
+					draggedFromSlot = i;
+				}
 				return true;
 			}
 		}
@@ -391,13 +443,50 @@ public class MSUAbilitechScreen extends Screen
 				int x = gridX(i), y = gridY(i);
 				if(isHovering(x, y, SLOT_SIZE, SLOT_SIZE, (int) mouseX, (int) mouseY))
 				{
-					Abilitech tech = allTechs.get(base + i);
-					selected = tech == selected ? null : tech;
+					draggedTech = allTechs.get(base + i);
+					draggedFromSlot = -1;
 					return true;
 				}
 			}
 		}
 
 		return super.mouseClicked(mouseX, mouseY, button);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button)
+	{
+		if(button != 0 || draggedTech == null)
+			return super.mouseReleased(mouseX, mouseY, button);
+
+		Abilitech tech = draggedTech;
+		int fromSlot = draggedFromSlot;
+		draggedTech = null;
+		draggedFromSlot = -1;
+
+		GodTierData godTier = godTier();
+		int slots = godTier.getTechSlots();
+		for(int i = 0; i < slots; i++)
+		{
+			int x = equipX(i, slots), y = equipY();
+			if(!isHovering(x, y, SLOT_SIZE, SLOT_SIZE, (int) mouseX, (int) mouseY))
+				continue;
+
+			if(i == fromSlot)
+				return true; // dropped back where it started - no-op
+
+			if(fromSlot != -1)
+				PacketDistributor.sendToServer(new AbilitechRequestPackets.Unequip(fromSlot));
+			PacketDistributor.sendToServer(new AbilitechRequestPackets.Equip(tech.getId(), i));
+			return true;
+		}
+
+		// Dropped outside any equip slot: if it came from one, that's the original's real "drag off-screen
+		// to unequip" gesture. If it came from the grid, it was never equipped in the first place - a plain
+		// cancel, nothing to undo.
+		if(fromSlot != -1)
+			PacketDistributor.sendToServer(new AbilitechRequestPackets.Unequip(fromSlot));
+
+		return true;
 	}
 }

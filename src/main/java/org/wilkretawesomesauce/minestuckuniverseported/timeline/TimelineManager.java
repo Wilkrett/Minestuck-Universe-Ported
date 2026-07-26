@@ -139,7 +139,7 @@ public final class TimelineManager
 		if(playerHistory.isEmpty())
 			return;
 
-		GameProfile profile = new GameProfile(UUID.randomUUID(), initiator.getName().getString() + " (Doomed)");
+		GameProfile profile = new GameProfile(UUID.randomUUID(), initiator.getName().getString());
 		MSUFakePlayer fakePlayer = DoomedTimelineClone.spawn(level, profile, playerHistory.get(0).state());
 		data.addDoomedClone(new DoomedTimelineClone(playerHistory, fakePlayer));
 	}

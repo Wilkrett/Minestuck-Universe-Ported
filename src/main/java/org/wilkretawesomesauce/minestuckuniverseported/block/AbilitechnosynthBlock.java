@@ -1,4 +1,4 @@
-package org.wilkretawesomesauce.minestuckuniverseported.blocks;
+package org.wilkretawesomesauce.minestuckuniverseported.block;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -36,7 +36,7 @@ import java.util.List;
  * and {@link #PART} (0-15, replacing the original's {@code classIndex*4 + PART} indexing scheme
  * directly, one value per position) - instead of 4 separate block classes, since modern blockstates
  * don't need separate classes to carry extra properties the way 1.12.2's did. Placement is handled by
- * {@link org.wilkretawesomesauce.minestuckuniverseported.items.AbilitechnosynthItem}, ported from
+ * {@link org.wilkretawesomesauce.minestuckuniverseported.item.AbilitechnosynthItem}, ported from
  * {@code items.ItemAbilitechnosyth}.
  * <p>
  * The GUI itself ({@code gui.GuiFraymachine} in the original, shared with the original's separate,
@@ -120,7 +120,7 @@ public class AbilitechnosynthBlock extends Block
 	/**
 	 * Ported from {@code ItemAbilitechnosyth#isValid} - walks back from this block's own known
 	 * {@link #PART} to the structure's placement anchor (the same anchor
-	 * {@link org.wilkretawesomesauce.minestuckuniverseported.items.AbilitechnosynthItem} placed
+	 * {@link org.wilkretawesomesauce.minestuckuniverseported.item.AbilitechnosynthItem} placed
 	 * relative to), then re-derives and checks all 16 expected positions/states forward from there,
 	 * exactly like the original.
 	 */

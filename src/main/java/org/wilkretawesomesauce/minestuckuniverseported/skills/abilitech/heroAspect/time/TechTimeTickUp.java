@@ -7,9 +7,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechKeyState;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUTechType;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
@@ -38,7 +38,7 @@ public class TechTimeTickUp extends TechHeroAspect
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout loadout = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
 
 		if(state == AbilitechKeyState.NONE)
 			return false;
@@ -46,26 +46,26 @@ public class TechTimeTickUp extends TechHeroAspect
 		if(!player.isCreative() && player.getFoodData().getFoodLevel() < 2)
 		{
 			player.displayClientMessage(Component.translatable("status.tooExhausted"), true);
-			loadout.setSlotTether(techSlot, null);
+			badgeEffects.setTether(techSlot, null);
 			return false;
 		}
 
 		if(state == AbilitechKeyState.RELEASED)
 		{
-			loadout.setSlotTether(techSlot, null);
+			badgeEffects.setTether(techSlot, null);
 			return true;
 		}
 
-		Entity target = loadout.getSlotTether(techSlot);
+		Entity target = badgeEffects.getTether(techSlot);
 		if(target == null)
 		{
 			target = MSUAbilitechRayTrace.getTargetEntity(player);
-			loadout.setSlotTether(techSlot, target);
+			badgeEffects.setTether(techSlot, target);
 		}
 
 		if(target != null && target.distanceTo(player) > 20)
 		{
-			loadout.setSlotTether(techSlot, null);
+			badgeEffects.setTether(techSlot, null);
 			target = null;
 		}
 

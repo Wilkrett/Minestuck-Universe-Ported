@@ -1,4 +1,4 @@
-package org.wilkretawesomesauce.minestuckuniverseported.items;
+package org.wilkretawesomesauce.minestuckuniverseported.item;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;

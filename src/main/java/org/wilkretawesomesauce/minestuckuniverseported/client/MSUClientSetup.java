@@ -17,14 +17,20 @@ import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.client.gui.ItemVoidScreen;
 import org.wilkretawesomesauce.minestuckuniverseported.client.gui.JujuScreen;
 import org.wilkretawesomesauce.minestuckuniverseported.client.gui.TemporalSendificatorScreen;
+import org.wilkretawesomesauce.minestuckuniverseported.client.model.ArchmageHatModel;
 import org.wilkretawesomesauce.minestuckuniverseported.client.model.BubbleModel;
+import org.wilkretawesomesauce.minestuckuniverseported.client.model.FrogHatModel;
 import org.wilkretawesomesauce.minestuckuniverseported.client.model.MSUModelLayers;
+import org.wilkretawesomesauce.minestuckuniverseported.client.model.WizardHatModel;
 import org.wilkretawesomesauce.minestuckuniverseported.client.particles.InkParticle;
 import org.wilkretawesomesauce.minestuckuniverseported.client.particles.PowerParticle;
 import org.wilkretawesomesauce.minestuckuniverseported.client.particles.TimeGearsRiseParticle;
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.BubbleRenderer;
+import org.wilkretawesomesauce.minestuckuniverseported.client.render.FrogHatLayer;
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.HopeGolemRenderer;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifeSpecibusData;
+import com.mraof.minestuck.client.renderer.entity.frog.FrogRenderer;
+import com.mraof.minestuck.entity.MSEntityTypes;
 
 /**
  * Ported from MinestuckUniverse (1.12.2)'s {@code ItemStrifeCard#addPropertyOverride}. 1.21.1 still uses
@@ -74,6 +80,9 @@ public final class MSUClientSetup
 	private static void onRegisterLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event)
 	{
 		event.registerLayerDefinition(MSUModelLayers.BUBBLE, BubbleModel::createBodyLayer);
+		event.registerLayerDefinition(MSUModelLayers.WIZARD_HAT, WizardHatModel::createLayer);
+		event.registerLayerDefinition(MSUModelLayers.ARCHMAGE_HAT, ArchmageHatModel::createLayer);
+		event.registerLayerDefinition(MSUModelLayers.FROG_HAT, FrogHatModel::createLayer);
 	}
 
 	@SubscribeEvent
@@ -81,5 +90,20 @@ public final class MSUClientSetup
 	{
 		event.registerEntityRenderer(MSUEntityTypes.BUBBLE.get(), BubbleRenderer::new);
 		event.registerEntityRenderer(MSUEntityTypes.HOPE_GOLEM.get(), HopeGolemRenderer::new);
+		event.registerEntityRenderer(MSUEntityTypes.MSU_THROWABLE.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
+	}
+
+	/**
+	 * Consorts get their worn-hat layer via {@code client.render.ConsortHatRenderEvents}' own GeckoLib
+	 * compile-layers subscriber instead - Frogs render through a plain vanilla renderer (see
+	 * {@code client.render.FrogHatLayer}'s own doc comment), so this is the real vanilla equivalent
+	 * extension point for that one entity.
+	 */
+	@SubscribeEvent
+	private static void onAddLayers(EntityRenderersEvent.AddLayers event)
+	{
+		FrogRenderer renderer = event.getRenderer(MSEntityTypes.FROG.get());
+		if(renderer != null)
+			renderer.addLayer(new FrogHatLayer(renderer, event.getEntityModels()));
 	}
 }
