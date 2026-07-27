@@ -317,6 +317,15 @@ public class MSUAbilitechScreen extends Screen
 			int[] classColor = org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors.get(heroClassTech.getRealHeroClass());
 			lines.add(new DescLine(classTag.getVisualOrderText(), classColor != null && classColor.length > 0 ? classColor[0] : 0xFFFFFF));
 
+			// A real, load-bearing requirement, not a cosmetic flavor tag like heroAspect's flavorClasses -
+			// see TechHeroClass's own requiredAspect constructor doc comment. null for every plain
+			// class-only tech, so this line simply doesn't appear for them.
+			if(heroClassTech.getRequiredAspect() != null)
+			{
+				Component aspectTag = Component.literal("[").append(heroClassTech.getRequiredAspect().asTextComponent()).append(Component.literal("]"));
+				lines.add(new DescLine(aspectTag.getVisualOrderText(), aspectColor(heroClassTech.getRequiredAspect())));
+			}
+
 			for(MSUTechType type : heroClassTech.getTechTypes())
 			{
 				Component typeTag = Component.literal("[").append(Component.translatable(type.unloc)).append(Component.literal("]"));

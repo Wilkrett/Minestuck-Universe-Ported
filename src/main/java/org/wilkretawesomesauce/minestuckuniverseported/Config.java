@@ -38,6 +38,34 @@ public class Config {
     private static final ModConfigSpec.IntValue TIME_REQUEST_DOOM_CHECK_INTERVAL;
     private static final ModConfigSpec.IntValue TIME_REQUEST_EVENT_COOLDOWN_TICKS;
     private static final ModConfigSpec.IntValue TIME_REQUEST_COOLDOWN_TICKS;
+    private static final ModConfigSpec.DoubleValue SCHISM_DAMAGE_AMPLIFY_FACTOR;
+    private static final ModConfigSpec.IntValue SCHISM_HOSTILITY_DURATION_TICKS;
+    private static final ModConfigSpec.IntValue SCHISM_CORRUPTION_DURATION_TICKS;
+    private static final ModConfigSpec.DoubleValue SCHISM_AURA_RADIUS;
+    private static final ModConfigSpec.DoubleValue SCHISM_AURA_WEAKEN_FACTOR;
+    private static final ModConfigSpec.DoubleValue SCHISM_AURA_DISRUPTION_CHANCE;
+    private static final ModConfigSpec.IntValue SCHISM_AURA_DISRUPTION_INTERVAL_TICKS;
+    private static final ModConfigSpec.DoubleValue SCHISM_AURA_OWNERSHIP_DECAY;
+    private static final ModConfigSpec.DoubleValue CRIMSON_DISCORD_AURA_RADIUS;
+    private static final ModConfigSpec.DoubleValue CRIMSON_DISCORD_INSTABILITY_GAIN_PER_PULSE;
+    private static final ModConfigSpec.IntValue CRIMSON_DISCORD_PULSE_INTERVAL_TICKS;
+    private static final ModConfigSpec.DoubleValue CRIMSON_DISCORD_BURST_AMOUNT;
+    private static final ModConfigSpec.DoubleValue CRIMSON_DISCORD_NATURAL_DECAY_AMOUNT;
+    private static final ModConfigSpec.IntValue CRIMSON_DISCORD_NATURAL_DECAY_INTERVAL_TICKS;
+    private static final ModConfigSpec.DoubleValue CRIMSON_DISCORD_DOMINO_RADIUS;
+    private static final ModConfigSpec.DoubleValue CRIMSON_DISCORD_DOMINO_BUMP;
+    private static final ModConfigSpec.DoubleValue CRIMSON_DISCORD_VENGEANCE_FAIL_DIVISOR;
+    private static final ModConfigSpec.IntValue CRIMSON_DISCORD_NEW_RIVALRIES_PER_PULSE;
+    private static final ModConfigSpec.DoubleValue CRIMSON_DISCORD_FIGHT_THRESHOLD;
+    private static final ModConfigSpec.IntValue RELATIONSHIP_FIGHTING_TOGETHER_WINDOW_TICKS;
+    private static final ModConfigSpec.DoubleValue RELATIONSHIP_FIGHTING_TOGETHER_GAIN;
+    private static final ModConfigSpec.DoubleValue RELATIONSHIP_DAMAGE_CONFLICT_GAIN;
+    private static final ModConfigSpec.DoubleValue RELATIONSHIP_DAMAGE_FAMILIARITY_GAIN;
+    private static final ModConfigSpec.DoubleValue RELATIONSHIP_BETRAYAL_AFFINITY_LOSS;
+    private static final ModConfigSpec.DoubleValue RELATIONSHIP_BETRAYAL_CONFLICT_GAIN;
+    private static final ModConfigSpec.DoubleValue RELATIONSHIP_BETRAYAL_STABILITY_LOSS;
+    private static final ModConfigSpec.DoubleValue RELATIONSHIP_NEARBY_RADIUS;
+    private static final ModConfigSpec.DoubleValue RELATIONSHIP_NEARBY_FAMILIARITY_GAIN;
     private static final ModConfigSpec.IntValue SKAIAN_SCROLL_LIMIT;
     private static final ModConfigSpec.ConfigValue<List<? extends String>> SKAIAN_SCROLL_BLACKLIST;
     private static final ModConfigSpec.BooleanValue COMBAT_OVERHAUL;
@@ -224,6 +252,130 @@ public class Config {
                 .defineInRange("timeRequestCooldownTicks", 1200, 0, Integer.MAX_VALUE);
 
         BUILDER.pop();
+
+        BUILDER.push("schism");
+
+        SCHISM_DAMAGE_AMPLIFY_FACTOR = BUILDER
+                .comment("How much a corrupted Blood Bond (heroClass.prince.blood.TechPrinceBloodSchism) amplifies shared damage by, applied per bonded member the same way heroClass.witch.blood.TechBloodWitchCultOfPersonality's own (hardcoded, uncorrupted) share fraction reduces it. 1.5 = each other member takes 150% of the original hit, matching the design doc's own 10-damage-in/15-damage-out example.")
+                .defineInRange("schismDamageAmplifyFactor", 1.5, 1.0, 100.0);
+
+        SCHISM_HOSTILITY_DURATION_TICKS = BUILDER
+                .comment("How long (in ticks) a corrupted bond's Fractured Loyalty hostility (a bonded member forced to target another bonded member, or the killer, after one of them dies) lasts before it's automatically cleared. 200 = 10 seconds.")
+                .defineInRange("schismHostilityDurationTicks", 200, 20, Integer.MAX_VALUE);
+
+        SCHISM_CORRUPTION_DURATION_TICKS = BUILDER
+                .comment("How long (in ticks) a Corrupted Blood Bond lasts before automatically reverting to normal, uncorrupted Cult of Personality behavior. Set to 0 for corruption to last indefinitely (until the Prince removes it or a Witch of Blood restores it).")
+                .defineInRange("schismCorruptionDurationTicks", 0, 0, Integer.MAX_VALUE);
+
+        SCHISM_AURA_RADIUS = BUILDER
+                .comment("Radius (in blocks) of the passive Schism Aura (heroClass.prince.blood.TechPrinceBloodSchism, toggled on like any other passive tech) - matches the design doc's own 24-block default.")
+                .defineInRange("schismAuraRadius", 24.0, 4.0, 64.0);
+
+        SCHISM_AURA_WEAKEN_FACTOR = BUILDER
+                .comment("Multiplies an uncorrupted Blood Bond's own shared-damage fraction for any bonded member currently within the Schism Aura's radius - the design doc's own \"Blood Bond effectiveness reduced by 50%\" (a milder, ambient effect, separate from fully corrupting a bond outright).")
+                .defineInRange("schismAuraWeakenFactor", 0.5, 0.0, 1.0);
+
+        SCHISM_AURA_DISRUPTION_CHANCE = BUILDER
+                .comment("Chance, checked once per schismAuraDisruptionIntervalTicks for every Mob within the Schism Aura's radius, that it loses its current attack target - the design doc's own \"Target Coordination Loss\" (allied entities have a chance to lose their shared target).")
+                .defineInRange("schismAuraDisruptionChance", 0.15, 0.0, 1.0);
+
+        SCHISM_AURA_DISRUPTION_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) the Schism Aura's Target Coordination Loss check runs. 100 = 5 seconds.")
+                .defineInRange("schismAuraDisruptionIntervalTicks", 100, 20, Integer.MAX_VALUE);
+
+        SCHISM_AURA_OWNERSHIP_DECAY = BUILDER
+                .comment("How many strength/stability points a nearby Ownership relationship (heroClass.blood.RelationshipType.OWNERSHIP - a tamed pet or entity.HopeGolemEntity ally and its owner) loses per Target Coordination Loss check while inside the Schism Aura - the design doc's own \"Bond strength decreases over time\".")
+                .defineInRange("schismAuraOwnershipDecay", 2.0, 0.0, 100.0);
+
+        BUILDER.pop();
+
+        BUILDER.push("crimsonDiscord");
+
+        CRIMSON_DISCORD_AURA_RADIUS = BUILDER
+                .comment("Radius (in blocks) of the passive Crimson Discord aura (heroClass.bard.blood.TechBardBloodCrimsonDiscord's \"Social Decay\", toggled on like any other passive tech) - matches that design doc's own 24-block recommendation.")
+                .defineInRange("crimsonDiscordAuraRadius", 24.0, 4.0, 64.0);
+
+        CRIMSON_DISCORD_INSTABILITY_GAIN_PER_PULSE = BUILDER
+                .comment("How much Instability (and, at half this rate, how much Stability) every relationship touching a nearby entity gains per Crimson Discord aura pulse.")
+                .defineInRange("crimsonDiscordInstabilityGainPerPulse", 3.0, 0.0, 100.0);
+
+        CRIMSON_DISCORD_PULSE_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) the Crimson Discord aura pulses. 100 = 5 seconds.")
+                .defineInRange("crimsonDiscordPulseIntervalTicks", 100, 20, Integer.MAX_VALUE);
+
+        CRIMSON_DISCORD_BURST_AMOUNT = BUILDER
+                .comment("How much Instability a single press of Crimson Discord (aimed at a specific entity) applies to all of that entity's relationships at once.")
+                .defineInRange("crimsonDiscordBurstAmount", 15.0, 0.0, 100.0);
+
+        CRIMSON_DISCORD_NATURAL_DECAY_AMOUNT = BUILDER
+                .comment("How much Instability every tracked relationship loses per crimsonDiscordNaturalDecayIntervalTicks when nothing is actively raising it - the design doc's own \"Instability naturally decays over time when no Bard of Blood influence is present\".")
+                .defineInRange("crimsonDiscordNaturalDecayAmount", 2.0, 0.0, 100.0);
+
+        CRIMSON_DISCORD_NATURAL_DECAY_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) Instability naturally decays, and how often every tracked relationship gets checked for Stage 4 collapse regardless of whether a Bard is nearby. 200 = 10 seconds.")
+                .defineInRange("crimsonDiscordNaturalDecayIntervalTicks", 200, 20, Integer.MAX_VALUE);
+
+        CRIMSON_DISCORD_DOMINO_RADIUS = BUILDER
+                .comment("Radius (in blocks) around a just-collapsed relationship's own members within which other relationships are hit by the Domino Effect.")
+                .defineInRange("crimsonDiscordDominoRadius", 12.0, 4.0, 64.0);
+
+        CRIMSON_DISCORD_DOMINO_BUMP = BUILDER
+                .comment("How much Instability the Domino Effect adds to each nearby relationship when one collapses - matches the design doc's own worked example (\"+10 Instability\").")
+                .defineInRange("crimsonDiscordDominoBump", 10.0, 0.0, 100.0);
+
+        CRIMSON_DISCORD_VENGEANCE_FAIL_DIVISOR = BUILDER
+                .comment("Chance (Instability / this value) that heroClass.witch.blood.CultOfPersonalityManager's own Blood Vengeance retaliation fails to fire for a given bonded member, once its linked heroClass.blood.RelationshipType.FAMILY relationship has any Instability at all - the higher this number, the less Instability affects retaliation reliability.")
+                .defineInRange("crimsonDiscordVengeanceFailDivisor", 150.0, 1.0, 10000.0);
+
+        CRIMSON_DISCORD_NEW_RIVALRIES_PER_PULSE = BUILDER
+                .comment("How many brand-new heroClass.blood.RelationshipType.RIVALRY relationships the Crimson Discord aura seeds per pulse, between random nearby Mob pairs that don't already have any relationship at all - the design doc's own \"even entities with no existing bond should start to turn on each other\". Each seeded rivalry then escalates over time at the same rate as every other relationship in range (see crimsonDiscordInstabilityGainPerPulse).")
+                .defineInRange("crimsonDiscordNewRivalriesPerPulse", 2, 0, 100);
+
+        CRIMSON_DISCORD_FIGHT_THRESHOLD = BUILDER
+                .comment("Once a RIVALRY relationship's own Instability reaches this value, both mobs are actually set hostile toward each other (real AI targeting, not just a hidden number) - matches the doc's own \"Wolf C -> Attacks Wolf A\"-style spirit, but for total strangers this time, not existing pack/ownership relationships.")
+                .defineInRange("crimsonDiscordFightThreshold", 40.0, 0.0, 100.0);
+
+        BUILDER.pop();
+
+        BUILDER.push("relationships");
+
+        RELATIONSHIP_FIGHTING_TOGETHER_WINDOW_TICKS = BUILDER
+                .comment("How recently two different attackers must have both hit the same victim for heroClass.blood.RelationshipManager to treat them as \"Fighting Together\" (the design doc's own event) and reinforce a relationship between the attackers themselves, not either of them and the victim. 100 = 5 seconds.")
+                .defineInRange("relationshipFightingTogetherWindowTicks", 100, 20, Integer.MAX_VALUE);
+
+        RELATIONSHIP_FIGHTING_TOGETHER_GAIN = BUILDER
+                .comment("How much Trust, Familiarity, and Strength two entities gain toward each other's shared relationship when \"Fighting Together\" triggers.")
+                .defineInRange("relationshipFightingTogetherGain", 3.0, 0.0, 100.0);
+
+        RELATIONSHIP_DAMAGE_CONFLICT_GAIN = BUILDER
+                .comment("How much Conflict a relationship gains whenever one side damages the other - applies to any pair regardless of existing relationship type (creating one if none exists yet), the design doc's own \"Damage -> Conflict increases\"/\"repeated combat creates a known enemy\".")
+                .defineInRange("relationshipDamageConflictGain", 4.0, 0.0, 100.0);
+
+        RELATIONSHIP_DAMAGE_FAMILIARITY_GAIN = BUILDER
+                .comment("How much Familiarity a relationship gains alongside relationshipDamageConflictGain whenever one side damages the other.")
+                .defineInRange("relationshipDamageFamiliarityGain", 2.0, 0.0, 100.0);
+
+        RELATIONSHIP_BETRAYAL_AFFINITY_LOSS = BUILDER
+                .comment("How much Affinity a positive relationship (Loyalty/Friendship/Family/Ownership) loses when one side kills the other - the design doc's own \"Betrayal\" event, on top of Strength dropping to 0 outright.")
+                .defineInRange("relationshipBetrayalAffinityLoss", 60.0, 0.0, 200.0);
+
+        RELATIONSHIP_BETRAYAL_CONFLICT_GAIN = BUILDER
+                .comment("How much Conflict a positive relationship gains on Betrayal (see relationshipBetrayalAffinityLoss).")
+                .defineInRange("relationshipBetrayalConflictGain", 40.0, 0.0, 100.0);
+
+        RELATIONSHIP_BETRAYAL_STABILITY_LOSS = BUILDER
+                .comment("How much Stability a positive relationship loses on Betrayal (see relationshipBetrayalAffinityLoss) - the design doc's own \"-Stability\", making an already-betrayed relationship easier to further corrupt or destabilize.")
+                .defineInRange("relationshipBetrayalStabilityLoss", 30.0, 0.0, 100.0);
+
+        RELATIONSHIP_NEARBY_RADIUS = BUILDER
+                .comment("Radius (in blocks) within which two entities that already have a relationship count as \"nearby\" for the design doc's own \"Spending Time Together\" event (passive Familiarity growth) - checked on the same sweep as Crimson Discord's own natural Instability decay (see crimsonDiscordNaturalDecayIntervalTicks), not a separate timer.")
+                .defineInRange("relationshipNearbyRadius", 8.0, 1.0, 64.0);
+
+        RELATIONSHIP_NEARBY_FAMILIARITY_GAIN = BUILDER
+                .comment("How much Familiarity two already-related, currently-nearby entities gain per sweep (see relationshipNearbyRadius).")
+                .defineInRange("relationshipNearbyFamiliarityGain", 1.0, 0.0, 100.0);
+
+        BUILDER.pop();
     }
 
     static final ModConfigSpec SPEC = BUILDER.build();
@@ -250,6 +402,34 @@ public class Config {
     public static int timeRequestDoomCheckInterval;
     public static int timeRequestEventCooldownTicks;
     public static int timeRequestCooldownTicks;
+    public static double schismDamageAmplifyFactor;
+    public static int schismHostilityDurationTicks;
+    public static int schismCorruptionDurationTicks;
+    public static double schismAuraRadius;
+    public static double schismAuraWeakenFactor;
+    public static double schismAuraDisruptionChance;
+    public static int schismAuraDisruptionIntervalTicks;
+    public static double schismAuraOwnershipDecay;
+    public static double crimsonDiscordAuraRadius;
+    public static double crimsonDiscordInstabilityGainPerPulse;
+    public static int crimsonDiscordPulseIntervalTicks;
+    public static double crimsonDiscordBurstAmount;
+    public static double crimsonDiscordNaturalDecayAmount;
+    public static int crimsonDiscordNaturalDecayIntervalTicks;
+    public static double crimsonDiscordDominoRadius;
+    public static double crimsonDiscordDominoBump;
+    public static double crimsonDiscordVengeanceFailDivisor;
+    public static int crimsonDiscordNewRivalriesPerPulse;
+    public static double crimsonDiscordFightThreshold;
+    public static int relationshipFightingTogetherWindowTicks;
+    public static double relationshipFightingTogetherGain;
+    public static double relationshipDamageConflictGain;
+    public static double relationshipDamageFamiliarityGain;
+    public static double relationshipBetrayalAffinityLoss;
+    public static double relationshipBetrayalConflictGain;
+    public static double relationshipBetrayalStabilityLoss;
+    public static double relationshipNearbyRadius;
+    public static double relationshipNearbyFamiliarityGain;
     public static boolean combatOverhaul;
     public static boolean keepPortfolioOnDeath;
     public static boolean restrictedStrife;
@@ -287,6 +467,34 @@ public class Config {
         timeRequestDoomCheckInterval = TIME_REQUEST_DOOM_CHECK_INTERVAL.get();
         timeRequestEventCooldownTicks = TIME_REQUEST_EVENT_COOLDOWN_TICKS.get();
         timeRequestCooldownTicks = TIME_REQUEST_COOLDOWN_TICKS.get();
+        schismDamageAmplifyFactor = SCHISM_DAMAGE_AMPLIFY_FACTOR.get();
+        schismHostilityDurationTicks = SCHISM_HOSTILITY_DURATION_TICKS.get();
+        schismCorruptionDurationTicks = SCHISM_CORRUPTION_DURATION_TICKS.get();
+        schismAuraRadius = SCHISM_AURA_RADIUS.get();
+        schismAuraWeakenFactor = SCHISM_AURA_WEAKEN_FACTOR.get();
+        schismAuraDisruptionChance = SCHISM_AURA_DISRUPTION_CHANCE.get();
+        schismAuraDisruptionIntervalTicks = SCHISM_AURA_DISRUPTION_INTERVAL_TICKS.get();
+        schismAuraOwnershipDecay = SCHISM_AURA_OWNERSHIP_DECAY.get();
+        crimsonDiscordAuraRadius = CRIMSON_DISCORD_AURA_RADIUS.get();
+        crimsonDiscordInstabilityGainPerPulse = CRIMSON_DISCORD_INSTABILITY_GAIN_PER_PULSE.get();
+        crimsonDiscordPulseIntervalTicks = CRIMSON_DISCORD_PULSE_INTERVAL_TICKS.get();
+        crimsonDiscordBurstAmount = CRIMSON_DISCORD_BURST_AMOUNT.get();
+        crimsonDiscordNaturalDecayAmount = CRIMSON_DISCORD_NATURAL_DECAY_AMOUNT.get();
+        crimsonDiscordNaturalDecayIntervalTicks = CRIMSON_DISCORD_NATURAL_DECAY_INTERVAL_TICKS.get();
+        crimsonDiscordDominoRadius = CRIMSON_DISCORD_DOMINO_RADIUS.get();
+        crimsonDiscordDominoBump = CRIMSON_DISCORD_DOMINO_BUMP.get();
+        crimsonDiscordVengeanceFailDivisor = CRIMSON_DISCORD_VENGEANCE_FAIL_DIVISOR.get();
+        crimsonDiscordNewRivalriesPerPulse = CRIMSON_DISCORD_NEW_RIVALRIES_PER_PULSE.get();
+        crimsonDiscordFightThreshold = CRIMSON_DISCORD_FIGHT_THRESHOLD.get();
+        relationshipFightingTogetherWindowTicks = RELATIONSHIP_FIGHTING_TOGETHER_WINDOW_TICKS.get();
+        relationshipFightingTogetherGain = RELATIONSHIP_FIGHTING_TOGETHER_GAIN.get();
+        relationshipDamageConflictGain = RELATIONSHIP_DAMAGE_CONFLICT_GAIN.get();
+        relationshipDamageFamiliarityGain = RELATIONSHIP_DAMAGE_FAMILIARITY_GAIN.get();
+        relationshipBetrayalAffinityLoss = RELATIONSHIP_BETRAYAL_AFFINITY_LOSS.get();
+        relationshipBetrayalConflictGain = RELATIONSHIP_BETRAYAL_CONFLICT_GAIN.get();
+        relationshipBetrayalStabilityLoss = RELATIONSHIP_BETRAYAL_STABILITY_LOSS.get();
+        relationshipNearbyRadius = RELATIONSHIP_NEARBY_RADIUS.get();
+        relationshipNearbyFamiliarityGain = RELATIONSHIP_NEARBY_FAMILIARITY_GAIN.get();
         combatOverhaul = COMBAT_OVERHAUL.get();
         keepPortfolioOnDeath = KEEP_PORTFOLIO_ON_DEATH.get();
         restrictedStrife = RESTRICTED_STRIFE.get();
