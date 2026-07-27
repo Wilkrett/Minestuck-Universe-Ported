@@ -38,6 +38,8 @@ public class Config {
     private static final ModConfigSpec.IntValue TIME_REQUEST_DOOM_CHECK_INTERVAL;
     private static final ModConfigSpec.IntValue TIME_REQUEST_EVENT_COOLDOWN_TICKS;
     private static final ModConfigSpec.IntValue TIME_REQUEST_COOLDOWN_TICKS;
+    private static final ModConfigSpec.IntValue SKAIAN_SCROLL_LIMIT;
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> SKAIAN_SCROLL_BLACKLIST;
     private static final ModConfigSpec.BooleanValue COMBAT_OVERHAUL;
     private static final ModConfigSpec.BooleanValue KEEP_PORTFOLIO_ON_DEATH;
     private static final ModConfigSpec.BooleanValue RESTRICTED_STRIFE;
@@ -133,6 +135,14 @@ public class Config {
                 .comment("Determines the size of the area within which the Quest Bed can spawn on a player's Land.")
                 .defineInRange("questBedSpawnArea", 2500, 1, Integer.MAX_VALUE);
 
+        SKAIAN_SCROLL_LIMIT = BUILDER
+                .comment("Determines the total number of Skaian Scrolls a player can use in total. Set to negative to ignore the limit.")
+                .defineInRange("skaiaScrollLimit", 2, -1, Integer.MAX_VALUE);
+
+        SKAIAN_SCROLL_BLACKLIST = BUILDER
+                .comment("Prevents the included Abilitechs (by registry name) from spawning as Skaian Scrolls.")
+                .defineListAllowEmpty("skaiaScrollBlacklist", List.of(), Config::validateNonBlankString);
+
         BUILDER.pop();
 
         BUILDER.push("timeline");
@@ -222,6 +232,8 @@ public class Config {
     public static int requiredRungToGT;
     public static int questBedSpawnDistance;
     public static int questBedSpawnArea;
+    public static int skaiaScrollLimit;
+    public static Set<String> skaiaScrollBlacklist;
     public static int timelineHistoryTicks;
     public static double timelineDoomPointsPerTick;
     public static int timelineRewindPlaybackSpeed;
@@ -257,6 +269,8 @@ public class Config {
         requiredRungToGT = REQUIRED_RUNG_TO_GT.get();
         questBedSpawnDistance = QUEST_BED_SPAWN_DISTANCE.get();
         questBedSpawnArea = QUEST_BED_SPAWN_AREA.get();
+        skaiaScrollLimit = SKAIAN_SCROLL_LIMIT.get();
+        skaiaScrollBlacklist = Set.copyOf(SKAIAN_SCROLL_BLACKLIST.get());
         timelineHistoryTicks = TIMELINE_HISTORY_TICKS.get();
         timelineDoomPointsPerTick = TIMELINE_DOOM_POINTS_PER_TICK.get();
         timelineRewindPlaybackSpeed = TIMELINE_REWIND_PLAYBACK_SPEED.get();

@@ -44,6 +44,23 @@ public final class MSUItemComponents
 					.persistent(net.minecraft.nbt.CompoundTag.CODEC)
 					.networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.TRUSTED_COMPOUND_TAG));
 
+	// Stamps the randomly-rolled Abilitech id onto a Skaian Scroll stack at loot-roll time - see
+	// item.SkaianScrollItem's own doc comment. Rolled once (loot modifier), read on every right-click and
+	// in the tooltip; never rerolled after that, matching the original's own stack-NBT "Skill" string tag.
+	public static final Supplier<DataComponentType<net.minecraft.resources.ResourceLocation>> SKAIAN_SCROLL_TECH = REGISTRY.registerComponentType(
+			"skaian_scroll_tech", builder -> builder
+					.persistent(net.minecraft.resources.ResourceLocation.CODEC)
+					.networkSynchronized(net.minecraft.resources.ResourceLocation.STREAM_CODEC));
+
+	// Real port of ItemSkaianScroll's own "Super" NBT flag - a scroll that bypasses Config#skaiaScrollLimit
+	// entirely and renders with an enchant glint (see SkaianScrollItem#isFoil). Never set by the dungeon
+	// loot modifier itself (matching the original, where SetRandomSkill never set it either) - reserved for
+	// any future command/creative-only source, same as the original's own scope.
+	public static final Supplier<DataComponentType<Boolean>> SKAIAN_SCROLL_SUPER = REGISTRY.registerComponentType(
+			"skaian_scroll_super", builder -> builder
+					.persistent(com.mojang.serialization.Codec.BOOL)
+					.networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL));
+
 	private MSUItemComponents()
 	{
 	}

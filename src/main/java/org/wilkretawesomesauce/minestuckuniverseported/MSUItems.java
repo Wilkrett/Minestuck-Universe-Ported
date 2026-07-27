@@ -112,6 +112,11 @@ public final class MSUItems
 			() -> new net.minecraft.world.item.PickaxeItem(MSUToolTiers.BATTLEPICK_OF_ZILLYDEW,
 					new Item.Properties().attributes(net.minecraft.world.item.PickaxeItem.createAttributes(MSUToolTiers.BATTLEPICK_OF_ZILLYDEW, 16.0F, -2.8F))));
 
+	// Ported from MinestuckUniverse (1.12.2)'s items.ItemSkaianScroll - see that class's own doc comment
+	// for the real, new per-player Aspect/Class eligibility gate the original never actually had.
+	public static final DeferredItem<Item> SKAIAN_SCROLL = REGISTER.register("skaian_scroll",
+			() -> new org.wilkretawesomesauce.minestuckuniverseported.item.SkaianScrollItem(new Item.Properties()));
+
 	private MSUItems()
 	{
 	}

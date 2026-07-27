@@ -94,6 +94,9 @@ public class Minestuckuniverseported {
         org.wilkretawesomesauce.minestuckuniverseported.juju.MSUJujuRegistry.LOOT_CONDITIONS.register(modEventBus);
         org.wilkretawesomesauce.minestuckuniverseported.juju.MSUJujuRegistry.LOOT_MODIFIER_SERIALIZERS.register(modEventBus);
 
+        // Skaian Scroll: loot modifier serializer (item itself is registered via MSUItems above)
+        org.wilkretawesomesauce.minestuckuniverseported.item.MSUSkaianScrollRegistry.LOOT_MODIFIER_SERIALIZERS.register(modEventBus);
+
         // Force-load the strife kind definitions so they're registered before anything needs them
         MSUKindAbstrata.init();
         org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills.init();

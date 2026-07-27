@@ -106,4 +106,22 @@ public final class MSUClientSetup
 		if(renderer != null)
 			renderer.addLayer(new FrogHatLayer(renderer, event.getEntityModels()));
 	}
+
+	/**
+	 * Ported from the original's {@code ItemSkaianScroll#getColor} - tints {@code skaian_scroll.json}'s
+	 * {@code layer1} overlay by the stored tech's own {@link org.wilkretawesomesauce.minestuckuniverseported.skills.Skill#getColor()},
+	 * or the original's own default teal (0x77FFEC) for a not-yet-rolled/unrecognized stack.
+	 */
+	@SubscribeEvent
+	private static void onRegisterItemColors(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Item event)
+	{
+		event.register((stack, tintIndex) ->
+		{
+			if(tintIndex != 1)
+				return -1;
+			org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech tech =
+					org.wilkretawesomesauce.minestuckuniverseported.item.SkaianScrollItem.getTech(stack);
+			return tech != null ? tech.getColor() : 0x77FFEC;
+		}, MSUItems.SKAIAN_SCROLL.get());
+	}
 }
