@@ -83,5 +83,10 @@ public final class MSUPayloads
 
 		registrar.playToClient(ManipulatorSelectionSyncPacket.ID, ManipulatorSelectionSyncPacket.STREAM_CODEC,
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
+
+		registrar.playToClient(BloodBondSyncPacket.ID, BloodBondSyncPacket.STREAM_CODEC,
+				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
+		registrar.playToClient(BloodBondImpactPacket.ID, BloodBondImpactPacket.STREAM_CODEC,
+				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 	}
 }
