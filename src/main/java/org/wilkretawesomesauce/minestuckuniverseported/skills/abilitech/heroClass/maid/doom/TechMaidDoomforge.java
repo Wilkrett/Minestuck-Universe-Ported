@@ -32,6 +32,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  */
 public class TechMaidDoomforge extends TechHeroClass
 {
+	private static final int DOOM_AMOUNT = 30;
 	public TechMaidDoomforge()
 	{
 		super(Minestuckuniverseported.id("doomforge"), EnumClass.MAID, EnumAspect.DOOM, 50000, MSUTechType.UTILITY);
@@ -52,7 +53,7 @@ public class TechMaidDoomforge extends TechHeroClass
 
 		target.getData(MSUAttachments.DOOM_DATA).addDoom(Config.doomforgeInjectAmount);
 
-		MSUAbilitechParticles.oneshot(level, target, EnumAspect.DOOM, 15);
+		MSUAbilitechParticles.oneshot(level, target, EnumAspect.DOOM, DOOM_AMOUNT);
 		player.displayClientMessage(Component.translatable("status.minestuckuniverseported.doomforgeCast", target.getName()), true);
 
 		return false;

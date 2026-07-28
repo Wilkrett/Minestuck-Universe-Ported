@@ -100,6 +100,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClas
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.mage.blood.TechMageBloodGuidance;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.mage.blood.TechMageBloodInsight;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.mage.blood.TechMageBloodMemory;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.mage.doom.TechMageDoomInsight;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.maid.TechMaid;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.maid.TechMaidServe;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.maid.doom.TechMaidDoomFinalityEngine;
@@ -278,6 +279,7 @@ public final class MSUSkills
 	public static final Abilitech BLOOD_INSIGHT = MSUAbilitechRegistry.register(new TechMageBloodInsight());
 	public static final Abilitech BLOOD_MEMORY = MSUAbilitechRegistry.register(new TechMageBloodMemory());
 	public static final Abilitech BLOOD_GUIDANCE = MSUAbilitechRegistry.register(new TechMageBloodGuidance());
+	public static final Abilitech DOOM_INSIGHT = MSUAbilitechRegistry.register(new TechMageDoomInsight());
 	public static final Abilitech MAID_FAVOR = MSUAbilitechRegistry.register(new TechMaid());
 	public static final Abilitech IRRADIANT_SERVITUDE = MSUAbilitechRegistry.register(new TechMaidServe());
 	public static final Abilitech DOOMFORGE = MSUAbilitechRegistry.register(new TechMaidDoomforge());
