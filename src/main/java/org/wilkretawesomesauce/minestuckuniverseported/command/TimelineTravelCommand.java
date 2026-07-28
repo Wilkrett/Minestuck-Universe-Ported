@@ -8,13 +8,13 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.TimelineManager;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineManager;
 
 /**
  * {@code /msutimeline travel backwards <seconds>} - the instant counterpart to
  * {@link TimelineRewindCommand}'s {@code rewind}: applies the exact same undo via
- * {@code timeline.TimelineManager#travelBackwards}, but all at once instead of played out over real
- * ticks, and without spawning a {@code timeline.DoomedTimelineClone} (there's nothing gradual to show
+ * {@code mechanics.timeline.TimelineManager#travelBackwards}, but all at once instead of played out over real
+ * ticks, and without spawning a {@code mechanics.timeline.DoomedTimelineClone} (there's nothing gradual to show
  * one alongside). You're instantly set to the beginning of the timeline snapshot.
  */
 public final class TimelineTravelCommand

@@ -31,7 +31,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifeSpecibus;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.DoomedTimelineClone;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.DoomedTimelineClone;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUFakePlayer;
 
 import java.util.ArrayList;

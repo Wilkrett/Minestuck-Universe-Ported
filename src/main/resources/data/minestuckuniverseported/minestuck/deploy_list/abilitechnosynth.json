@@ -1,0 +1,19 @@
+{
+  "entries": [
+    {
+      "cost": [
+        {
+          "grist": {
+            "minestuck:build": 5000
+          }
+        }
+      ],
+      "item": {
+        "count": 1,
+        "id": "minestuckuniverseported:abilitechnosynth"
+      },
+      "category": "deploy"
+    }
+  ],
+  "priority": 15.0
+}

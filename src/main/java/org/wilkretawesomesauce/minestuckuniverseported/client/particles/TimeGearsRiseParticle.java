@@ -10,7 +10,7 @@ import net.minecraft.core.particles.SimpleParticleType;
 
 /**
  * The 16-frame "gears rising" effect (source: a user-provided animation of stacked cog rings rising and
- * fading), played on {@code timeline.DoomedTimelineClone} spawn and despawn. Structured the same way as
+ * fading), played on {@code mechanics.timeline.DoomedTimelineClone} spawn and despawn. Structured the same way as
  * Minestuck's own {@code client.particles.PlasmaParticle} - a {@link TextureSheetParticle} driven by
  * {@link SpriteSet#get} via age, not a custom render loop.
  */

@@ -10,11 +10,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.BranchDeleter;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.BranchForker;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.BranchPruneSweep;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.TimelineBranch;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.TimelineBranchRegistry;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.BranchDeleter;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.BranchForker;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.BranchPruneSweep;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineBranch;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineBranchRegistry;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * {@code /msutimeline branch ...} - a permission-level-2-gated ("cheats"/op, not tied to game mode)
  * debug/testing surface for the parallel timeline branch tree (see
- * {@code timeline.TimelineBranch}/{@code timeline.BranchForker}). The real
+ * {@code mechanics.timeline.TimelineBranch}/{@code mechanics.timeline.BranchForker}). The real
  * player-facing way to fork/return between branches is the {@code TechTimelineBranch} Abilitech; this
  * command tree exists for testing it directly and for operations (like naming a branch, or browsing to
  * an arbitrary one anywhere in the tree) that tech has no in-game UI for yet.

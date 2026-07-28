@@ -38,6 +38,45 @@ public class Config {
     private static final ModConfigSpec.IntValue TIME_REQUEST_DOOM_CHECK_INTERVAL;
     private static final ModConfigSpec.IntValue TIME_REQUEST_EVENT_COOLDOWN_TICKS;
     private static final ModConfigSpec.IntValue TIME_REQUEST_COOLDOWN_TICKS;
+    private static final ModConfigSpec.DoubleValue DOOM_DAMAGE_SEVERITY_MAX;
+    private static final ModConfigSpec.DoubleValue DOOM_DAMAGE_SEVERITY_CURVE;
+    private static final ModConfigSpec.DoubleValue DOOM_DAMAGE_SEVERITY_MIN_THRESHOLD;
+    private static final ModConfigSpec.DoubleValue DOOM_DAMAGE_AMPLIFY_MAX;
+    private static final ModConfigSpec.DoubleValue DOOM_DAMAGE_AMPLIFY_HALF_POINT;
+    private static final ModConfigSpec.DoubleValue DOOM_EFFECT_DURATION_EXTEND_MAX;
+    private static final ModConfigSpec.DoubleValue DOOM_EFFECT_DURATION_HALF_POINT;
+    private static final ModConfigSpec.DoubleValue DOOM_KILL_BASE;
+    private static final ModConfigSpec.DoubleValue DOOM_KILL_PER_MAX_HEALTH;
+    private static final ModConfigSpec.DoubleValue DOOM_KILL_CAP;
+    private static final ModConfigSpec.IntValue DOOM_PASSIVE_ACCRUAL_CHECK_INTERVAL_TICKS;
+    private static final ModConfigSpec.IntValue DOOM_PASSIVE_ACCRUAL_AGE_THRESHOLD_TICKS;
+    private static final ModConfigSpec.DoubleValue DOOM_PASSIVE_ACCRUAL_PER_INTERVAL;
+    private static final ModConfigSpec.IntValue DOOM_HARVEST_WINDOW_TICKS;
+    private static final ModConfigSpec.IntValue DOOM_RELEASE_TICK_INTERVAL_TICKS;
+    private static final ModConfigSpec.DoubleValue DOOM_MARK_ACCRUAL_MULTIPLIER;
+    private static final ModConfigSpec.DoubleValue DOOM_RELATIONSHIP_DEATH_SCALE;
+    private static final ModConfigSpec.DoubleValue DOOM_RELATIONSHIP_DEATH_CAP;
+    private static final ModConfigSpec.DoubleValue DOOM_RELATIONSHIP_SEVERANCE_SCALE;
+    private static final ModConfigSpec.DoubleValue DOOM_RELATIONSHIP_SEVERANCE_CAP;
+    private static final ModConfigSpec.DoubleValue DOOM_BETRAYAL_BASE;
+    private static final ModConfigSpec.DoubleValue DOOM_BETRAYAL_CAP;
+    private static final ModConfigSpec.IntValue DOOM_ISOLATION_CHECK_INTERVAL_TICKS;
+    private static final ModConfigSpec.IntValue DOOM_ISOLATION_RELATIONSHIP_THRESHOLD;
+    private static final ModConfigSpec.DoubleValue DOOM_ISOLATION_PER_INTERVAL;
+    private static final ModConfigSpec.DoubleValue DOOMFORGE_INJECT_AMOUNT;
+    private static final ModConfigSpec.IntValue FINALITY_ENGINE_CHARGE_TICKS;
+    private static final ModConfigSpec.DoubleValue FINALITY_ENGINE_BASE_DAMAGE;
+    private static final ModConfigSpec.DoubleValue FINALITY_ENGINE_DOOM_SCALE;
+    private static final ModConfigSpec.DoubleValue FINALITY_ENGINE_MAX_DAMAGE;
+    private static final ModConfigSpec.IntValue DOOM_RESERVOIR_HARVEST_INTERVAL_TICKS;
+    private static final ModConfigSpec.DoubleValue DOOM_RESERVOIR_HARVEST_RADIUS;
+    private static final ModConfigSpec.DoubleValue DOOM_RESERVOIR_HARVEST_AMOUNT_PER_PULSE;
+    private static final ModConfigSpec.DoubleValue APOCALYPSE_RELEASE_RADIUS;
+    private static final ModConfigSpec.DoubleValue APOCALYPSE_RELEASE_DAMAGE_SCALE;
+    private static final ModConfigSpec.DoubleValue APOCALYPSE_RELEASE_MAX_CONSUME;
+    private static final ModConfigSpec.DoubleValue DOOM_REVERSAL_AMOUNT_PER_SECOND;
+    private static final ModConfigSpec.DoubleValue DEATH_UNMADE_REMOVE_AMOUNT;
+    private static final ModConfigSpec.DoubleValue DOOM_REDISTRIBUTION_AMOUNT;
     private static final ModConfigSpec.DoubleValue SCHISM_DAMAGE_AMPLIFY_FACTOR;
     private static final ModConfigSpec.IntValue SCHISM_HOSTILITY_DURATION_TICKS;
     private static final ModConfigSpec.IntValue SCHISM_CORRUPTION_DURATION_TICKS;
@@ -187,11 +226,11 @@ public class Config {
 
         TIMELINE_REWIND_PLAYBACK_SPEED = BUILDER
                 .comment("How many recorded ticks get restored per real tick while a rewind is playing back. 1 = the world visibly rewinds at the same speed it originally happened; higher values play it back faster.",
-                        "Defaults to 1 (real time) rather than fast-forwarded: blocks restoring in visible multi-tick batches read as generic \"world resetting\" rather than something actually happening, especially now that the doomed clone (see timeline.DoomedTimelineClone) visibly swings at the moments it caused a block change - that only reads as cause-and-effect if the world isn't several ticks ahead of or behind the clone.")
+                        "Defaults to 1 (real time) rather than fast-forwarded: blocks restoring in visible multi-tick batches read as generic \"world resetting\" rather than something actually happening, especially now that the doomed clone (see mechanics.timeline.DoomedTimelineClone) visibly swings at the moments it caused a block change - that only reads as cause-and-effect if the world isn't several ticks ahead of or behind the clone.")
                 .defineInRange("timelineRewindPlaybackSpeed", 1, 1, 200);
 
         TIMELINE_CLONE_REPLAY_SPEED = BUILDER
-                .comment("How many recorded ticks the doomed-timeline clone (see timeline.DoomedTimelineClone) replays per real tick.",
+                .comment("How many recorded ticks the doomed-timeline clone (see mechanics.timeline.DoomedTimelineClone) replays per real tick.",
                         "Deliberately separate from timelineRewindPlaybackSpeed and defaults to 1 (real time): the world-undo can run fast-forwarded without issue, but the clone is supposed to look like a believable re-enactment of what actually happened, not a sped-up blur. Raising this desyncs the clone from matching pace with when its own recorded actions (like breaking a block) actually happened.")
                 .defineInRange("timelineCloneReplaySpeed", 1, 1, 200);
 
@@ -253,6 +292,193 @@ public class Config {
 
         BUILDER.pop();
 
+        // ============================================================================================
+        // Doom - the universal per-entity Doom value (mechanics.doom.DoomData). Original design for this project,
+        // no 1.12.2 counterpart - unrelated to timelineDoomPointsPerTick/timeRequestDoom* above, which
+        // are their own separate, pre-existing "Doom Points" bookkeeping (see mechanics.doom.DoomData's own doc
+        // comment for why all three stay distinct).
+        // ============================================================================================
+
+        BUILDER.push("doom");
+
+        DOOM_DAMAGE_SEVERITY_MAX = BUILDER
+                .comment("Max Doom gained from a single hit whose severity (fraction of current HP it removes) is 1.0 (lethal-equivalent). See doomDamageSeverityCurve for how gain scales below max severity.")
+                .defineInRange("doomDamageSeverityMax", 8.0, 0.0, 1000.0);
+
+        DOOM_DAMAGE_SEVERITY_CURVE = BUILDER
+                .comment("Exponent applied to hit severity before scaling by doomDamageSeverityMax - higher values make only near-death hits matter (a cubic default: a hit at 50% severity gives ~12.5% of max gain, a 90%-severity hit gives ~73%).")
+                .defineInRange("doomDamageSeverityCurve", 3.0, 1.0, 10.0);
+
+        DOOM_DAMAGE_SEVERITY_MIN_THRESHOLD = BUILDER
+                .comment("Hits with severity (fraction of current HP removed) below this contribute no Doom at all - trivial pokes shouldn't register.")
+                .defineInRange("doomDamageSeverityMinThreshold", 0.05, 0.0, 1.0);
+
+        DOOM_DAMAGE_AMPLIFY_MAX = BUILDER
+                .comment("Asymptotic cap on how much high Doom can amplify incoming damage (the 'bad luck'/greater destruction susceptibility natural effect) - 0.5 means damage taken can never be amplified more than +50%, no matter how high Doom climbs.")
+                .defineInRange("doomDamageAmplifyMax", 0.5, 0.0, 5.0);
+
+        DOOM_DAMAGE_AMPLIFY_HALF_POINT = BUILDER
+                .comment("The Doom value at which half of doomDamageAmplifyMax's bonus is reached (a saturating curve, not linear) - default 500 means an entity at 500 Doom takes +25% damage, approaching but never reaching the +50% cap as Doom keeps climbing.")
+                .defineInRange("doomDamageAmplifyHalfPoint", 500.0, 1.0, 100000.0);
+
+        DOOM_EFFECT_DURATION_EXTEND_MAX = BUILDER
+                .comment("Same saturating-curve shape as doomDamageAmplifyMax, applied to how much longer harmful (MobEffectCategory.HARMFUL) potion effects last on a high-Doom entity - 0.5 means never more than +50% duration.")
+                .defineInRange("doomEffectDurationExtendMax", 0.5, 0.0, 5.0);
+
+        DOOM_EFFECT_DURATION_HALF_POINT = BUILDER
+                .comment("The Doom value at which half of doomEffectDurationExtendMax's bonus is reached - see doomDamageAmplifyHalfPoint's comment for the same shape.")
+                .defineInRange("doomEffectDurationHalfPoint", 500.0, 1.0, 100000.0);
+
+        DOOM_KILL_BASE = BUILDER
+                .comment("Flat Doom a killer gains for killing any other LivingEntity, before the per-max-health scaling below.")
+                .defineInRange("doomKillBase", 1.0, 0.0, 1000.0);
+
+        DOOM_KILL_PER_MAX_HEALTH = BUILDER
+                .comment("Additional Doom a killer gains per point of the victim's max health - tougher kills matter more, capped by doomKillCap so one-shotting a boss-tier mob doesn't grant an absurd spike.")
+                .defineInRange("doomKillPerMaxHealth", 0.05, 0.0, 100.0);
+
+        DOOM_KILL_CAP = BUILDER
+                .comment("Max Doom a single kill can ever grant, regardless of the victim's max health.")
+                .defineInRange("doomKillCap", 15.0, 0.0, 1000.0);
+
+        DOOM_PASSIVE_ACCRUAL_CHECK_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) each living entity's age-based passive Doom accrual is checked. 1200 = once a minute.")
+                .defineInRange("doomPassiveAccrualCheckIntervalTicks", 1200, 20, 72000);
+
+        DOOM_PASSIVE_ACCRUAL_AGE_THRESHOLD_TICKS = BUILDER
+                .comment("An entity must have been continuously alive at least this long before passive age-based Doom accrual starts at all. 24000 = 20 minutes.")
+                .defineInRange("doomPassiveAccrualAgeThresholdTicks", 24000, 0, Integer.MAX_VALUE);
+
+        DOOM_PASSIVE_ACCRUAL_PER_INTERVAL = BUILDER
+                .comment("How much Doom accrues per doomPassiveAccrualCheckIntervalTicks once doomPassiveAccrualAgeThresholdTicks is exceeded - deliberately tiny ('very slow' as a real number, not just flavor text).")
+                .defineInRange("doomPassiveAccrualPerInterval", 0.1, 0.0, 100.0);
+
+        DOOM_HARVEST_WINDOW_TICKS = BUILDER
+                .comment("How long (in ticks) a dying entity's released Doom sits harvestable at their death position before dissipating back into reality unclaimed. 6000 = 5 minutes.")
+                .defineInRange("doomHarvestWindowTicks", 6000, 20, 72000);
+
+        DOOM_RELEASE_TICK_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) pending released-Doom records are checked for expiry. Doesn't need to run every tick.")
+                .defineInRange("doomReleaseTickIntervalTicks", 20, 1, 1200);
+
+        DOOM_MARK_ACCRUAL_MULTIPLIER = BUILDER
+                .comment("Default Doom-accumulation-rate multiplier applied by mechanics.doom.DoomMarks#applyDeadShuffleMark (and any future mark applied via the same convenience default) - a marked target's every Doom gain (damage, kills, passive accrual) is multiplied by this.")
+                .defineInRange("doomMarkAccrualMultiplier", 2.0, 1.0, 100.0);
+
+        BUILDER.pop();
+
+        // ============================================================================================
+        // Doom Relationship Interaction - mechanics.doom.RelationshipDoomEvents generating Doom from the existing
+        // mechanics.relationship.RelationshipManager graph ending (death/severance/betrayal/isolation), never a
+        // separate relationship mechanic of its own. Original design for this project, no 1.12.2
+        // counterpart.
+        // ============================================================================================
+
+        BUILDER.push("doomRelationship");
+
+        DOOM_RELATIONSHIP_DEATH_SCALE = BUILDER
+                .comment("Scales mechanics.doom.RelationshipDoomEvents#contributionOf(relationship) into the Doom a surviving connected party gains when the other side of that relationship dies.")
+                .defineInRange("doomRelationshipDeathScale", 0.5, 0.0, 1000.0);
+
+        DOOM_RELATIONSHIP_DEATH_CAP = BUILDER
+                .comment("Max Doom a single relationship's death-of-connected-entity trigger can ever grant the survivor, regardless of contribution.")
+                .defineInRange("doomRelationshipDeathCap", 20.0, 0.0, 1000.0);
+
+        DOOM_RELATIONSHIP_SEVERANCE_SCALE = BUILDER
+                .comment("Scales mechanics.doom.RelationshipDoomEvents#contributionOf(relationship) into the Doom both surviving parties gain when a relationship severs (Stage 4 Instability collapse) rather than ending via death.")
+                .defineInRange("doomRelationshipSeveranceScale", 0.4, 0.0, 1000.0);
+
+        DOOM_RELATIONSHIP_SEVERANCE_CAP = BUILDER
+                .comment("Max Doom a single relationship's severance can ever grant each surviving party.")
+                .defineInRange("doomRelationshipSeveranceCap", 15.0, 0.0, 1000.0);
+
+        DOOM_BETRAYAL_BASE = BUILDER
+                .comment("Base Doom a killer gains on top of the normal death-of-connected-entity Doom when the entity they killed had a positive relationship with them - scaled by that relationship's trust/strength/stability (all 0-1 fractions) before the cap below applies, so betrayal only spikes when trust/strength/stability were genuinely high.")
+                .defineInRange("doomBetrayalBase", 10.0, 0.0, 1000.0);
+
+        DOOM_BETRAYAL_CAP = BUILDER
+                .comment("Max betrayal-bonus Doom a single kill can ever grant, regardless of how high trust/strength/stability were.")
+                .defineInRange("doomBetrayalCap", 25.0, 0.0, 1000.0);
+
+        DOOM_ISOLATION_CHECK_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) each online player's current relationship count is checked for isolation Doom. 1200 = once a minute.")
+                .defineInRange("doomIsolationCheckIntervalTicks", 1200, 20, 72000);
+
+        DOOM_ISOLATION_RELATIONSHIP_THRESHOLD = BUILDER
+                .comment("A player with this many or fewer current relationships (see mechanics.relationship.RelationshipManager#getAllFor) accrues isolation Doom each check. 0 = only a player with literally no relationships at all.")
+                .defineInRange("doomIsolationRelationshipThreshold", 0, 0, 100);
+
+        DOOM_ISOLATION_PER_INTERVAL = BUILDER
+                .comment("How much Doom accrues per doomIsolationCheckIntervalTicks while at/under the isolation threshold - deliberately tiny, matching the base Doom system's own passive-accrual pacing.")
+                .defineInRange("doomIsolationPerInterval", 0.05, 0.0, 100.0);
+
+        BUILDER.pop();
+
+        // ============================================================================================
+        // Doom Class Abilities - the 8 new Maid/Page/Sylph/Rogue of Doom techs (heroClass.<class>.doom
+        // packages). Original design for this project, no 1.12.2 counterpart.
+        // ============================================================================================
+
+        BUILDER.push("doomClass");
+
+        DOOMFORGE_INJECT_AMOUNT = BUILDER
+                .comment("Doom directly injected into a target by Maid of Doom's Doomforge, per press.")
+                .defineInRange("doomforgeInjectAmount", 15.0, 0.0, 1000.0);
+
+        FINALITY_ENGINE_CHARGE_TICKS = BUILDER
+                .comment("How long Maid of Doom's Finality Engine must be held before it fires.")
+                .defineInRange("finalityEngineChargeTicks", 25, 1, 600);
+
+        FINALITY_ENGINE_BASE_DAMAGE = BUILDER
+                .comment("Flat damage Finality Engine deals before scaling by the target's own current Doom.")
+                .defineInRange("finalityEngineBaseDamage", 2.0, 0.0, 1000.0);
+
+        FINALITY_ENGINE_DOOM_SCALE = BUILDER
+                .comment("Additional Finality Engine damage per point of the target's own current Doom, before the cap below.")
+                .defineInRange("finalityEngineDoomScale", 0.05, 0.0, 100.0);
+
+        FINALITY_ENGINE_MAX_DAMAGE = BUILDER
+                .comment("Max damage a single Finality Engine hit can ever deal, regardless of the target's Doom.")
+                .defineInRange("finalityEngineMaxDamage", 40.0, 0.0, 10000.0);
+
+        DOOM_RESERVOIR_HARVEST_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) Page of Doom's passive Doom Reservoir auto-harvests from the nearby release pool while toggled on. 100 = 5 seconds.")
+                .defineInRange("doomReservoirHarvestIntervalTicks", 100, 20, 6000);
+
+        DOOM_RESERVOIR_HARVEST_RADIUS = BUILDER
+                .comment("Radius (in blocks) Doom Reservoir auto-harvests within, centered on the Page.")
+                .defineInRange("doomReservoirHarvestRadius", 16.0, 1.0, 64.0);
+
+        DOOM_RESERVOIR_HARVEST_AMOUNT_PER_PULSE = BUILDER
+                .comment("Max Doom Doom Reservoir harvests per pulse - may harvest less if the release pool doesn't have this much available in range.")
+                .defineInRange("doomReservoirHarvestAmountPerPulse", 5.0, 0.0, 1000.0);
+
+        APOCALYPSE_RELEASE_RADIUS = BUILDER
+                .comment("Radius (in blocks) of Page of Doom's Apocalypse Release AoE burst.")
+                .defineInRange("apocalypseReleaseRadius", 8.0, 1.0, 32.0);
+
+        APOCALYPSE_RELEASE_DAMAGE_SCALE = BUILDER
+                .comment("Damage dealt by Apocalypse Release per point of the Page's own Doom actually consumed.")
+                .defineInRange("apocalypseReleaseDamageScale", 0.5, 0.0, 100.0);
+
+        APOCALYPSE_RELEASE_MAX_CONSUME = BUILDER
+                .comment("Max Doom Apocalypse Release can consume from the Page's own stored Doom in one discharge - may consume less if they don't have this much stored.")
+                .defineInRange("apocalypseReleaseMaxConsume", 200.0, 0.0, 100000.0);
+
+        DOOM_REVERSAL_AMOUNT_PER_SECOND = BUILDER
+                .comment("Doom removed per second from a tethered target by Sylph of Doom's Doom Reversal.")
+                .defineInRange("doomReversalAmountPerSecond", 3.0, 0.0, 1000.0);
+
+        DEATH_UNMADE_REMOVE_AMOUNT = BUILDER
+                .comment("Doom instantly removed from a target by Sylph of Doom's Death Unmade, which also clears any Doom Mark they carry.")
+                .defineInRange("deathUnmadeRemoveAmount", 100.0, 0.0, 100000.0);
+
+        DOOM_REDISTRIBUTION_AMOUNT = BUILDER
+                .comment("Doom moved per press by Rogue of Doom's Doom Redistribution - direction depends on whether the Rogue is sneaking (see that tech's own doc comment).")
+                .defineInRange("doomRedistributionAmount", 10.0, 0.0, 1000.0);
+
+        BUILDER.pop();
+
         BUILDER.push("schism");
 
         SCHISM_DAMAGE_AMPLIFY_FACTOR = BUILDER
@@ -284,7 +510,7 @@ public class Config {
                 .defineInRange("schismAuraDisruptionIntervalTicks", 100, 20, Integer.MAX_VALUE);
 
         SCHISM_AURA_OWNERSHIP_DECAY = BUILDER
-                .comment("How many strength/stability points a nearby Ownership relationship (heroClass.blood.RelationshipType.OWNERSHIP - a tamed pet or entity.HopeGolemEntity ally and its owner) loses per Target Coordination Loss check while inside the Schism Aura - the design doc's own \"Bond strength decreases over time\".")
+                .comment("How many strength/stability points a nearby Ownership relationship (mechanics.relationship.RelationshipType.OWNERSHIP - a tamed pet or entity.HopeGolemEntity ally and its owner) loses per Target Coordination Loss check while inside the Schism Aura - the design doc's own \"Bond strength decreases over time\".")
                 .defineInRange("schismAuraOwnershipDecay", 2.0, 0.0, 100.0);
 
         BUILDER.pop();
@@ -324,11 +550,11 @@ public class Config {
                 .defineInRange("crimsonDiscordDominoBump", 10.0, 0.0, 100.0);
 
         CRIMSON_DISCORD_VENGEANCE_FAIL_DIVISOR = BUILDER
-                .comment("Chance (Instability / this value) that heroClass.witch.blood.CultOfPersonalityManager's own Blood Vengeance retaliation fails to fire for a given bonded member, once its linked heroClass.blood.RelationshipType.FAMILY relationship has any Instability at all - the higher this number, the less Instability affects retaliation reliability.")
+                .comment("Chance (Instability / this value) that heroClass.witch.blood.CultOfPersonalityManager's own Blood Vengeance retaliation fails to fire for a given bonded member, once its linked mechanics.relationship.RelationshipType.FAMILY relationship has any Instability at all - the higher this number, the less Instability affects retaliation reliability.")
                 .defineInRange("crimsonDiscordVengeanceFailDivisor", 150.0, 1.0, 10000.0);
 
         CRIMSON_DISCORD_NEW_RIVALRIES_PER_PULSE = BUILDER
-                .comment("How many brand-new heroClass.blood.RelationshipType.RIVALRY relationships the Crimson Discord aura seeds per pulse, between random nearby Mob pairs that don't already have any relationship at all - the design doc's own \"even entities with no existing bond should start to turn on each other\". Each seeded rivalry then escalates over time at the same rate as every other relationship in range (see crimsonDiscordInstabilityGainPerPulse).")
+                .comment("How many brand-new mechanics.relationship.RelationshipType.RIVALRY relationships the Crimson Discord aura seeds per pulse, between random nearby Mob pairs that don't already have any relationship at all - the design doc's own \"even entities with no existing bond should start to turn on each other\". Each seeded rivalry then escalates over time at the same rate as every other relationship in range (see crimsonDiscordInstabilityGainPerPulse).")
                 .defineInRange("crimsonDiscordNewRivalriesPerPulse", 2, 0, 100);
 
         CRIMSON_DISCORD_FIGHT_THRESHOLD = BUILDER
@@ -340,7 +566,7 @@ public class Config {
         BUILDER.push("relationships");
 
         RELATIONSHIP_FIGHTING_TOGETHER_WINDOW_TICKS = BUILDER
-                .comment("How recently two different attackers must have both hit the same victim for heroClass.blood.RelationshipManager to treat them as \"Fighting Together\" (the design doc's own event) and reinforce a relationship between the attackers themselves, not either of them and the victim. 100 = 5 seconds.")
+                .comment("How recently two different attackers must have both hit the same victim for mechanics.relationship.RelationshipManager to treat them as \"Fighting Together\" (the design doc's own event) and reinforce a relationship between the attackers themselves, not either of them and the victim. 100 = 5 seconds.")
                 .defineInRange("relationshipFightingTogetherWindowTicks", 100, 20, Integer.MAX_VALUE);
 
         RELATIONSHIP_FIGHTING_TOGETHER_GAIN = BUILDER
@@ -402,6 +628,45 @@ public class Config {
     public static int timeRequestDoomCheckInterval;
     public static int timeRequestEventCooldownTicks;
     public static int timeRequestCooldownTicks;
+    public static double doomDamageSeverityMax;
+    public static double doomDamageSeverityCurve;
+    public static double doomDamageSeverityMinThreshold;
+    public static double doomDamageAmplifyMax;
+    public static double doomDamageAmplifyHalfPoint;
+    public static double doomEffectDurationExtendMax;
+    public static double doomEffectDurationHalfPoint;
+    public static double doomKillBase;
+    public static double doomKillPerMaxHealth;
+    public static double doomKillCap;
+    public static int doomPassiveAccrualCheckIntervalTicks;
+    public static int doomPassiveAccrualAgeThresholdTicks;
+    public static double doomPassiveAccrualPerInterval;
+    public static int doomHarvestWindowTicks;
+    public static int doomReleaseTickIntervalTicks;
+    public static double doomMarkAccrualMultiplier;
+    public static double doomRelationshipDeathScale;
+    public static double doomRelationshipDeathCap;
+    public static double doomRelationshipSeveranceScale;
+    public static double doomRelationshipSeveranceCap;
+    public static double doomBetrayalBase;
+    public static double doomBetrayalCap;
+    public static int doomIsolationCheckIntervalTicks;
+    public static int doomIsolationRelationshipThreshold;
+    public static double doomIsolationPerInterval;
+    public static double doomforgeInjectAmount;
+    public static int finalityEngineChargeTicks;
+    public static double finalityEngineBaseDamage;
+    public static double finalityEngineDoomScale;
+    public static double finalityEngineMaxDamage;
+    public static int doomReservoirHarvestIntervalTicks;
+    public static double doomReservoirHarvestRadius;
+    public static double doomReservoirHarvestAmountPerPulse;
+    public static double apocalypseReleaseRadius;
+    public static double apocalypseReleaseDamageScale;
+    public static double apocalypseReleaseMaxConsume;
+    public static double doomReversalAmountPerSecond;
+    public static double deathUnmadeRemoveAmount;
+    public static double doomRedistributionAmount;
     public static double schismDamageAmplifyFactor;
     public static int schismHostilityDurationTicks;
     public static int schismCorruptionDurationTicks;
@@ -467,6 +732,45 @@ public class Config {
         timeRequestDoomCheckInterval = TIME_REQUEST_DOOM_CHECK_INTERVAL.get();
         timeRequestEventCooldownTicks = TIME_REQUEST_EVENT_COOLDOWN_TICKS.get();
         timeRequestCooldownTicks = TIME_REQUEST_COOLDOWN_TICKS.get();
+        doomDamageSeverityMax = DOOM_DAMAGE_SEVERITY_MAX.get();
+        doomDamageSeverityCurve = DOOM_DAMAGE_SEVERITY_CURVE.get();
+        doomDamageSeverityMinThreshold = DOOM_DAMAGE_SEVERITY_MIN_THRESHOLD.get();
+        doomDamageAmplifyMax = DOOM_DAMAGE_AMPLIFY_MAX.get();
+        doomDamageAmplifyHalfPoint = DOOM_DAMAGE_AMPLIFY_HALF_POINT.get();
+        doomEffectDurationExtendMax = DOOM_EFFECT_DURATION_EXTEND_MAX.get();
+        doomEffectDurationHalfPoint = DOOM_EFFECT_DURATION_HALF_POINT.get();
+        doomKillBase = DOOM_KILL_BASE.get();
+        doomKillPerMaxHealth = DOOM_KILL_PER_MAX_HEALTH.get();
+        doomKillCap = DOOM_KILL_CAP.get();
+        doomPassiveAccrualCheckIntervalTicks = DOOM_PASSIVE_ACCRUAL_CHECK_INTERVAL_TICKS.get();
+        doomPassiveAccrualAgeThresholdTicks = DOOM_PASSIVE_ACCRUAL_AGE_THRESHOLD_TICKS.get();
+        doomPassiveAccrualPerInterval = DOOM_PASSIVE_ACCRUAL_PER_INTERVAL.get();
+        doomHarvestWindowTicks = DOOM_HARVEST_WINDOW_TICKS.get();
+        doomReleaseTickIntervalTicks = DOOM_RELEASE_TICK_INTERVAL_TICKS.get();
+        doomMarkAccrualMultiplier = DOOM_MARK_ACCRUAL_MULTIPLIER.get();
+        doomRelationshipDeathScale = DOOM_RELATIONSHIP_DEATH_SCALE.get();
+        doomRelationshipDeathCap = DOOM_RELATIONSHIP_DEATH_CAP.get();
+        doomRelationshipSeveranceScale = DOOM_RELATIONSHIP_SEVERANCE_SCALE.get();
+        doomRelationshipSeveranceCap = DOOM_RELATIONSHIP_SEVERANCE_CAP.get();
+        doomBetrayalBase = DOOM_BETRAYAL_BASE.get();
+        doomBetrayalCap = DOOM_BETRAYAL_CAP.get();
+        doomIsolationCheckIntervalTicks = DOOM_ISOLATION_CHECK_INTERVAL_TICKS.get();
+        doomIsolationRelationshipThreshold = DOOM_ISOLATION_RELATIONSHIP_THRESHOLD.get();
+        doomIsolationPerInterval = DOOM_ISOLATION_PER_INTERVAL.get();
+        doomforgeInjectAmount = DOOMFORGE_INJECT_AMOUNT.get();
+        finalityEngineChargeTicks = FINALITY_ENGINE_CHARGE_TICKS.get();
+        finalityEngineBaseDamage = FINALITY_ENGINE_BASE_DAMAGE.get();
+        finalityEngineDoomScale = FINALITY_ENGINE_DOOM_SCALE.get();
+        finalityEngineMaxDamage = FINALITY_ENGINE_MAX_DAMAGE.get();
+        doomReservoirHarvestIntervalTicks = DOOM_RESERVOIR_HARVEST_INTERVAL_TICKS.get();
+        doomReservoirHarvestRadius = DOOM_RESERVOIR_HARVEST_RADIUS.get();
+        doomReservoirHarvestAmountPerPulse = DOOM_RESERVOIR_HARVEST_AMOUNT_PER_PULSE.get();
+        apocalypseReleaseRadius = APOCALYPSE_RELEASE_RADIUS.get();
+        apocalypseReleaseDamageScale = APOCALYPSE_RELEASE_DAMAGE_SCALE.get();
+        apocalypseReleaseMaxConsume = APOCALYPSE_RELEASE_MAX_CONSUME.get();
+        doomReversalAmountPerSecond = DOOM_REVERSAL_AMOUNT_PER_SECOND.get();
+        deathUnmadeRemoveAmount = DEATH_UNMADE_REMOVE_AMOUNT.get();
+        doomRedistributionAmount = DOOM_REDISTRIBUTION_AMOUNT.get();
         schismDamageAmplifyFactor = SCHISM_DAMAGE_AMPLIFY_FACTOR.get();
         schismHostilityDurationTicks = SCHISM_HOSTILITY_DURATION_TICKS.get();
         schismCorruptionDurationTicks = SCHISM_CORRUPTION_DURATION_TICKS.get();

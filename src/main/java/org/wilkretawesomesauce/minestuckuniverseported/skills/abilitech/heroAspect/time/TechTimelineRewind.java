@@ -10,17 +10,17 @@ import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.Ab
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.TimelineManager;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineManager;
 
 /**
  * The real "Rewind" ability from the Time Aspect timeline-management design discussion: hold to charge,
  * release to actually undo the last few seconds of recorded world history (blocks and nearby entities -
- * see {@code timeline.TimelineRecorder} for exactly what's tracked and its limits) via
+ * see {@code mechanics.timeline.TimelineRecorder} for exactly what's tracked and its limits) via
  * {@link TimelineManager#rewind}, not just your own position like the smaller {@code TechTimeRecall}.
  * <p>
  * Charging longer rewinds further: roughly 1 second of charge per second of rewind, capped at 10 seconds
  * (200 ticks). Costs 3 food per second charged. Every rewind adds Doom Points regardless of size - see
- * {@code timeline.TimelineData#getDoomPoints} (currently just a tracked placeholder with no consequences
+ * {@code mechanics.timeline.TimelineData#getDoomPoints} (currently just a tracked placeholder with no consequences
  * attached yet).
  */
 public class TechTimelineRewind extends TechHeroAspect

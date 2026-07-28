@@ -1,0 +1,9 @@
+{
+  "condition": {
+    "type": "minestuck:flag",
+    "flag": "skill_shop_seller"
+  },
+  "dialogue": "minestuckuniverseported:skill_shop_offer",
+  "dialogue_weight": 10,
+  "keep_on_reset": true
+}

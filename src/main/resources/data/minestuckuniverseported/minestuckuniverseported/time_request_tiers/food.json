@@ -1,0 +1,7 @@
+[
+  { "rung": 0, "item": "minecraft:bread" },
+  { "rung": 3, "item": "minecraft:cooked_beef" },
+  { "rung": 6, "item": "minecraft:golden_carrot" },
+  { "rung": 10, "item": "minecraft:golden_apple" },
+  { "rung": 15, "item": "minecraft:enchanted_golden_apple" }
+]

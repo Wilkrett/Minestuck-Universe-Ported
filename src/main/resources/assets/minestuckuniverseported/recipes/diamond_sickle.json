@@ -1,0 +1,21 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "DD ",
+        "  D",
+        " S "
+    ],
+    "key": {
+        "D": {
+            "item": "minecraft:diamond"
+        },
+        "S": {
+            "type": "forge:ore_dict",
+            "ore": "stickWood"
+        }
+    },
+    "result": {
+        "item": "minestuckuniverse:diamond_sickle",
+        "count": 1
+    }
+}

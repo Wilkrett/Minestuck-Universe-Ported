@@ -1,0 +1,7 @@
+[
+  { "rung": 0, "item": "minecraft:iron_ingot" },
+  { "rung": 3, "item": "minecraft:gold_ingot" },
+  { "rung": 6, "item": "minecraft:diamond" },
+  { "rung": 10, "item": "minecraft:netherite_scrap" },
+  { "rung": 15, "item": "minecraft:netherite_ingot" }
+]

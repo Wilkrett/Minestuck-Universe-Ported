@@ -1,0 +1,7 @@
+[
+  { "rung": 0, "item": "minecraft:wooden_sword" },
+  { "rung": 3, "item": "minecraft:stone_sword" },
+  { "rung": 6, "item": "minecraft:iron_sword" },
+  { "rung": 10, "item": "minecraft:diamond_sword" },
+  { "rung": 15, "item": "minecraft:netherite_sword" }
+]

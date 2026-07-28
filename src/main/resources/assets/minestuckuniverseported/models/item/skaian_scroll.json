@@ -1,0 +1,7 @@
+{
+    "parent": "item/generated",
+    "textures": {
+        "layer0": "minestuckuniverseported:items/skaian_scroll",
+        "layer1": "minestuckuniverseported:items/skaian_scroll_overlay"
+    }
+}

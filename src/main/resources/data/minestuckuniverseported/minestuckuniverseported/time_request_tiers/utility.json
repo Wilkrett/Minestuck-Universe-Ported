@@ -1,0 +1,7 @@
+[
+  { "rung": 0, "item": "minecraft:torch" },
+  { "rung": 3, "item": "minecraft:ender_pearl" },
+  { "rung": 6, "item": "minecraft:shulker_box" },
+  { "rung": 10, "item": "minecraft:elytra" },
+  { "rung": 15, "item": "minecraft:totem_of_undying" }
+]

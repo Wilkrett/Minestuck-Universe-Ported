@@ -14,15 +14,15 @@ import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.Ab
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.BranchForker;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.TimelineBranch;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.TimelineBranchRegistry;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.BranchForker;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineBranch;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineBranchRegistry;
 
 import java.util.UUID;
 
 /**
  * The real gameplay-facing way to fork/return between parallel timeline branches (see
- * {@code timeline.TimelineBranch}/{@code timeline.BranchForker}) - as distinct from
+ * {@code mechanics.timeline.TimelineBranch}/{@code mechanics.timeline.BranchForker}) - as distinct from
  * {@code /msutimeline branch ...}, which is a creative-mode-only debug/testing surface for the same
  * underlying system.
  * <p>

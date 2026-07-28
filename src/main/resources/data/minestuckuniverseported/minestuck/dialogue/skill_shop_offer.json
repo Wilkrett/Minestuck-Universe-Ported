@@ -1,0 +1,22 @@
+{
+  "node": {
+    "animation": {},
+    "gui": "minestuck:textures/gui/dialogue/dialogue.png",
+    "message": "minestuckuniverseported.dialogue.skill_shop_offer.message",
+    "responses": [
+      {
+        "condition": {
+          "type": "minestuck:always_true"
+        },
+        "hide_if_failed": true,
+        "message": "minestuckuniverseported.dialogue.skill_shop_offer.response",
+        "triggers": [
+          {
+            "type": "minestuck:command",
+            "command": "msu debug shop"
+          }
+        ]
+      }
+    ]
+  }
+}

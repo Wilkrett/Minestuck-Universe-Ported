@@ -1,0 +1,10 @@
+{
+  "type": "minestuckuniverseported:chest_juju",
+  "conditions": [
+    {
+      "condition": "minestuckuniverseported:juju",
+      "chance": 0.05,
+      "juju": "minestuckuniverseported:cue_ball"
+    }
+  ]
+}

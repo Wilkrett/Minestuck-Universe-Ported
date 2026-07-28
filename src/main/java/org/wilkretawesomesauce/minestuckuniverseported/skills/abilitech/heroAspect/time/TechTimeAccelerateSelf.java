@@ -45,7 +45,7 @@ import java.util.WeakHashMap;
  * stay up continuously across both the charge <i>and</i> the resulting burst - they only cut off once the
  * released burst's own {@link #activeBurst} entry has actually run out ({@link BurstState#endTick}, a
  * per-player {@code WeakHashMap} tracking each active burst's expiry tick against {@link Level#getGameTime()},
- * the same lightweight self-contained-scratch-state idiom {@code doom.DecayEffect}'s own per-entity
+ * the same lightweight self-contained-scratch-state idiom {@code mechanics.doom.DecayEffect}'s own per-entity
  * hit-count map already uses - {@code onUseTick} is called every server tick for every equipped tech
  * regardless of key state, per {@code AbilitechEvents#onPlayerTick}, so a {@code state == NONE} tick is a
  * real, reliable place to check it).

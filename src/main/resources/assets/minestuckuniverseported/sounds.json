@@ -1,0 +1,92 @@
+{
+  "item.home_run_bat": {
+    "category": "players",
+    "subtitle": "subtitle.minestuckuniverse.home_run_bat",
+    "sounds": [
+      "minestuckuniverse:item/home_run_bat"
+    ]
+  },
+  "item.bada": {
+    "category": "players",
+    "sounds": [
+      "minestuckuniverse:item/bada1",
+      "minestuckuniverse:item/bada2"
+    ]
+  },
+  "item.shield_parry": {
+    "category": "players",
+    "subtitle": "subtitle.minestuckuniverse.shield_parry",
+    "sounds": [
+      "minestuckuniverse:item/shield_parry1",
+      "minestuckuniverse:item/shield_parry2",
+      "minestuckuniverse:item/shield_parry3"
+    ]
+  },
+  "item.shock": {
+    "category": "players",
+    "subtitle": "subtitle.minestuckuniverse.shock",
+    "sounds": [
+      "minestuckuniverse:item/shock"
+    ]
+  },
+  "item.whip_crack": {
+    "category": "players",
+    "subtitle": "subtitle.minestuckuniverse.whip_crack",
+    "sounds": [
+        "minestuckuniverse:item/whip_crack"
+    ]
+  },
+  "item.whip_crock": {
+    "category": "players",
+    "subtitle": "subtitle.minestuckuniverse.whip_crock",
+    "sounds": [
+        "minestuckuniverse:item/whip_crock"
+    ]
+  },
+  "item.gaster_blaster.charge": {
+    "category": "players",
+    "subtitle": "subtitle.minestuckuniverse.gaster_blaster.charge",
+    "sounds": [
+        "minestuckuniverse:item/gaster_blaster_charge"
+    ]
+  },
+  "item.gaster_blaster.release": {
+    "category": "players",
+    "subtitle": "subtitle.minestuckuniverse.gaster_blaster.release",
+    "sounds": [
+        "minestuckuniverse:item/gaster_blaster_release"
+    ]
+  },
+  "chat_ping": {
+        "subtitle": "subtitle.chat_ping",
+        "sounds": [ "minestuckuniverse:chat_ping" ]
+    },
+    "eight_ball_throw": {
+        "subtitle": "subtitle.eight_ball_throw",
+        "sounds": [ "random/bow" ]
+    },
+    "operandi_task_complete": {
+        "subtitle": "subtitle.operandi_task_complete",
+        "sounds": [ "note/bell" ]
+    },
+    "cruxtruder_fill_gel": {
+        "subtitle": "subtitle.cruxtruder_fill_gel",
+        "sounds":
+        [
+            "block/brewing_stand/brew1",
+            "block/brewing_stand/brew2"
+        ]
+    },
+    "chasity_lock": {
+        "subtitle": "subtitle.chasity_lock",
+        "sounds": [{"name": "locks:lock.close1"}, {"name": "locks:lock.close2"}]
+    },
+    "chasity_rattle": {
+        "subtitle": "subtitle.chasity_lock",
+        "sounds": [{"name": "locks:lock.rattle"}]
+    },
+    "chasity_unlock": {
+        "subtitle": "subtitle.chasity_unlock",
+        "sounds": [{"name": "locks:lock.open"}]
+    }
+}

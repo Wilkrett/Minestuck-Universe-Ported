@@ -8,11 +8,11 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.TimelineManager;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineManager;
 
 /**
  * {@code /msutimeline rewind <seconds>} - the "just type a number" way to trigger a real world rewind
- * that plays out over time (see {@code timeline.TimelineManager#rewind}), for testing/using the timeline
+ * that plays out over time (see {@code mechanics.timeline.TimelineManager#rewind}), for testing/using the timeline
  * system directly rather than through an equipped Abilitech's charge-and-release input. See
  * {@link TimelineTravelCommand} for the instant counterpart. Still adds Doom Points like any other
  * rewind - this is a different way to trigger the same operation, not a way around its cost.

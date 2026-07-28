@@ -14,9 +14,9 @@ import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.Ab
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.TimelineData;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.WorldTickSnapshot;
-import org.wilkretawesomesauce.minestuckuniverseported.timeline.vision.PastVisionSession;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineData;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.WorldTickSnapshot;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.vision.PastVisionSession;
 
 import java.util.ArrayList;
 import java.util.List;

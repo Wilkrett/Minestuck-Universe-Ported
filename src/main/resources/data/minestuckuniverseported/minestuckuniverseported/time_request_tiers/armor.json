@@ -1,0 +1,7 @@
+[
+  { "rung": 0, "item": "minecraft:leather_chestplate" },
+  { "rung": 3, "item": "minecraft:chainmail_chestplate" },
+  { "rung": 6, "item": "minecraft:iron_chestplate" },
+  { "rung": 10, "item": "minecraft:diamond_chestplate" },
+  { "rung": 15, "item": "minecraft:netherite_chestplate" }
+]

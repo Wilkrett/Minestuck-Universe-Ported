@@ -8,7 +8,7 @@ package org.wilkretawesomesauce.minestuckuniverseported.util;
 //
 // A network-less ServerPlayer: every packet-handling method is a no-op, and it's wired to a dummy
 // Connection/Channel instead of a real client socket. Used by TechTimeParallelAction and
-// timeline.DoomedTimelineClone to spawn standing/replaying doubles of a player without a full separate
+// mechanics.timeline.DoomedTimelineClone to spawn standing/replaying doubles of a player without a full separate
 // entity type.
 import com.mojang.authlib.GameProfile;
 import io.netty.channel.*;
