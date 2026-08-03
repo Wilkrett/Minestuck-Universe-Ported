@@ -18,8 +18,10 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.blood.TechBloodReformer;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.blood.TechBloodTransfusion;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.TechBreathBubble;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.TechBreathConstrain;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.TechBreathGale;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.TechBreathKnockback;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.TechBreathLiberate;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.TechBreathSpaceFallProof;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.TechBreathSpeed;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.TechBreathWindVessel;
@@ -100,13 +102,16 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClas
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.mage.blood.TechMageBloodGuidance;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.mage.blood.TechMageBloodInsight;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.mage.blood.TechMageBloodMemory;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.mage.breath.TechMageBreathInsight;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.mage.doom.TechMageDoomInsight;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.mage.mind.TechMageMindInsight;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.maid.TechMaid;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.maid.TechMaidServe;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.maid.doom.TechMaidDoomFinalityEngine;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.maid.doom.TechMaidDoomforge;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.muse.TechMuse;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.page.TechPagePerseverantAwakening;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.page.breath.TechPageBreathFreeWill;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.page.doom.TechPageDoomApocalypseRelease;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.page.doom.TechPageDoomReservoir;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.prince.TechPrinceSlash;
@@ -194,6 +199,8 @@ public final class MSUSkills
 	public static final Abilitech BREATH_SPACE_FALL_PROOF = MSUAbilitechRegistry.register(new TechBreathSpaceFallProof());
 	public static final Abilitech BREATH_SPEED = MSUAbilitechRegistry.register(new TechBreathSpeed());
 	public static final Abilitech BREATH_WIND_VESSEL = MSUAbilitechRegistry.register(new TechBreathWindVessel());
+	public static final Abilitech BREATH_LIBERATE = MSUAbilitechRegistry.register(new TechBreathLiberate());
+	public static final Abilitech BREATH_CONSTRAIN = MSUAbilitechRegistry.register(new TechBreathConstrain());
 
 	// Doom aspect
 	public static final Abilitech DOOM_BIND = MSUAbilitechRegistry.register(new TechDoomBind());
@@ -280,6 +287,8 @@ public final class MSUSkills
 	public static final Abilitech BLOOD_MEMORY = MSUAbilitechRegistry.register(new TechMageBloodMemory());
 	public static final Abilitech BLOOD_GUIDANCE = MSUAbilitechRegistry.register(new TechMageBloodGuidance());
 	public static final Abilitech DOOM_INSIGHT = MSUAbilitechRegistry.register(new TechMageDoomInsight());
+	public static final Abilitech BREATH_INSIGHT = MSUAbilitechRegistry.register(new TechMageBreathInsight());
+	public static final Abilitech MIND_INSIGHT = MSUAbilitechRegistry.register(new TechMageMindInsight());
 	public static final Abilitech MAID_FAVOR = MSUAbilitechRegistry.register(new TechMaid());
 	public static final Abilitech IRRADIANT_SERVITUDE = MSUAbilitechRegistry.register(new TechMaidServe());
 	public static final Abilitech DOOMFORGE = MSUAbilitechRegistry.register(new TechMaidDoomforge());
@@ -288,6 +297,7 @@ public final class MSUSkills
 	public static final Abilitech PERSEVERANT_AWAKENING = MSUAbilitechRegistry.register(new TechPagePerseverantAwakening());
 	public static final Abilitech DOOM_RESERVOIR = MSUAbilitechRegistry.register(new TechPageDoomReservoir());
 	public static final Abilitech APOCALYPSE_RELEASE = MSUAbilitechRegistry.register(new TechPageDoomApocalypseRelease());
+	public static final Abilitech FREE_WILL = MSUAbilitechRegistry.register(new TechPageBreathFreeWill());
 	public static final Abilitech PRINCE_WRATH = MSUAbilitechRegistry.register(new TechPrinceWrath());
 	public static final Abilitech RULING_SLASH = MSUAbilitechRegistry.register(new TechPrinceSlash());
 	public static final Abilitech SCHISM = MSUAbilitechRegistry.register(new TechPrinceBloodSchism());

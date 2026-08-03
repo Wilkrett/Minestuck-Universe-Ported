@@ -58,10 +58,231 @@ pieces (the bubble, the Reformer AI) were later de-simplified to real mechanics 
 EntityBubble" below.
 
 ### Breath Aspect (`skills.abilitech.heroAspect.breath`)
-6 techs (Gale, Knockback, Fall Proof, Speed, Bubble, Wind Vessel). Wind Vessel does real
-render-cancellation + movement-input dampening. **Known gap**: sub-block collision-phasing
+8 techs (Gale, Knockback, Fall Proof, Speed, Bubble, Wind Vessel, Liberate, Constrain). Wind Vessel does
+real render-cancellation + movement-input dampening. **Known gap**: sub-block collision-phasing
 (slipping through gaps) was never built - no modern NeoForge hook exists for overriding a real
-connected player's own collision resolution without Mixin.
+connected player's own collision resolution without Mixin. Liberate/Constrain are new techs added for
+the Freedom system below - see that section for what they actually manipulate.
+
+### Breath Wind visuals - two layers, `WindEngine` (particles) + `WindRibbonRenderer`/`WindBurstRenderer` (mesh)
+Original design for this project, no 1.12.2 counterpart - built across three standalone user-supplied
+docs in sequence, each correcting the last. Real callers throughout: `TechBreathLiberate`/
+`TechBreathConstrain`/`TechPageBreathFreeWill` only - the other 5 Breath techs (Gale/Knockback/Fall Proof/
+Speed/Bubble/Wind Vessel) are untouched, since none of the docs specced them.
+
+**Real detour, tried and reverted - worth knowing if this ever needs revisiting**: a first pass wired up
+[Low-Drag-MC's Photon](https://github.com/Low-Drag-MC/Photon) (a real, actively-maintained Unity-style VFX
+mod, confirmed via its own maven and decompiled classes to genuinely support NeoForge 1.21.1) as an
+optional soft dependency - `FXHelper.getFX`/`EntityEffectExecutor` confirmed real and callable, a
+`mandatory=false, side=CLIENT` `neoforge.mods.toml` entry, a network packet bridging server-authoritative
+tech code to Photon's own client-only trigger API. **Reverted entirely**, for a real, confirmed reason:
+Photon's actual effect definitions (particle graphs, timelines, materials) have no data-driven/JSON
+authoring path anywhere in its own source tree - every one is built through its in-game `/photon_editor`
+GUI, which nothing in this project's own toolchain can operate. Wiring the dependency would have shipped
+real plumbing pointed at an effect that could never exist without a human opening Minecraft and using that
+editor by hand. A user-supplied "Breath Visualizer Architecture Decision" doc then independently proposed
+the actual real fix: don't rely on any external VFX authoring tool at all, build a genuine custom
+*renderer* instead - real Java rendering code is something this project can actually write and compile-verify
+itself. `gradle.properties`/`build.gradle` were fully reverted to their pre-Photon state; no trace of that
+dependency remains.
+
+**`client.render.WindRibbonRenderer`/`WindBurstRenderer` - the real primary visual**, per that doc's own
+explicit rule ("do not implement Breath visuals primarily through vanilla particle spawning... the primary
+Breath visual should be a custom renderer"). Directly extends `client.render.TetherBondRenderer`'s already-proven
+technique rather than inventing new rendering machinery: same `RenderLevelStageEvent.Stage.AFTER_PARTICLES`
+hook, same per-segment camera-facing billboard quad (width perpendicular to both the segment's own axis
+and the camera direction - the standard textured-line-with-no-real-geometry trick), same reused
+`textures/entity/projectiles/clear_beam.png` tintable strip (no new art needed). What's genuinely new:
+`WindRibbonRenderer#ribbonPoint` replaces `TetherBondRenderer`'s single static bow with a *time-animated*
+curve (two summed sine waves at different frequency/phase, tapered to zero at both ends so the ribbon
+always anchors cleanly to caster and target) - the doc's own "Simple" turbulence method; real Perlin noise
+(the doc's "Better" method) was deliberately left for a later pass, since a subtle noise bug in a system
+that can't be tested in a live client this session was a real risk not worth taking for a first cut.
+**Real follow-up, a direct user request** ("wavy blue streaks" for Liberate/Constrain specifically,
+matching a reference image's own look of several independently-undulating parallel bands rather than one
+line): `renderRibbon` now draws `STREAK_COUNT` parallel streaks instead of one, each offset from the
+caster-target centerline by a *fixed, untapered* spacing - only each streak's own wave wobble tapers to
+zero at the endpoints, the fixed spacing itself doesn't, so the streaks stay visibly spread the whole way
+rather than all pinching back together at the caster/target - and each carries its own phase stagger and a
+small frequency variation so they wave independently instead of moving in lockstep.
+`renderVortex` is the doc's own "Spiral Currents" - a gentle wrap around the target, angle advancing
+with both arc-length and real time so it visibly rotates, radius/density scaled by the same intensity value
+`WindEngine`'s own particle calls already use. `WindBurstRenderer` (Free Will's activation) is the doc's
+own "expanding spherical pressure wave" - deterministic-per-burst radial billboard spokes (seeded from
+caster id + spawn tick, regenerated fresh every frame from that seed rather than stored, so the shell reads
+as one coherent wave instead of flickering noise) expanding via an ease-out curve while fading to 0.
+
+**Two real bugs, caught from a live screenshot** (the first actual in-game look at this system, and a
+direct user report: "it flickers a lot... you can see the edges"): both `WindRibbonRenderer#renderQuad`
+and `WindBurstRenderer#renderQuad` were emitting every quad *twice*, in both winding orders, copying
+`TetherBondRenderer`'s own defensive-but-explicitly-unconfirmed habit of doing that "in case the render
+type ever turns out to cull backfaces." Checked for real this time (`RenderType.entityTranslucentCull`
+exists as a *separate* method from the plain `entityTranslucent` this project uses, confirming the plain
+one doesn't cull) - so the second copy was drawing identical translucent triangles at the identical
+position a second time, a textbook cause of both symptoms actually reported: z-fighting flicker
+(floating-point depth precision doesn't reliably agree with itself on truly coincident geometry) and
+doubled/harder-looking alpha compositing at the edges. Fixed in both classes by emitting each quad once.
+`TetherBondRenderer` itself very likely has the same latent bug - not touched, since fixing it wasn't part
+of what was asked and it hasn't been reported as visibly wrong, but worth revisiting together if the
+tether ever gets its own bug report. Second, the original vortex used a tight multi-turn spiral (1.5 turns
+in a ~1-block radius); camera-facing billboard segments recompute their own orientation every frame from
+the live camera position, so wherever the curve bends sharply between segments - exactly what a tight
+spiral does - adjacent segments' orientations diverge a lot frame-to-frame, reading as visible faceting/
+shimmer even with the z-fight fixed. Softened to well under one full turn at a wider radius (still wraps
+around the target - the one part of the original screenshot the user explicitly liked - just gently), and
+the streaks/vortex were both substantially widened, slowed, and given lower-frequency waves to match the
+reference image (thick, clearly-separated, lazily-undulating bands, not fine fast-zigzagging threads).
+Server-to-client bridging is real networking, not the removed Photon packet: `network.WindRibbonSyncPacket`
+(sent once on lock-on, then every `RIBBON_RESYNC_INTERVAL_TICKS` while held so the vortex can visibly grow
+with the target's *current* Freedom without spamming a packet every tick, and once more on release to
+clear it) and `network.WindBurstPacket` (fire-and-forget, mirrors `TetherBondImpactPacket`'s exact shape).
+Client-side state (`client.WindRibbonClientState`) mirrors `TetherBondClientState` exactly.
+
+**`skills.abilitech.heroAspect.breath.WindEngine` (particles) is real too, now demoted to secondary/
+atmospheric decoration** - the third doc's own explicit "correct" formula (Custom Wind Ribbon + particles
+as decoration + environmental reactions, never particles alone as "the entire Breath effect"). Every
+`WindEngine` method (`ribbon`/`spiralAroundTarget`/`pressureInward`/`expandingBurst`/`nudgeNearbyItems`/
+`nudgeItemsOutward`) is unchanged from its own original pass and still called every tick alongside the new
+mesh renderer's sync packets - real motion math on top of the already-real, already-tinted
+`MSUParticles#spawnPowerParticle` primitive every other aspect's own particles use, not a new sprite.
+**Most of the doc's own "Environmental Reactions" list (leaves/grass/flowers swaying, smoke bending,
+campfire flames leaning, snow drifting, clouds swirling) is NOT implemented, for confirmed technical
+reasons, not oversight**: none of it has a real per-location override hook in modern NeoForge without
+Mixin. "Arrows wobble" is skipped for a different, deliberate reason: an `Arrow` has no separate
+visual-only transform channel, so faking a wobble would mean nudging its *real* flight path - the docs
+explicitly want environmental reactions to be visual-only, so doing that would violate the instruction
+rather than satisfy it. **Only "dropped items shift slightly" is real** (`nudgeNearbyItems`/
+`nudgeItemsOutward`) - a real vanilla `ItemEntity` is an ordinary entity with ordinary velocity, the one
+item on that list with an actual lever to pull.
+
+**Not yet manually verified in a real client** - same reasoning as every other item in "Suggested next
+steps": this is the single highest-risk unverified item in the whole project alongside Space Salt's own
+multiblock relocation - real vertex-animated world-space mesh rendering is more fragile to get right blind
+than anything else built this session (a wrong render-type, matrix transform, or winding order can look
+broken or silently render nothing, and none of it has been seen in an actual client). Needs a real client
+to confirm the ribbon/vortex/burst actually read as "flowing air" rather than a visual mess, that the curve
+genuinely bends when a Liberate/Constrain target moves instead of snapping or breaking, and that
+`WindBurstRenderer`'s billboard spokes don't degenerate at the near-camera cutoff.
+
+### Freedom system (`mechanics.freedom` package)
+Original design for this project, no 1.12.2 counterpart (same category as `mechanics.doom.DoomData`) -
+built from a standalone user-supplied design doc ("Minestuck - Breath Aspect Mechanic"). Every
+`LivingEntity` carries a hidden 0-100 `FreedomData` value (50 = neutral, real attachment
+`MSUAttachments#FREEDOM_DATA`, deliberately not `copyOnDeath()` - same reasoning as `DOOM_DATA`) that
+represents how much behavioral slack an entity has, not a resource to spend - explicitly **not** mind
+control, the entity still wants what it always wanted. `FreedomEvents` applies it to real hooks:
+continuous movement-speed/jump-strength `AttributeModifier`s scaled off distance from the 50 baseline;
+reduced incoming knockback and a chance to resist Slowness outright above the "High" (70+) threshold;
+leashing a High-freedom mob has a chance to fail, and an already-leashed one has a small periodic chance
+to snap its own leash; at "Extremely Low" (≤20) a `Mob`'s own dodge/flee/wander goals (`AvoidEntityGoal`/
+`PanicGoal`/`RandomStrollGoal`/`WaterAvoidingRandomStrollGoal`) are spliced out of its `goalSelector` on
+bracket entry and restored on exit, the same real goal-splicing idiom `heroAspect.rage.RageAI` already
+established. Breath's own two new techs (`TechBreathLiberate`/`TechBreathConstrain`, "Liberating
+Zephyr"/"Stifling Calm") are the player-facing trigger: hold and aim at a target to raise or lower their
+Freedom over time, matching the source doc's own "Breath users manipulate Freedom instead of directly
+controlling entities" framing.
+**Two categories deliberately left unmodeled, stated plainly rather than faked** (see `FreedomEvents`'
+own doc comment for the full reasoning): the source doc's "more varied AI decisions"/"improvised
+alternate routes"/"the entity appears creative" language has no generic engine hook to attach to -
+vanilla's own A* pathfinder always computes the objectively shortest path to whatever a goal picked,
+there's no "path diversity" knob anywhere in it; a periodic target-clear + forced `recomputePath()` at
+High freedom is the closest real approximation, not a literal implementation. And "resistance to webs"
+specifically (one item in the doc's "resistance to Slowness, webs, knockback" list) has no real hook
+either - `Entity#stuckSpeedMultiplier` is a protected field re-set every tick from inside cobweb's own
+`entityInside`, with no public mutator reachable before movement consumes it the same tick, same
+no-Mixin-policy gap as `TechBreathWindVessel`'s own documented collision-phasing limitation. The goal
+splicing at Extremely Low is also a heuristic, not exhaustive - it matches by exact vanilla goal class
+only, so a modded mob's own equivalent goal won't be recognized.
+**Not yet manually verified in a real client** - same reasoning as every other item in "Suggested next
+steps" below (needs a real client and a live mob to watch react): confirm the movement-speed/jump-height
+shift is actually visible/felt at both extremes; confirm a High-freedom mob's goals actually get spliced
+back correctly after a chunk unload/reload mid-suppression (untested edge case - `lastAppliedLevel`
+resets to unknown on reload, so a mob that unloads while suppressed and reloads already Extremely Low
+will silently re-suppress a second time against an already-goal-less selector, which should be harmless
+but was never actually watched happen); confirm Liberate/Constrain's tether survives a target walking
+out of range and reacquires correctly like `heart.TechHeartBond`'s own tether does.
+
+### Freedom/Doom/Relationship cross-system interactions
+Built from a second, separate user-supplied doc ("Minestuck Systems Overview") describing how Freedom
+should relate to the already-existing Doom and Relationship systems - same "original design, no 1.12.2
+counterpart" category as all three. Deliberately additive, one-way-dependency listener classes (Doom/
+Relationship stay generic, unaware of Freedom), the same shape `mechanics.doom.RelationshipDoomEvents`
+already established for Doom-reacts-to-Relationship:
+- **`mechanics.doom.FreedomDoomEvents`** - the one quadrant of the doc's own Freedom/Doom four-quadrant
+  matrix that needed real code ("Low Freedom + High Doom: trapped by circumstances, events feel
+  inevitable"): a second, independent damage multiplier on top of `DoomDamageEvents`' own, scaled by how
+  far below neutral (50) an entity's Freedom sits, gated on `doom > 0`. The other three quadrants are
+  intentionally *not* separately coded - they already emerge for free from `FreedomEvents`/
+  `DoomDamageEvents` running side by side (e.g. "can escape... but every choice carries risk" is just
+  Freedom's own knockback/leash resistance plus Doom's own existing damage amplification, no glue needed).
+- **`mechanics.freedom.FreedomRelationshipEvents`** - the doc's own flagship example, implemented for
+  real: "A Page of Breath does not force a mob to follow them. They increase its Freedom until it chooses
+  to follow." A `Mob` sustained at "High" Freedom by a specific player (`TechBreathLiberate`, which now
+  also records `FreedomData#setLastLiberatedBy`) gets a real trust/affinity boost toward that player;
+  only if that's enough to derive a real `FRIENDSHIP`/`LOYALTY` relationship (never forced, blocked
+  outright by a standing `HOSTILE` one) does the mob actually start following
+  (`FreedomData#setFollowing`, driven by a new generic `FreedomFollowGoal` - the `Mob`-agnostic,
+  UUID-driven equivalent of `entity.HopeGolemEntity`'s own private `FollowOwnerGoal`, re-injected on
+  world load the same way `heroAspect.rage.RageMobEvents` already re-injects its own goals). Dropping back
+  to Low/Extremely Low Freedom breaks an existing follow bond. Also drives a slow ambient relationship
+  stability drift (stronger at High Freedom, more fragile at Low) - the doc's own "based on choice, not
+  control" framing.
+- **`TechBreathLiberate`'s own potency now scales with the caster-target relationship** (the doc's
+  "Potential Relationship Effects" section): a positive relationship boosts the Freedom gain rate by up
+  to 50% at full trust; a `HOSTILE` one (the closest existing analog to the doc's own unmodeled "Fear"
+  value) heavily dampens it; low trust otherwise mildly weakens it. **"Respect"/"Fear" were deliberately
+  not added as new `Relationship` fields** - mapped onto what the existing `Relationship`
+  class already tracks (`LOYALTY`'s own trust/strength thresholds for "Respect", a standing `HOSTILE`
+  relationship for "Fear") rather than growing that class for one flavor doc, matching the restraint
+  `RelationshipManager`/`RelationshipDoomEvents` already show toward their own source docs.
+**Not yet manually verified in a real client**, same reasoning as the Freedom system above - needs a real
+mob, a real second player to be liberated toward, and time to watch the following conversion (or its
+breakdown) actually happen.
+
+**Real correction pass, from a third, later user-supplied doc** ("Minestuck Relationship System
+Interaction: Breath Aspect") that gave this whole area a stricter Core Design Rule: "Blood creates the
+relationship. Breath determines whether the relationship is chosen." / "Breath does not create
+relationships." That directly contradicted `FreedomRelationshipEvents`' own first version, which used
+`RelationshipManager#getOrCreate` in `tryFormWillingFollowership` - a Page of Breath could conjure real
+followership out of a total stranger mob with zero prior connection. **Fixed for real**: now uses
+`RelationshipManager#get` (never creates) - a mob only ever converts an *already-existing* relationship
+(vanilla taming's own `OWNERSHIP`, an organically-formed `FORMING`/`RIVALRY`, `KINSHIP`, etc.) into a
+chosen one; a genuine stranger gains nothing from sustained Liberation, matching the doc's own wolf
+example correctly (the wolf already has a taming bond *before* Breath ever touches it). Same doc also
+named two real, distinct relationship *events* Breath causes (as opposed to Blood's own event set),
+both now real and both respecting the same never-create rule:
+- **Liberation** (`TechBreathLiberate`) - fires once, the exact tick a target's Freedom crosses from
+  Low/Extremely Low up into High as a direct result of the ability (a real threshold-crossing event, not
+  a per-tick trickle): +Trust/+Affinity/+Stability on top of the ability's own ordinary per-tick gain.
+- **Forced Freedom** (`TechBreathLiberate`) - a small periodic chance, only while the relationship is
+  `HOSTILE`, of the opposite outcome instead of any gain: -Trust/+Conflict, "Freedom cannot be forced."
+
+**New tech, same doc's own "Ability Concept: Free Will"**: `heroClass.page.breath.TechPageBreathFreeWill`
+("Free Will" - `[Page] [Breath] [Utility]`), Page of Breath's real class+aspect tech (same
+`EnumClass.PAGE` + `requiredAspect = EnumAspect.BREATH` shape `page.doom.TechPageDoomReservoir` already
+established). Passive: nearby entities gain a slow Freedom trickle, doubled for anyone with a real
+(never-created) relationship to the Page. Activation (press): an instant burst - grants nearby entities a
+real chunk of Freedom, snaps any nearby mob's leash (real `Leashable#dropLeash`, the concrete reading of
+"allows entities to leave forced situations"), and reduces Instability on relationships touching a nearby
+entity (this project's own real "relationship manipulation" mechanic is Crimson Discord's Instability
+system, so "reduces relationship manipulation effects" is read as a direct counter to that specific
+existing mechanic). Also implements the doc's own **Shared Freedom** event for real: any two entities
+caught in the same burst that already have a relationship *with each other* gain
+Familiarity/Trust/Affinity from it. **Deliberately not modeled**: "makes loyalty based more on Trust than
+dependency" has no concrete mechanical anchor in the real `Relationship` fields and was left as flavor
+text rather than forced into an arbitrary implementation - same honesty convention as this project's other
+stated gaps.
+**Not yet manually verified in a real client** - same reasoning as everything else in this section; Free
+Will additionally needs a real group of nearby entities (ideally some already related to each other) to
+watch the Shared Freedom event actually fire correctly.
+
+**New tech, user-requested directly (not from any of the three Breath/Freedom docs)**:
+`heroClass.mage.breath.TechMageBreathInsight` ("Breath Insight" - `[Mage] [Breath] [Utility]`), a fourth
+sibling to `mage.blood.TechMageBloodInsight`/`mage.doom.TechMageDoomInsight` (same "the Mage cannot
+create/manipulate, only understand" role, same 100-boondollar cheap-informational-read price, same
+press-while-aiming-to-report shape). Reads a target's `FreedomData` - raw 0-100 value, its `FreedomLevel`
+bracket (color-coded green/white/gold/red for High/Neutral/Low/Extremely Low), who last raised it via
+Liberate, and who it's currently willingly following, if anyone - purely read-only, no side effects.
 
 ### Real EntityBubble (`entity` package) - de-simplification pass
 Shared, renderable `BubbleEntity` (real port) backs all three aspects' bubble techs
@@ -90,6 +311,78 @@ rendering + visibility hooks; Rage Berserk/Frenzy splice real `GoalSelector` ent
 needed, unlike the original); Light Insight wires a real 5x Juju drop-chance loot condition; Life
 Chloroball is a real block using vanilla random-tick fertilizing. Per-tech known gaps are
 documented inline in code; see "Suggested next steps" for the manual-verification checklist.
+
+### Mind Decision system (`mechanics.mind` package)
+Original design for this project, no 1.12.2 counterpart (same category as `mechanics.freedom`/
+`mechanics.doom`) - built from a standalone user-supplied design doc ("Mind Aspect System Design"). Core
+rule: Mind governs *decisions*, not thoughts/personality/knowledge/relationships (those stay Heart/Light/
+Blood's job) - "Mind determines what an entity chooses to do." Every `LivingEntity` carries a hidden
+`DecisionData` (`MSUAttachments#DECISION_DATA`, not `copyOnDeath()`, same reasoning as `FREEDOM_DATA`):
+four 0-100/50-neutral attributes (Certainty, Hesitation, Adaptability, Resolve - the doc gives no numeric
+scale of its own, this mirrors Freedom's convention for consistency) plus a `DecisionType` (Attack/
+Protect/Flee/Wander/Follow/Breed/Search/Harvest/Guard) + target UUID + capped history.
+`mechanics.mind.DecisionManager` is the doc's own named class ("owns behavioral choices") - real
+operations matching the doc's own vocabulary: `commit`/`reconsider` (direct, unresisted), `tryRedirect`
+(Resolve-resisted - "harder to redirect... less vulnerable to Mind abilities" - the doc's own explicit
+tie between Resolve and being manipulated), `delay` (schedules a hesitation pause), `reinforceConfidence`/
+`weakenConfidence` (both just adjust Certainty). **Architectural dependency is real and enforced by
+omission, exactly as the doc's own diagram** (`RelationshipManager -> DecisionManager`, never reverse):
+`DecisionManager.evaluatePriority` reads `RelationshipManager` (Ownership/Friendship/Loyalty/Family/
+Kinship score by Trust, Hostile/Rivalry score by Conflict) but nothing in the file has a code path to
+write back to it - the doc's own Design Boundary ("Mind should never directly modify relationship values")
+holds because there's simply no method that does that, not because of a runtime guard.
+`mechanics.mind.DecisionEvents` is the real behavior-wiring half (mirrors `FreedomEvents`' own split
+between data-holder and interpreter), `Mob`-only (no player-relevant hooks exist for this system, unlike
+Freedom's own attribute modifiers): Certainty resists a `Mob`'s own natural vanilla retargeting above the
+50 baseline (a real `Mob#setTarget` override), *unless* `evaluatePriority` says the new candidate target
+is dramatically more relevant than the old one - a real, live implementation of the doc's own worked
+example (a Hostile threat overriding a merely-committed decision even for a high-Certainty entity), and
+the one place Relationship data actually reaches a live AI decision in this pass. Adaptability scales how
+quickly a stale (dead/gone) decision target actually clears, from a fast 20-tick check at high Adaptability
+up to a slow 200-tick one at low ("tunnel vision"). Hesitation splices real `MeleeAttackGoal` instances out
+of a mob's `goalSelector` for the scheduled pause duration and restores them after - deliberately *only*
+the attack goal, so a hesitating mob can still move/look/flee/wander normally, a real distinction from a
+stun (the doc's own explicit "this is not a stun effect").
+**Real Resolve payoff, wired into already-built content** rather than left as unconsumed infrastructure:
+`TechMindControl`'s possession attempt and `TechMindConfusion`'s effect application both now roll
+`DecisionManager#resistsInfluence` (a shared, above-50-baseline-only resistance formula) before doing
+anything - a resisted attempt costs no food/resource and sends `status.mindResisted`.
+**"Predict" has a real reader now**: `heroClass.mage.mind.TechMageMindInsight` ("Mind Insight",
+`[Mage] [Mind] [Utility]`, cost 100 like its three siblings) - press while aiming at a living entity to
+read out its Certainty/Hesitation/Adaptability/Resolve, current `DecisionType` + target if any, and its
+most recent history entry. Same "the Mage cannot create/manipulate, only understand" role and same
+read-only shape as `mage.breath.TechMageBreathInsight`/`mage.blood.TechMageBloodInsight`/
+`mage.doom.TechMageDoomInsight` - `IDecisionData`'s plain getters were exactly the read-only surface this
+needed, no dedicated "predict" method required on `DecisionManager` itself.
+**Real bug fix, caught from a live report** ("entities targeting you don't show that they're targeting
+you"): `DecisionEvents.processTargetTracking` was always syncing `currentDecisionTarget` correctly
+(including to the player), but `currentDecision` (the `DecisionType` label) is only ever set by a
+deliberate `DecisionManager#commit`/`tryRedirect` call - nothing an ordinary vanilla-AI-hunted mob would
+ever trigger. `TechMageMindInsight`'s report gated its whole "Currently: ..." line behind
+`currentDecision != null`, so a mob correctly tracking the player as its target still reported nothing at
+all. Two real fixes, not a workaround: the report now shows the target line whenever a target exists,
+independent of whether a decision type is set (labeling an untyped one `(untyped)`, and calling the
+player out by name as "you" in red rather than their in-game name); and `DecisionEvents` gained a new
+`syncTarget` helper that labels a synced natural vanilla combat target as `DecisionType.ATTACK` (accurate,
+since `Mob#getTarget()` *is* vanilla's own attack target) and clears the label alongside a lost target, so
+the common case now reads as a real "Currently: ATTACK targeting you" instead of the technically-correct
+but useless "(untyped)". **Known limitation, not fully solved**: `currentDecisionTarget` is genuinely
+overloaded (vanilla's own attack target vs. whoever a deliberately committed non-combat decision like
+`PROTECT` is about) - nothing currently calls `commit` with a non-`ATTACK` decision that also sets a
+target, so this has never actually collided in practice, but a future caller that does would have its
+own committed target silently overwritten the next time natural target-tracking runs. Worth a second,
+dedicated field if/when a real non-combat target-setting caller exists - see `DecisionEvents.syncTarget`'s
+own doc comment.
+`evaluatePriority` is deliberately a modest single consult point, not a full
+replacement targeting AI - the doc's own worked example (Player→Ownership/Wolf→Kinship/Zombie→Hostile
+driving Protect/Follow/Attack/Retreat) is illustrative of the *kind* of reasoning Relationship should
+inform, not a spec for a general-purpose utility-AI system, and building one would risk real conflicts
+with vanilla AI for a doc that explicitly says "build on existing decisions rather than replacing
+Minecraft AI entirely."
+**Not yet manually verified in a real client** - same reasoning as every other item in "Suggested next
+steps": needs real mobs with real vanilla AI to watch retarget (or resist retargeting), a real Hostile
+threat appearing mid-combat to confirm the relationship override actually fires, and a real hesitation
+pause to confirm only the attack goal pauses while the mob keeps moving/looking around normally.
 
 ### Timeline system (`timeline` package)
 From-scratch design (not ported from the original mod). `TimelineRecorder` always-on records
@@ -738,3 +1031,50 @@ actually spending currency.
     place blocks (survival stack-count limit, creative 256-block cap, outline renders, normal single
     right-click placement is fully replaced not doubled) both via the badge and via real Minestuck Edit
     Mode.
+28. Manually verify the new Freedom system (`mechanics.freedom`, see that section above) in a real client
+    - not driven end-to-end this session, same reasoning as every item above: confirm a hostile mob
+    driven to Extremely Low Freedom via `TechBreathConstrain` actually stops dodging/fleeing/wandering
+    and that its goals correctly return once released; confirm a High-Freedom mob visibly moves/jumps
+    faster, occasionally breaks its own leash, and resists a Slowness potion at least sometimes; confirm
+    `TechBreathLiberate`/`TechBreathConstrain`'s tether behaves like `heart.TechHeartBond`'s own tether
+    (survives the target moving, drops cleanly on release/unequip). Consider, if it ever feels needed in
+    practice, a `/msu debug` command to directly set an entity's Freedom for testing rather than relying
+    on holding down the new techs.
+29. Manually verify the Freedom/Doom/Relationship cross-system interactions (see that section above) in a
+    real client - not driven end-to-end this session, same reasoning as every item above: sustain
+    `TechBreathLiberate` on a real hostile-to-neutral mob long enough to watch it actually flip to
+    Friendship/Loyalty and start following, then watch it stop following after a `TechBreathConstrain`
+    pass or natural Freedom decay; confirm the relationship stability drift is actually noticeable over a
+    longer play session rather than just compiling clean; confirm a high-Doom, low-Freedom entity really
+    does take visibly more damage than either factor alone would predict, without runaway values (both
+    curves are supposed to saturate, but this was reasoned about, not watched).
+30. Manually verify the "Breath does not create relationships" correction and `TechPageBreathFreeWill`
+    ("Free Will", see the Freedom/Doom/Relationship section above) in a real client - not driven
+    end-to-end this session, same reasoning as every item above: confirm a genuine stranger mob gains no
+    followership from sustained `TechBreathLiberate` (the corrected, intended behavior) while an already-
+    tamed/owned mob does; confirm the Liberation event actually fires once (not repeatedly) on the real
+    threshold crossing; confirm Forced Freedom's Trust/Conflict shift is visible against a real Hostile
+    mob; confirm Free Will's passive trickle, its activation burst (Freedom grant, leash-breaking,
+    Instability reduction), and Shared Freedom's pairwise relationship boost all work correctly on a real
+    group of nearby entities.
+31. Manually verify the new Mind Decision system (`mechanics.mind`, see that section above) in a real
+    client - not driven end-to-end this session, same reasoning as every item above: confirm a real
+    high-Certainty mob visibly resists being retargeted away from its current opponent, and that a
+    Hostile-relationship threat still overrides that resistance; confirm a low-Adaptability mob keeps
+    "chasing" a target that already died noticeably longer than a high-Adaptability one; confirm a
+    hesitating mob genuinely keeps moving/reacting but doesn't land an attack until the pause elapses;
+    confirm `TechMindControl`/`TechMindConfusion`'s new Resolve resistance actually blocks an attempt
+    against a real high-Resolve target and sends `status.mindResisted`. Consider, if it ever feels needed,
+    a `/msu debug` command to directly set an entity's Decision attributes for testing.
+32. Manually verify the Breath Wind visuals (`WindRibbonRenderer`/`WindBurstRenderer` + `WindEngine`, see
+    that section above) in a real client - not driven end-to-end this session, same reasoning as every item
+    above, but higher-stakes than most: this is real vertex-animated mesh rendering, never seen render at
+    all. Confirm the ribbon mesh actually appears (right render type, right texture, not invisible/black/
+    missing), that it visibly twists and bends when the target walks around instead of snapping or breaking
+    apart; confirm the vortex spiral around the target rotates and grows with Freedom as intended; confirm
+    Constrain's inward-shrinking vortex reads as compression, not "evil"; confirm `WindBurstRenderer`'s
+    expanding billboard shell reads as one coherent wave, not scattered flickering spokes, and that the
+    near-camera cutoff doesn't leave visible gaps; confirm `WindEngine`'s own particle layer still looks
+    right as secondary decoration underneath the mesh, not fighting it visually. If the mesh rendering turns
+    out too fragile/wrong in practice, the `WindEngine`-only particle version (this same section's own git
+    history, before the mesh renderer pass) is a real, working fallback to revert to.

@@ -14,6 +14,8 @@ import org.wilkretawesomesauce.minestuckuniverseported.capabilities.game.GameDat
 import org.wilkretawesomesauce.minestuckuniverseported.client.streak.StreakPreference;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.doom.DoomData;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.freedom.FreedomData;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.mind.DecisionData;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.doom.DoomReleasePool;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineBranchRegistry;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineData;
@@ -115,6 +117,17 @@ public final class MSUAttachments
 	// unlike MEDIUM_DATA/ITEM_VOID's Overworld-only scope). See mechanics.doom.DoomReleasePool's own doc comment.
 	public static final Supplier<AttachmentType<DoomReleasePool>> DOOM_RELEASE_POOL = REGISTER.register(
 			"doom_release_pool", () -> AttachmentType.serializable(DoomReleasePool::new).build());
+
+	// Attaches to any LivingEntity - the hidden Freedom value (see mechanics.freedom.FreedomData's own doc
+	// comment). Deliberately NOT copyOnDeath(), same reasoning as DOOM_DATA above: a fresh, neutral value
+	// on a respawned player's new instance is correct, not a bug.
+	public static final Supplier<AttachmentType<FreedomData>> FREEDOM_DATA = REGISTER.register(
+			"freedom_data", () -> AttachmentType.serializable(FreedomData::new).build());
+
+	// Attaches to any LivingEntity - the hidden Decision State (see mechanics.mind.DecisionData's own doc
+	// comment). Deliberately NOT copyOnDeath(), same reasoning as FREEDOM_DATA above.
+	public static final Supplier<AttachmentType<DecisionData>> DECISION_DATA = REGISTER.register(
+			"decision_data", () -> AttachmentType.serializable(DecisionData::new).build());
 
 	private MSUAttachments()
 	{

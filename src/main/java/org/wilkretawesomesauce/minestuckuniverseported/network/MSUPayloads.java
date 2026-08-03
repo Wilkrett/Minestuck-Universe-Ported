@@ -88,5 +88,10 @@ public final class MSUPayloads
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 		registrar.playToClient(TetherBondImpactPacket.ID, TetherBondImpactPacket.STREAM_CODEC,
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
+
+		registrar.playToClient(WindRibbonSyncPacket.ID, WindRibbonSyncPacket.STREAM_CODEC,
+				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
+		registrar.playToClient(WindBurstPacket.ID, WindBurstPacket.STREAM_CODEC,
+				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 	}
 }

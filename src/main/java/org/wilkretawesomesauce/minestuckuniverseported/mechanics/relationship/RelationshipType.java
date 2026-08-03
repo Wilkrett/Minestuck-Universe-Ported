@@ -14,7 +14,7 @@ package org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship;
  */
 public enum RelationshipType
 {
-	/**asdasd
+	/**
 	 * Not from either design document by name - a real, project-original addition needed to make
 	 * {@link RelationshipManager#deriveType} correct: the default type for a relationship organically
 	 * created by a single event (one hit, one instance of fighting alongside someone) that hasn't yet

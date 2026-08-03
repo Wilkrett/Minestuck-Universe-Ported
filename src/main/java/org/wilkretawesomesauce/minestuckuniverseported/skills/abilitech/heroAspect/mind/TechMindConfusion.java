@@ -9,6 +9,7 @@ import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.mind.DecisionManager;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
@@ -20,6 +21,11 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
  * ({@link #DURATION_TICKS}, matching the original's 400-tick duration exactly), reversing their controls
  * for as long as it lasts. See {@link MindConfusionEffect}'s own doc comment for how the reversal itself
  * is implemented client-side.
+ * <p>
+ * <b>Real Resolve resistance</b>, from the later "Mind Aspect System Design" document (no 1.12.2
+ * counterpart): {@code mechanics.mind.DecisionManager#resistsInfluence} - "harder to confuse" at high
+ * Resolve - gets a real chance to reject the effect outright before it's ever applied, same shape and
+ * same shared formula {@code heroAspect.mind.TechMindControl}'s own possession-attempt check uses.
  */
 public class TechMindConfusion extends TechHeroAspect
 {
@@ -48,6 +54,12 @@ public class TechMindConfusion extends TechHeroAspect
 		LivingEntity target = MSUAbilitechRayTrace.getTargetEntity(player);
 		if(target == null)
 			return true;
+
+		if(DecisionManager.resistsInfluence(target))
+		{
+			player.displayClientMessage(Component.translatable("status.mindResisted"), true);
+			return true;
+		}
 
 		target.addEffect(new MobEffectInstance(MSUMobEffects.MIND_CONFUSION, DURATION_TICKS, 0));
 		MSUAbilitechParticles.oneshot(level, target, EnumAspect.MIND, 10);

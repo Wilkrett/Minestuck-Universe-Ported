@@ -17,6 +17,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.mind.DecisionManager;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
@@ -50,6 +51,15 @@ import org.wilkretawesomesauce.minestuckuniverseported.network.MindControlSyncPa
  * an already-possessed target that gains it is immediately released - matching the original's own two
  * real checks. The original's third check (auto-release once the target strays more than 20 blocks away)
  * isn't ported - a separate distance-limit mechanic, not part of "port the real potion effects."
+ * <p>
+ * <b>Real Resolve resistance</b>, from the later "Mind Aspect System Design" document (no 1.12.2
+ * counterpart): {@code mechanics.mind.DecisionData#getResolve()} - "harder to redirect... less
+ * vulnerable to Mind abilities" at high Resolve - gets a real chance to reject the possession attempt
+ * outright, above-neutral Resolve only (same "only resists above the 50 baseline" shape
+ * {@code mechanics.freedom.FreedomEvents} already established for its own resistance checks). This is
+ * the single most literal "redirect this entity's decisions" ability in the whole project, so it's the
+ * natural first real consumer of Resolve - checked once, on the initial possession attempt only (not
+ * every held tick), matching how the original tech itself only ever rolls its own gates once per press.
  */
 public class TechMindControl extends TechHeroAspect
 {
@@ -84,6 +94,11 @@ public class TechMindControl extends TechHeroAspect
 			LivingEntity newTarget = MSUAbilitechRayTrace.getTargetEntity(player);
 				if(newTarget != null && newTarget.hasEffect(MSUMobEffects.MIND_FORTITUDE))
 					newTarget = null;
+				if(newTarget != null && DecisionManager.resistsInfluence(newTarget))
+				{
+					player.displayClientMessage(Component.translatable("status.mindResisted"), true);
+					newTarget = null;
+				}
 
 			if(newTarget != null && newTarget != player)
 			{
