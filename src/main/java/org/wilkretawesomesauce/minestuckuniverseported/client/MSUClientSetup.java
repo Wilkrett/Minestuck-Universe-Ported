@@ -25,6 +25,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.client.model.WizardHatMod
 import org.wilkretawesomesauce.minestuckuniverseported.client.particles.InkParticle;
 import org.wilkretawesomesauce.minestuckuniverseported.client.particles.PowerParticle;
 import org.wilkretawesomesauce.minestuckuniverseported.client.particles.TimeGearsRiseParticle;
+import org.wilkretawesomesauce.minestuckuniverseported.client.particles.WindWispParticle;
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.BubbleRenderer;
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.FrogHatLayer;
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.HopeGolemRenderer;
@@ -66,6 +67,7 @@ public final class MSUClientSetup
 		event.registerSpriteSet(MSUParticles.TIME_GEARS_RISE.get(), TimeGearsRiseParticle.Provider::new);
 		event.registerSpriteSet(MSUParticles.POWER.get(), PowerParticle.Provider::new);
 		event.registerSpriteSet(MSUParticles.INK.get(), InkParticle.Provider::new);
+		event.registerSpriteSet(MSUParticles.WIND_WISP.get(), WindWispParticle.Provider::new);
 	}
 
 	@SubscribeEvent

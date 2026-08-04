@@ -26,6 +26,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TimeDilationEffect;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TimeStopEffect;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.voidAspect.ConcealEffect;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.voidAspect.VoidStepEffect;
 import org.wilkretawesomesauce.minestuckuniverseported.godtier.GodTierComebackEffect;
 
 public final class MSUMobEffects
@@ -55,6 +56,7 @@ public final class MSUMobEffects
 	public static final DeferredHolder<MobEffect, AcceleratingEffect> ACCELERATING = REGISTER.register("accelerating", AcceleratingEffect::new);
 	public static final DeferredHolder<MobEffect, DecayproofEffect> DECAYPROOF = REGISTER.register("decayproof", DecayproofEffect::new);
 	public static final DeferredHolder<MobEffect, SlingChargeEffect> SLING_CHARGE = REGISTER.register("sling_charge", SlingChargeEffect::new);
+	public static final DeferredHolder<MobEffect, VoidStepEffect> VOID_STEP = REGISTER.register("void_step", VoidStepEffect::new);
 
 	private MSUMobEffects()
 	{

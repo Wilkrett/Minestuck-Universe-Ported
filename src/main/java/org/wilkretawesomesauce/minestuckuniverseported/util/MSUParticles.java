@@ -79,6 +79,22 @@ public final class MSUParticles
 		}
 	});
 
+	/** Original design for this project, no 1.12.2 counterpart - see {@link WindWispParticleOption}'s own doc comment. */
+	public static final Supplier<ParticleType<WindWispParticleOption>> WIND_WISP = REGISTER.register("wind_wisp", () -> new ParticleType<>(false)
+	{
+		@Override
+		public MapCodec<WindWispParticleOption> codec()
+		{
+			return WindWispParticleOption.codec(this);
+		}
+
+		@Override
+		public StreamCodec<? super RegistryFriendlyByteBuf, WindWispParticleOption> streamCodec()
+		{
+			return WindWispParticleOption.streamCodec(this);
+		}
+	});
+
 	private MSUParticles()
 	{
 	}
@@ -110,6 +126,14 @@ public final class MSUParticles
 	public static void spawnInkParticle(Level level, double x, double y, double z, double xVel, double yVel, double zVel, int color)
 	{
 		spawnInkParticle(level, x, y, z, xVel, yVel, zVel, color, 1.0F);
+	}
+
+	/** See {@link WindWispParticleOption}'s own doc comment - {@code scale} lets one call site spawn a subtle small wisp and another a much bigger swirling one. */
+	public static void spawnWindWisp(Level level, double x, double y, double z, double xVel, double yVel, double zVel, int maxAge, int hexColor, float scale)
+	{
+		if(!(level instanceof ServerLevel serverLevel))
+			return;
+		serverLevel.sendParticles(new WindWispParticleOption(hexColor, maxAge, scale), x, y, z, 0, xVel, yVel, zVel, 1.0);
 	}
 
 	public static void spawnAuraParticles(Entity entity, int color, int count)

@@ -2,6 +2,7 @@ package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAsp
 
 import com.mraof.minestuck.player.EnumAspect;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
@@ -31,6 +32,16 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
  * matching the original's real one-off call exactly rather than this aspect's own registered table
  * entry) - skipped while {@link MSUMobEffects#CONCEAL} is active, matching the original's own
  * "don't show particles while concealed" check.
+ * <p>
+ * <b>Real bug fix, from a live report ("void step doesn't work")</b>: setting {@code player.noPhysics}
+ * only ever touched the <i>server's</i> own {@code Player} instance - the whole Abilitech tick framework
+ * ({@code AbilitechEvents#onPlayerTick}) is explicitly server-only, and {@code Entity#noPhysics} is a
+ * plain, unsynced field, so the real connected client never found out Void Step was active and kept
+ * resolving its own local collision normally. See {@link VoidStepEffect}'s own doc comment for the full
+ * explanation. Fixed the same way {@code breath.TechBreathWindVessel} already had to solve this exact
+ * problem: {@link MSUMobEffects#VOID_STEP} is now applied every held tick as a plain marker potion effect
+ * (auto-synced to the client for free), which {@link VoidStepClientEvents} reads to set the client's own
+ * copy of {@code noPhysics} too.
  */
 public class TechVoidStep extends TechHeroAspect
 {
@@ -53,6 +64,7 @@ public class TechVoidStep extends TechHeroAspect
 		}
 
 		player.noPhysics = true;
+		player.addEffect(new MobEffectInstance(MSUMobEffects.VOID_STEP, 20, 0, true, false));
 
 		if(!player.hasEffect(MSUMobEffects.CONCEAL))
 			MSUAbilitechParticles.aura(level, player, 1, 0x104EA2, 0x001856);
@@ -65,6 +77,7 @@ public class TechVoidStep extends TechHeroAspect
 	{
 		super.onUnequipped(level, player, techSlot);
 		player.noPhysics = false;
+		player.removeEffect(MSUMobEffects.VOID_STEP);
 	}
 
 	@Override

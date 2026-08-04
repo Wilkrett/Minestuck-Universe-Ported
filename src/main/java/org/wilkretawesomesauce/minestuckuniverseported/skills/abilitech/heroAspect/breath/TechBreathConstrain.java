@@ -42,6 +42,21 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  * same ribbon+vortex mesh {@link TechBreathLiberate} uses, driven by the same {@link WindRibbonSyncPacket}
  * with {@code inward=true} - see that renderer's own doc comment for how the {@code inward} flag changes
  * both the vortex's motion (shrinking toward the target instead of holding constant radius) and its color.
+ * Only the mesh's quad-streak style is skipped for this tech (a direct user request) - only its lightning
+ * trail style renders here.
+ * <p>
+ * <b>{@code WindEngine#ribbon} added alongside {@code pressureInward}, a direct later user request</b> (a
+ * live screenshot of {@link TechBreathLiberate}'s own trail read as "1 measly wind effect" - see that
+ * class's own doc comment for the full story): this tech now also calls {@code WindEngine#ribbon} every
+ * active tick, which - since that method's own rework - traces the exact same curve as the lightning
+ * trail's own glowing core, giving this tech a denser particle stream layered directly on its trail too, on
+ * top of (not instead of) the existing {@code pressureInward} compression particles around the target.
+ * <p>
+ * <b>{@code WindEngine#windSwirl} added, the same technique pivot {@link TechBreathLiberate} got</b> (see
+ * that class's own doc comment for the full reference-screenshot story) - here the swirl's radius
+ * <i>shrinks</i> as compression increases (mirroring {@code pressureInward}'s own inward-shrinking radius),
+ * so the soft curling ring visibly tightens around the target as its Freedom drops, matching this tech's own
+ * "air pressure compresses toward the target" motif rather than Liberate's outward-growing one.
  */
 public class TechBreathConstrain extends TechHeroAspect
 {
@@ -53,6 +68,9 @@ public class TechBreathConstrain extends TechHeroAspect
 	private static final float PRESSURE_INTENSITY_MAX = 2.2F;
 
 	private static final int RIBBON_RESYNC_INTERVAL_TICKS = 10;
+
+	private static final double SWIRL_RADIUS_MAX = 1.3;
+	private static final double SWIRL_RADIUS_MIN = 0.4;
 
 	public TechBreathConstrain()
 	{
@@ -107,6 +125,14 @@ public class TechBreathConstrain extends TechHeroAspect
 		WindEngine.pressureInward(level, target.position().add(0, target.getBbHeight() * 0.5, 0),
 				PRESSURE_RADIUS_MAX - compressionFraction * (PRESSURE_RADIUS_MAX - PRESSURE_RADIUS_MIN), color,
 				PRESSURE_INTENSITY_MIN + compressionFraction * (PRESSURE_INTENSITY_MAX - PRESSURE_INTENSITY_MIN));
+
+		WindEngine.ribbon(level, player.position().add(0, player.getEyeHeight() * 0.8, 0),
+				target.position().add(0, target.getBbHeight() * 0.5, 0),
+				level.getGameTime() / 20F, color, compressionFraction);
+
+		WindEngine.windSwirl(level, target.position().add(0, target.getBbHeight() * 0.5, 0),
+				SWIRL_RADIUS_MAX - compressionFraction * (SWIRL_RADIUS_MAX - SWIRL_RADIUS_MIN),
+				level.getGameTime() / 20F, color, Math.max(0.3F, compressionFraction));
 
 		if(time == 0 || time % RIBBON_RESYNC_INTERVAL_TICKS == 0)
 			syncRibbon(player, target, compressionFraction);

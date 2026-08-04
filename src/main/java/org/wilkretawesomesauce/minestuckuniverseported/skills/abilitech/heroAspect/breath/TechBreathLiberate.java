@@ -24,7 +24,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 
 /**
- * New tech for this project ("Liberating Zephyr") - no 1.12.2 counterpart, no original cost to port (see
+ * New tech for this project ("Tailwind", renamed from "Liberating Zephyr") - no 1.12.2 counterpart, no original cost to port (see
  * this class's own cost comment below). The player-facing half of {@code mechanics.freedom.FreedomData}
  * for the Breath aspect: hold and aim at a target (locks on immediately, same raytrace-and-tether idiom
  * {@code heart.TechHeartBond} already established) to gradually raise their hidden Freedom - more
@@ -71,22 +71,34 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  * be a custom renderer." The real primary system now is {@code client.render.WindRibbonRenderer} - a
  * genuine procedural ribbon mesh + orbiting vortex, driven by {@link WindRibbonSyncPacket} (sent once on
  * lock-on, then re-sent every {@link #RIBBON_RESYNC_INTERVAL_TICKS} while held so the vortex can visibly
- * grow as the target's Freedom actually climbs, and once more on release to clear it - never every tick,
- * unlike the particle calls below, since a Photon/custom-mesh effect is meant to run its own animation
- * loop client-side once told "this is active", not be re-spawned constantly). {@link WindEngine#ribbon}/
- * {@link WindEngine#spiralAroundTarget} are kept too, exactly matching that doc's own "correct" formula
- * (custom ribbon + particles as secondary atmospheric decoration + environmental reactions) - not removed,
- * just demoted to the decoration layer they were always going to end up as.
+ * grow as the target's Freedom actually climbs, and once more on release to clear it - never every tick).
+ * <p>
+ * <b>{@code WindEngine} particles reintroduced, tracing the trail curve - two direct later user requests</b>.
+ * First, "remove the particles from LiberatingZephyr and use the trail instead" dropped the old
+ * {@code WindEngine#ribbon}/{@code WindEngine#spiralAroundTarget} calls entirely (the mesh's own lightning
+ * trail was judged sufficient on its own). Then, from a live screenshot ("it only shows 1 measly wind
+ * effect"), a follow-up request asked to bring {@code WindEngine} back specifically wired to "the trail"
+ * rather than its own old independent path: {@link #onUseTick} now calls {@code WindEngine#ribbon} every
+ * active tick again, but that method's own curve was reworked (see its own doc comment) to trace the exact
+ * same tapered curve {@code client.render.WindRibbonRenderer}'s lightning tube animates along, so the
+ * particle stream now visually hugs the mesh's own glowing core instead of an unrelated separate line -
+ * denser, fuller "wind" layered directly on the thin tube rather than atmospheric decoration off to the
+ * side. {@code spiralAroundTarget} is deliberately still not re-added (not asked for). The same
+ * {@code WindEngine#ribbon} call was also added to {@code TechBreathConstrain} (a direct user confirmation,
+ * both abilities should get it, not just this one).
+ * <p>
+ * <b>{@code WindEngine#windSwirl} added, a genuine technique pivot from a later reference-screenshot
+ * request</b> ("I want something like this [soft, blurred, curling smoke-ring wisps]... though keep the
+ * color blue"): the mesh's precise line geometry was never going to read as "natural wind" no matter how
+ * its thickness/flatness was retuned - see {@code client.particles.WindWispParticle}'s own doc comment for
+ * the full investigation (including why Photon wasn't reintroduced). {@link #onUseTick} now also calls
+ * {@code WindEngine#windSwirl} around the target every tick, radius/intensity scaled by the same
+ * {@code freedomFraction} the mesh's own vortex already uses, so the two stay visually in sync.
  */
 public class TechBreathLiberate extends TechHeroAspect
 {
 	private static final float FREEDOM_PER_TICK = 0.5F;
 	private static final float LOW_TRUST_THRESHOLD = 25F;
-
-	private static final double SPIRAL_RADIUS_MIN = 0.3;
-	private static final double SPIRAL_RADIUS_MAX = 1.2;
-	private static final float SPIRAL_INTENSITY_MIN = 0.4F;
-	private static final float SPIRAL_INTENSITY_MAX = 2.0F;
 
 	private static final float LIBERATION_TRUST_GAIN = 15F;
 	private static final float LIBERATION_AFFINITY_GAIN = 15F;
@@ -98,9 +110,12 @@ public class TechBreathLiberate extends TechHeroAspect
 
 	private static final int RIBBON_RESYNC_INTERVAL_TICKS = 10;
 
+	private static final double SWIRL_RADIUS_MIN = 0.5;
+	private static final double SWIRL_RADIUS_MAX = 1.3;
+
 	public TechBreathLiberate()
 	{
-		super(Minestuckuniverseported.id("liberating_zephyr"), EnumAspect.BREATH, 32000, MSUTechType.UTILITY); // new tech, no original cost to port - picked to fit this aspect's own cost spread
+		super(Minestuckuniverseported.id("tailwind"), EnumAspect.BREATH, 32000, MSUTechType.UTILITY); // new tech, no original cost to port - picked to fit this aspect's own cost spread
 	}
 
 	@Override
@@ -156,13 +171,16 @@ public class TechBreathLiberate extends TechHeroAspect
 		if(time % 20 == 0 && !player.isCreative())
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 1);
 
-		int color = MSUAspectColors.get(EnumAspect.BREATH)[0];
 		float freedomFraction = data.getFreedom() / 100F;
 
-		WindEngine.ribbon(level, player.getEyePosition(1.0F), target.position(), color, 1.0F);
-		WindEngine.spiralAroundTarget(level, target.position().add(0, target.getBbHeight() * 0.5, 0),
-				SPIRAL_RADIUS_MIN + freedomFraction * (SPIRAL_RADIUS_MAX - SPIRAL_RADIUS_MIN), color,
-				SPIRAL_INTENSITY_MIN + freedomFraction * (SPIRAL_INTENSITY_MAX - SPIRAL_INTENSITY_MIN));
+		int color = MSUAspectColors.get(EnumAspect.BREATH)[0];
+		WindEngine.ribbon(level, player.position().add(0, player.getEyeHeight() * 0.8, 0),
+				target.position().add(0, target.getBbHeight() * 0.5, 0),
+				level.getGameTime() / 20F, color, freedomFraction);
+
+		WindEngine.windSwirl(level, target.position().add(0, target.getBbHeight() * 0.5, 0),
+				SWIRL_RADIUS_MIN + freedomFraction * (SWIRL_RADIUS_MAX - SWIRL_RADIUS_MIN),
+				level.getGameTime() / 20F, color, Math.max(0.3F, freedomFraction));
 
 		if(time == 0 || time % RIBBON_RESYNC_INTERVAL_TICKS == 0)
 			syncRibbon(player, target, freedomFraction);

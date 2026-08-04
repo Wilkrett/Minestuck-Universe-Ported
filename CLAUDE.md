@@ -138,13 +138,185 @@ with the target's *current* Freedom without spamming a packet every tick, and on
 clear it) and `network.WindBurstPacket` (fire-and-forget, mirrors `TetherBondImpactPacket`'s exact shape).
 Client-side state (`client.WindRibbonClientState`) mirrors `TetherBondClientState` exactly.
 
-**`skills.abilitech.heroAspect.breath.WindEngine` (particles) is real too, now demoted to secondary/
-atmospheric decoration** - the third doc's own explicit "correct" formula (Custom Wind Ribbon + particles
-as decoration + environmental reactions, never particles alone as "the entire Breath effect"). Every
-`WindEngine` method (`ribbon`/`spiralAroundTarget`/`pressureInward`/`expandingBurst`/`nudgeNearbyItems`/
-`nudgeItemsOutward`) is unchanged from its own original pass and still called every tick alongside the new
-mesh renderer's sync packets - real motion math on top of the already-real, already-tinted
-`MSUParticles#spawnPowerParticle` primitive every other aspect's own particles use, not a new sprite.
+**Real "lightning trail" layer, added on top of the streaks (a direct, explicit user request - not a
+replacement of the wavy-band system)**: pointed at a real reference mod (`ChestItem`, NeoForge 1.21.1)
+whose own trail entities render through vanilla's real `RenderType.lightning()` instead of a textured
+quad - confirmed by reading that mod's actual renderer source, not guessed. `WindRibbonRenderer` now also
+builds real 3D cylinder geometry (`renderLightningTube`, 6-sided) along the exact same animated curve
+math the streaks already use (a distinct phase offset so it doesn't sit exactly on top of streak 0),
+drawn through a second, genuinely separate `VertexConsumer`/render-type batch using vanilla's own
+`RenderType.lightning()` - the same untextured, additive-ish, glowing render type vanilla itself uses for
+actual lightning bolts (confirmed against `LightningBoltRenderer`'s own real source: its vertex format is
+`POSITION_COLOR`, so a lightning vertex only ever gets a position and a color - no UV/overlay/light/normal
+calls, a genuinely simpler vertex-building path than the textured streaks). No new shader/texture assets
+needed - `RenderType.lightning()` is a public vanilla constant, not something the reference mod had to
+build itself (that mod's own copy layers a custom Mixin-injected render-target system on top for a
+screen-distortion effect - explicitly not replicated here, out of scope and against this project's own
+no-Mixin policy - only the plain vanilla render type was adopted). Real 3D tube geometry also sidesteps
+`renderQuad`'s own near-camera degenerate-quad cutoff entirely - a fixed-radius cylinder doesn't have a
+camera-facing billboard's "width grows unbounded as distance to camera shrinks" problem.
+
+**Real crash, caught from a live client report ("Crashed...") the very first time this layer actually
+ran**: `IllegalStateException: Not building!` inside `VertexConsumer#addVertex`, thrown from
+`WindRibbonRenderer#vertex`/`renderQuad`/`renderRibbon`. Root cause confirmed by reading
+`MultiBufferSource.java`'s real `getBuffer()` source, not guessed: `entityTranslucent(TEXTURE)` and
+`lightning()` are both "shared-buffer" render types (neither has its own dedicated fixed buffer), and
+`getBuffer()` unconditionally ends whichever shared-buffer type was last active (`endBatch(lastSharedType)`)
+the instant a *different* shared-buffer type is requested. The original `onRenderLevel` fetched both
+consumers up front, then interleaved streak and lightning draw calls in one loop - so fetching
+`lightningConsumer` right after `consumer` silently ended `consumer`'s batch before a single vertex had been
+written to it, and the very first streak `addVertex()` call inside the loop crashed. Fixed by splitting into
+two fully sequential passes over `ribbons.entrySet()` - fetch `entityTranslucent(TEXTURE)`, draw every
+ribbon's streaks/vortex, `endBatch` it; only then fetch `lightning()`, draw every ribbon's lightning
+tubes/vortex, `endBatch` it. General rule for any future render type added here (or anywhere else two
+shared-buffer types are used in the same frame): never hold two different shared-buffer `VertexConsumer`
+references live across a `getBuffer()` call boundary - one type's whole pass has to fully finish (including
+its `endBatch`) before the next type is ever fetched.
+
+**Fade-out on release, a direct later user request** ("instead of instantly making the trail disappear it
+should slowly fade out"): `client.WindRibbonClientState` used to `Map.remove` a ribbon the instant
+`WindRibbonSyncPacket` arrived with `targetId=-1` (release), so `WindRibbonRenderer` simply stopped seeing
+it the very next frame - a hard pop. Fixed by mirroring a pattern this exact codebase already has for a
+different feature: `client.StreakClientState`'s own `active`/`fadingOut` live/fading map split (built for
+its ghost afterimages, not its ribbon trail - this is the first reuse of that shape elsewhere).
+`WindRibbonClientState.clearRibbon` now moves the released ribbon into a second `fadingRibbons` map with a
+start tick instead of discarding it; a new `getRenderRibbons()` (replacing the old `getRibbons()`, its only
+caller) hands the renderer a combined snapshot each frame - live ribbons at full strength, fading ones with
+a `fadeMultiplier` ramping `1F -> 0F` over `FADE_OUT_TICKS` (20 ticks/1 second, self-pruned once elapsed).
+`WindRibbonRenderer` threads that multiplier through `renderRibbon`/`renderVortex`/`renderLightningRibbon`/
+`renderLightningVortex`, multiplied into whatever alpha value each already computes (independent of, not a
+replacement for, the existing `intensity` scalar) - so every visual element (streaks, vortex, lightning
+tube, lightning vortex) now fades together smoothly instead of vanishing instantly.
+
+**Per-ability visual split, two direct later user requests** ("remove the streak from Stifling Calm and
+use the trail instead" / "remove the particles from LiberatingZephyr and use the trail instead") - the two
+abilities briefly no longer shared an identical visual, each leaning on a different half of what this
+renderer built at the time: Constrain's pass 1 (the quad-streak style) was skipped for `inward=true`
+ribbons only, while Liberate still got both mesh styles. **Superseded by the next entry below** - the
+quad-streak style is now gone for both abilities, not just Constrain.
+
+**The quad-streak style removed entirely, a direct later user request** ("it still uses streaks.. causing
+it to look quite jarring", from a live screenshot of Liberate): the wide translucent billboard quads
+(`renderRibbon`'s `STREAK_COUNT` parallel bands + `renderVortex`, both built on `renderQuad`/`vertex` and
+the reused `clear_beam.png` texture) read as jarring even for Liberate alone once seen live, not just
+relative to Constrain's already-cleaner look. Removed outright for both abilities - `renderRibbon`,
+`renderVortex`, `renderQuad`, `vertex`, and every constant only they used (`TEXTURE`, `RADIUS`, `ALPHA`,
+`MIN_CAM_DISTANCE_SQR`, `STREAK_COUNT`/`STREAK_SPACING`/`STREAK_PHASE_STAGGER`/`STREAK_FREQ_VARIATION`)
+were deleted from `WindRibbonRenderer` rather than left dead, since nothing else in the project called them
+and this style was the repeat source of every real visual complaint in this feature's history (double-
+emission z-fighting, tight-spiral flicker, and now this). Both abilities now render identically: the
+lightning tube + lightning vortex (this renderer's only remaining visual) plus `WindEngine.ribbon`'s
+particle trail (below) - no per-ability mesh-style difference left at all. `onRenderLevel` also dropped
+back to a single render-type pass now that only `lightning()` is ever fetched (the two-pass structure from
+the earlier crash fix is no longer strictly required, but was kept as the simplest already-proven-safe
+shape rather than un-splitting it for no real benefit).
+
+**Multiple parallel trail strands, a direct later user request** ("there's only 1 trail instead of
+multiple... I liked the thickness & amount the streaks had"): removing the quad-streak style also removed
+its "several parallel bands" look, and a single thin lightning tube alone read as too sparse. Rather than
+reviving any flat billboard geometry, `renderLightningRibbon` now draws `TRAIL_STRAND_COUNT` (3) parallel
+*tubes* instead of one, reusing the exact same shape the deleted quad streaks used - `ribbonPoint` got its
+`strandOffset`/`phase`/`freqScale` parameters back (a fixed, untapered lateral offset per strand so they
+stay visibly spread rather than pinching together at the endpoints, plus a phase stagger and small
+per-strand frequency bump so they wave independently instead of in lockstep) - just applied to real round
+cylinder geometry instead of flat quads, so the "amount" is back without the jarring flat-panel look coming
+back with it. The vortex (`renderLightningVortex`) is untouched - still a single spiral tube, not
+multi-stranded, since this request was specifically about the connecting trail.
+
+**Flattened, elliptical tube cross-section, a direct later user request** ("i think i need the trails
+somewhat more flatter or stretched out... it doesnt really feel like a breath/wind effect"): a perfectly
+round tube read as a rigid rope rather than flowing wind even with multiple strands. `renderLightningTube`
+now builds an elliptical cross-section - a new `LIGHTNING_TUBE_WIDTH` (0.18, wide) along `basis[0]` and
+`LIGHTNING_TUBE_THICKNESS` (0.03, thin) along `basis[1]`, replacing the old single symmetric
+`LIGHTNING_TUBE_RADIUS` - rather than a circle. `basis[0]` is exactly the same axis the parallel strands
+above are already spread apart along, so each strand's own flat side lines up with the "sheet" the strands
+form together, reading as overlapping flat ribbons rather than round rods. Deliberately still real 3D
+geometry with a fixed world-space cross-section (each strand's own local tangent frame, recomputed per
+segment along the curve), not a revived camera-facing billboard - the earlier "jarring" billboard problems
+were about a screen-facing quad degenerating near the camera and z-fighting when double-drawn, not simply
+about being flat, so flattening the already-working, already-proven tube geometry sidesteps that whole bug
+class while still reading as ribbon-like.
+
+**Real technique pivot to a soft particle-swarm "wind wisp" system, from fresh reference screenshots** ("I
+want something like this... though keep the color blue" - a different modpack's Photon-based spell-charging
+effect: soft, blurred, translucent smoke-ring wisps curling around the caster, nothing like a precise
+geometric line). After several rounds of tuning the mesh's thickness/flatness, the user confirmed (via two
+direct questions) that the mesh's line geometry was never going to read as "natural wind" regardless of
+shape, and that the real fix was a technique pivot to a denser, softer particle swarm rather than continued
+mesh tuning.
+
+**Photon investigated a second time and still not reintroduced** - the user's "I think we might have to use
+Proton" turned out to mean Photon (the reference modpack's own mod list, `E:\Twitch\Instances\magic evo 2
+\mods`, includes `photon-forge-1.20.1-1.1.17.jar`, and the swirl screenshots are literally one of its
+bundled effects, `assets/photon/fx/windcasting.fx` inside that pack's `magic_evolved_two` mod). Inspecting
+that file for real (gzip-decompressed, not guessed) found it's actually a real, structured NBT-like data
+format (`particle`/`trails`/`colorOverTrail` gradient/`material shader photon:circle` fields, etc.) - a real
+correction to this doc's own earlier claim that Photon has "no data-driven/JSON authoring path anywhere in
+its own source tree." It does have an underlying file format. That correction doesn't change the outcome,
+though, for two separate real reasons: reusing that modpack's actual bundled `.fx` file in this project
+would mean redistributing another modder's authored creative work without permission (a licensing concern,
+not a technical one), and hand-authoring a *new* correct effect in that binary format completely blind (no
+live Minecraft client available in this session to render/iterate against) remains impractically high-risk
+- one wrong field in a particle/shader graph and it silently renders nothing. Photon stays out. What *was*
+worth taking from this investigation: the underlying **technique** (soft round particle sprites moving along
+spiral/trail paths with a color gradient) is fully achievable with tools this project already has.
+
+**`skills.abilitech.heroAspect.breath.WindEngine`'s new wind-wisp particles - real vanilla art reuse, not
+new placeholder art**: confirmed via direct inspection of the actual vanilla 1.21.1 client jar
+(`neoformruntime`'s cached `minecraft_1.21.1_client.jar`), vanilla ships its own real "Gust" Wind Charge/
+Breeze particle art - `textures/particle/gust_0.png` through `gust_11.png` (12 frames), each genuinely soft,
+blurred, and translucent (visually confirmed by rendering several frames - `gust_0` is a soft round blur
+dot, `gust_6`/`gust_10` are soft curling comma/spiral-ring shapes) - and its own `particles/gust.json` lists
+them exactly the same way this project's own `particles/power.json` already lists vanilla's `spark_0`-
+`spark_7` for `PowerParticle`. Same established convention (`PowerParticle`'s own doc comment), a
+thematically perfect zero-new-art fit this time. New: `util.WindWispParticleOption` (color + maxAge + a new
+`scale` field, modeled on `PowerParticleOption`), `client.particles.WindWispParticle` (modeled on
+`PowerParticle` - same `PARTICLE_SHEET_TRANSLUCENT`/"always half-lit" glow trick - but with two real
+additions `PowerParticle` deliberately doesn't have: `tick()` now actively animates both `alpha` (ease-in
+over the first 15% of life, ease-out to 0 after - so it fades in and out instead of popping/vanishing) and
+`quadSize` (a mild growth over its life, a "puffing outward" feel) - kept as a genuinely separate class
+rather than added to `PowerParticle` itself, since that class is shared infrastructure every other aspect's
+own particle calls still go through unchanged), a new `MSUParticles.WIND_WISP`/`spawnWindWisp` pair
+(registered/wired the same way `POWER`/`INK` already are, including in `client.MSUClientSetup`), and a new
+`particles/wind_wisp.json` listing the real `gust_0`-`gust_11` frames.
+- `WindEngine.ribbon` switched from `spawnPowerParticle` to `spawnWindWisp` (small `scale`) with a small
+  random perpendicular jitter per spawn point - a precise spark sitting exactly on the curve read as a crisp
+  line of motes, not a soft drifting stream; the jitter turns it into a loose cloud following the trail.
+- New `WindEngine.windSwirl(Level, Vec3 center, double radius, float time, int color, float intensity)` -
+  reuses `spiralAroundTarget`'s own orbiting shape (angle/radius/tangential velocity) but denser, bigger,
+  slower, with a gentle vertical bob layered on top, so it reads as a soft curling ring/aura around the
+  target rather than a thin fast vortex of motes - the piece that actually reproduces the reference
+  screenshots' "curling wing/ring" look. Called from both `TechBreathLiberate` (radius grows with
+  `freedomFraction`, matching the mesh's own vortex) and `TechBreathConstrain` (radius *shrinks* as
+  compression increases instead, mirroring `pressureInward`'s own inward motif rather than Liberate's
+  outward one). `spiralAroundTarget`/`pressureInward`/`expandingBurst` stay on the older, sharper
+  `spawnPowerParticle` unchanged - out of scope, still correct for what they visualize.
+- Color needed no new logic anywhere - every new call passes through the exact same `MSUAspectColors.get(EnumAspect.BREATH)`
+  values (`0x47E2FA`/`0x4379E6`) the existing calls at each site already used.
+- `client.render.WindRibbonRenderer`'s mesh is de-emphasized, not deleted: `LIGHTNING_ALPHA` lowered from
+  `0.55F` to `0.25F` so it reads as a faint accent thread under the new particle swarm instead of competing
+  with it - a one-constant, easily-revertable change, since the mesh itself is still real, crash-tested,
+  working code.
+
+**`WindEngine.ribbon` reintroduced and reworked to trace the trail curve, from a live screenshot report**
+("it only shows 1 measly wind effect... reuse windengine but wire it to be using the trails instead of the
+streaks"): the particle-removal change above was a real overcorrection - the mesh's lightning tube alone
+read as too sparse while held. `WindEngine.ribbon` (previously removed from every call site, `dead code
+with no caller`) is back, called every active tick from **both** `TechBreathLiberate` and
+`TechBreathConstrain` (the latter alongside its existing `pressureInward`, not replacing it) - a direct
+user confirmation that both abilities should get it, not just the one in the screenshot. Its own internal
+math changed too, not just its call sites: it used to trace an independent single cos/sin spiral-twist path
+(`RIBBON_TWIST_AMPLITUDE`/`RIBBON_TWIST_TURNS_PER_BLOCK`, both removed) unrelated to anything the mesh
+renders; it now samples the exact same tapered, two-summed-sine curve `WindRibbonRenderer`'s lightning tube
+already animates along (`ribbonPoint`'s own math, `streakOffset=0`/`phase=LIGHTNING_PHASE`) via a new
+private `curvePoint` - a deliberate server-side duplicate (mirroring `TWIST_FREQ_1/2`/`TIME_SPEED_1/2`/
+`TWIST_AMPLITUDE`/`LIGHTNING_PHASE` under a local `TRAIL_PHASE` name), since `WindRibbonRenderer` is
+`@EventBusSubscriber(..., value = Dist.CLIENT)` and can't be imported from this server-tick code without
+pulling client rendering onto the dedicated-server classpath - the same reasoning both classes' already-
+duplicated `perpendicularBasis` helpers document. Net effect: the particle stream now visually hugs the
+mesh's own glowing lightning core instead of tracing an unrelated line, reading as a much denser, fuller
+"wind" layered directly on the thin tube. `spiralAroundTarget`/`expandingBurst`/`nudgeNearbyItems`/
+`nudgeItemsOutward` are unchanged and still only used where they always were (Free Will/general).
 **Most of the doc's own "Environmental Reactions" list (leaves/grass/flowers swaying, smoke bending,
 campfire flames leaning, snow drifting, clouds swirling) is NOT implemented, for confirmed technical
 reasons, not oversight**: none of it has a real per-location override hook in modern NeoForge without
@@ -177,8 +349,8 @@ leashing a High-freedom mob has a chance to fail, and an already-leashed one has
 to snap its own leash; at "Extremely Low" (≤20) a `Mob`'s own dodge/flee/wander goals (`AvoidEntityGoal`/
 `PanicGoal`/`RandomStrollGoal`/`WaterAvoidingRandomStrollGoal`) are spliced out of its `goalSelector` on
 bracket entry and restored on exit, the same real goal-splicing idiom `heroAspect.rage.RageAI` already
-established. Breath's own two new techs (`TechBreathLiberate`/`TechBreathConstrain`, "Liberating
-Zephyr"/"Stifling Calm") are the player-facing trigger: hold and aim at a target to raise or lower their
+established. Breath's own two new techs (`TechBreathLiberate`/`TechBreathConstrain`, "Tailwind"
+(renamed from "Liberating Zephyr")/"Stifling Calm") are the player-facing trigger: hold and aim at a target to raise or lower their
 Freedom over time, matching the source doc's own "Breath users manipulate Freedom instead of directly
 controlling entities" framing.
 **Two categories deliberately left unmodeled, stated plainly rather than faked** (see `FreedomEvents`'
@@ -311,6 +483,24 @@ rendering + visibility hooks; Rage Berserk/Frenzy splice real `GoalSelector` ent
 needed, unlike the original); Light Insight wires a real 5x Juju drop-chance loot condition; Life
 Chloroball is a real block using vanilla random-tick fertilizing. Per-tech known gaps are
 documented inline in code; see "Suggested next steps" for the manual-verification checklist.
+
+**Real bug fix, from a live report ("void step doesn't work")**: `TechVoidStep` used to set
+`player.noPhysics = true` directly, and only on the server's own `Player` instance - the whole Abilitech
+tick framework (`AbilitechEvents#onPlayerTick`) is explicitly server-only. `Entity#noPhysics` is a plain,
+*unsynced* field (confirmed against real vanilla source, not guessed) - it only works for spectator mode
+because both client and server independently compute `noPhysics = isSpectator()` from the same
+already-synced gamemode inside `Player#tick()` (which runs on both logical sides), not because that value
+is itself pushed over the network. So Void Step's server-side field flip did nothing for how a real
+connected player's own client resolves its own local collision - the client never learned Void Step was
+active at all. Fixed the same real way `breath.TechBreathWindVessel` already had to solve this exact class
+of problem: a new marker `MobEffect` (`voidAspect.VoidStepEffect`, auto-synced to every observing client
+for free like any potion effect, refreshed every held tick) plus a new client-side event hook
+(`voidAspect.VoidStepClientEvents`, `PlayerTickEvent.Post` on the client only - timed to run *after*
+`Player#tick()`'s own reset for that tick, so it actually sticks) that sets the client's own copy of
+`noPhysics` too. Checked for the same bug class elsewhere in the project (any other server-only tick code
+directly mutating an unsynced `Entity`/`Player` field like `noPhysics`/`abilities.flying`) - found nothing
+else matching it; every other passive tech either uses real vanilla potion effects (auto-synced, e.g.
+`TechBreathSpeed`) or already has its own correct marker-effect-plus-client-hook pair.
 
 ### Mind Decision system (`mechanics.mind` package)
 Original design for this project, no 1.12.2 counterpart (same category as `mechanics.freedom`/
@@ -798,6 +988,16 @@ in different classes before the pattern was recognized:
    wrong active transform) that only got caught by literally re-reading the original's
    `setScale`/`drawTexturedModalRect` call sequence and matching each multiplication term, not by
    reasoning about what "should" be right.
+6. **Never hold two different shared-buffer `VertexConsumer`s live across a `getBuffer()` call.**
+   `MultiBufferSource.BufferSource#getBuffer` ends whichever shared-buffer render type
+   (`RenderType.entityTranslucent`, `RenderType.lightning()`, etc. - any type without its own fixed
+   buffer) was last active the instant a *different* shared-buffer type is requested, even if not a
+   single vertex was written to it yet. `WindRibbonRenderer` crashed a real client
+   (`IllegalStateException: Not building!`) by fetching two such consumers up front and interleaving
+   draw calls between them in one loop - fetching the second silently ended the first's batch before
+   it had any vertices. Fix: do one type's whole pass (fetch → draw everything → `endBatch`) before
+   ever fetching the next type - see "Real crash" note under Breath Wind visuals below for the full
+   diagnosis.
 
 ## Config reference
 

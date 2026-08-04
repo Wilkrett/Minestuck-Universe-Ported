@@ -3,11 +3,8 @@ package org.wilkretawesomesauce.minestuckuniverseported.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -23,100 +20,146 @@ import java.util.Map;
 /**
  * The real primary Breath visual system - "Breath Visualizer Architecture Decision" design doc's own
  * "Wind Field" renderer (no 1.12.2 counterpart, original design for this project). Renders a genuine
- * procedural ribbon mesh between caster and target (not vanilla particles, which the doc explicitly
- * demotes to secondary/atmospheric-only status - see {@code skills.abilitech.heroAspect.breath.WindEngine}'s
- * own doc comment for that half), plus a spiral vortex around the target. Fed by
- * {@code client.WindRibbonClientState}, populated by {@code network.WindRibbonSyncPacket}.
+ * procedural "lightning trail" mesh between caster and target (not vanilla particles, which the doc
+ * explicitly demotes to secondary/atmospheric-only status - see
+ * {@code skills.abilitech.heroAspect.breath.WindEngine}'s own doc comment for that half), plus a spiral
+ * vortex around the target. Fed by {@code client.WindRibbonClientState}, populated by
+ * {@code network.WindRibbonSyncPacket}.
  * <p>
- * <b>Directly extends {@code TetherBondRenderer}'s own proven technique</b> rather than inventing new
- * rendering machinery: same {@link RenderLevelStageEvent}{@code .Stage.AFTER_PARTICLES} hook, same
- * per-segment camera-facing billboard quad ({@link #renderQuad}, width perpendicular to both the segment's
- * own axis and the direction to the camera - "the standard trick for a textured line/beam with no real
- * geometry"), same near-camera degenerate-quad cutoff, same reused {@code textures/entity/projectiles/clear_beam.png}
- * tintable strip texture (no new art needed - a near-neutral strip that takes a color tint cleanly).
+ * <b>Real "lightning trail" layer</b> - a direct user request, pointed at a real reference mod (`ChestItem`,
+ * NeoForge 1.21.1) whose own trail entities render through vanilla's real {@link RenderType#lightning()}
+ * instead of a textured quad: untextured, additive-ish, glowing vertex-colored geometry, the same render
+ * type vanilla itself uses for actual lightning bolts (confirmed against {@code LightningBoltRenderer}'s
+ * own real source, not guessed - its vertex format is {@code POSITION_COLOR}, so a lightning-type vertex
+ * only ever gets a position and a color, no UV/overlay/light/normal calls at all). {@link #renderLightningTube}
+ * builds real 3D cylinder geometry ({@link #LIGHTNING_TUBE_SIDES} sides) rather than a flat billboard -
+ * looks round and solid from any angle instead of paper-thin, matching the reference mod's own
+ * {@code renderBlood}/{@code addSquare} technique - along an animated curve ({@link #ribbonPoint}, two
+ * summed sine waves of different spatial frequency/phase, offset perpendicular to the caster-target line
+ * and tapered to zero at both ends via {@code sin(t*PI)} so it anchors cleanly rather than flailing right
+ * at the endpoints - the doc's own "Simple" turbulence method, "smooth curved movement... slight twisting
+ * motion... should curve if the target moves").
  * <p>
- * <b>What's actually new here, matching the design doc's own requested properties</b> ("smooth curved
- * movement... slight twisting motion... should curve if the target moves... natural turbulence") - and,
- * later, a direct user request for "wavy blue streaks" specifically (matching the reference gif's own
- * look of several independently-undulating parallel bands, not one single line): {@link #renderRibbon}
- * draws {@link #STREAK_COUNT} parallel streaks rather than one, each offset from the caster-target
- * centerline by a fixed (untapered) spacing along {@code basis[0]} - the spacing itself doesn't taper to
- * zero at the endpoints, only each streak's own wave wobble does, so the streaks stay visually spread the
- * whole way and don't all pinch back together into a single point at the caster/target - and each carries
- * its own phase/frequency offset ({@link #ribbonPoint}) so they wave independently rather than moving in
- * perfect lockstep. The underlying wave itself is still two summed sine waves (different spatial frequency
- * and phase) offset perpendicular to the line, tapered to zero at both ends via {@code sin(t*PI)} so each
- * streak still anchors cleanly rather than flailing right at the endpoints. This is the doc's own "Simple"
- * turbulence method (real Perlin noise, the doc's "Better" method, was left for a later pass - summed sines
- * already reads as genuine flowing turbulence and carries far less risk of a subtle noise-implementation
- * bug in a system that can't be tested in a live client this session).
- * <p>
- * {@link #renderVortex} is the doc's own "Spiral Currents" - a gentle wrap around the target (angle
+ * {@link #renderLightningVortex} is the doc's own "Spiral Currents" - a gentle wrap around the target (angle
  * advancing with both arc-length and real time, so it visibly rotates), radius/density scaled by
- * {@link WindRibbonClientState.Ribbon#intensity()} (Liberate's own "gentle orbiting rings... grows with
+ * {@link WindRibbonClientState.RenderRibbon#intensity()} (Liberate's own "gentle orbiting rings... grows with
  * Freedom" - see {@code TechBreathLiberate}'s own call site for how that value is derived). For
  * {@code inward} ribbons (Constrain), the spiral's radius shrinks toward the target along its own length
  * instead of holding constant - "air pressure compresses toward the target" made literal, and colored with
  * Breath's own second real palette entry (a deeper blue, never a darker/invented "evil" color - the design
  * doc's own explicit instruction).
  * <p>
- * <b>Two real bugs, caught from a live screenshot</b>: the first version drew every quad twice, in both
- * winding orders, copying {@code TetherBondRenderer}'s own defensive-but-unconfirmed habit of doing that
- * "in case the render type ever turns out to cull backfaces." It doesn't - {@link RenderType#entityTranslucent}
- * is confirmed (a separate {@code entityTranslucentCull} variant exists specifically for the culling case,
- * confirming the plain one doesn't) - so that second copy was rendering identical translucent triangles at
- * the identical position a second time, which is a textbook cause of both symptoms actually reported: z-fighting
- * flicker (floating-point depth precision doesn't reliably agree with itself on truly coincident geometry)
- * and doubled/harder-looking alpha compositing at the edges. Fixed by emitting each quad once. Second, the
- * original vortex used a tight multi-turn spiral (1.5 turns in a ~1-block radius) - camera-facing billboard
- * segments recompute their own orientation every frame from the live camera position, and wherever the
- * curve bends sharply between segments (exactly what a tight spiral does), adjacent segments' orientations
- * diverge a lot frame-to-frame, reading as visible faceting/shimmer even with the z-fight fixed. Softened to
- * {@link #VORTEX_TURNS} well under one full turn at a wider radius - still wraps around the target (the one
- * part of the original screenshot that read correctly), just gently.
+ * <b>Real crash, caught from a live client report ("Crashed...") the very first time this layer actually
+ * ran</b>: {@code IllegalStateException: Not building!} inside {@code VertexConsumer#addVertex}. Root cause
+ * confirmed by reading {@code MultiBufferSource.java}'s real {@code getBuffer()} source, not guessed: this
+ * used to also render a textured "quad-streak" style sharing one interleaved loop with this lightning
+ * layer, and {@code entityTranslucent(TEXTURE)}/{@code lightning()} are both "shared-buffer" render types
+ * (neither has its own dedicated fixed buffer) - {@code getBuffer()} unconditionally ends whichever
+ * shared-buffer type was last active the instant a *different* shared-buffer type is requested, so fetching
+ * the second consumer right after the first silently ended the first's batch before a single vertex had
+ * been written to it. Fixed at the time by splitting into two fully sequential passes; the textured
+ * quad-streak pass itself was later removed entirely (see below), so this class now only ever fetches one
+ * render type per frame and the two-pass structure is no longer strictly needed - kept anyway as the
+ * simplest, already-proven-safe shape. General rule for any future render type added here (or anywhere else
+ * two shared-buffer types are used in the same frame): never hold two different shared-buffer
+ * {@link VertexConsumer} references live across a {@code getBuffer()} call boundary.
+ * <p>
+ * <b>The textured "quad-streak" style (parallel wavy billboard bands) is gone entirely, a direct later user
+ * request</b> ("it still uses streaks.. causing it to look quite jarring", from a live screenshot): this
+ * class used to also draw {@code STREAK_COUNT}-many wide translucent billboard quads (camera-facing strips
+ * textured with a reused {@code clear_beam.png}) alongside the lightning tube - first removed for Constrain
+ * only (a separate, earlier request), then removed for Liberate too once the reused wide quads themselves
+ * turned out to read as visually jarring even alone, not just relative to Constrain's cleaner look. Both
+ * abilities now render identically: the lightning tube (this doc comment's own primary section) plus its
+ * lightning vortex, and nothing else - {@code skills.abilitech.heroAspect.breath.WindEngine}'s own particle
+ * trail (reworked to trace this exact same curve, see its own doc comment) is the only other visual layer
+ * left. The former quad-billboard machinery ({@code renderRibbon}/{@code renderVortex}/{@code renderQuad}/
+ * {@code vertex}, and the {@code TEXTURE}/{@code RADIUS}/{@code ALPHA}/{@code MIN_CAM_DISTANCE_SQR}/
+ * {@code STREAK_*} constants it alone used) was deleted outright rather than left dead, since nothing else
+ * in the project ever called it and this class's own history already shows that style was the repeat source
+ * of every visual complaint (double-emission z-fighting, tight-spiral flicker, and now this).
+ * <p>
+ * <b>Multiple parallel trail strands, a direct later user request</b> ("there's only 1 trail instead of
+ * multiple... I liked the thickness &amp; amount the streaks had"): removing the quad-streak style above
+ * also removed its "several parallel bands" look, leaving a single thin tube that read as too sparse on its
+ * own. {@link #renderLightningRibbon} now draws {@link #TRAIL_STRAND_COUNT} parallel tubes instead of one,
+ * reusing the exact same "fixed untapered lateral offset + tapered animated wobble + phase/frequency
+ * stagger per strand" shape the deleted quad-streak style used ({@link #ribbonPoint}'s restored
+ * {@code strandOffset}/{@code phase}/{@code freqScale} parameters) - so the "amount" is back without
+ * reintroducing the flat *billboard* geometry that actually caused the jarring look (a screen-facing quad
+ * that goes edge-on/degenerate near the camera); each strand is still real, always-solid 3D tube geometry,
+ * just several of them side by side.
+ * <p>
+ * <b>Flattened tube cross-section, a direct later user request</b> ("i think i need the trails somewhat
+ * more flatter or stretched out... it doesnt really feel like a breath/wind effect"): a perfectly circular
+ * tube read as a rigid round rope rather than flowing wind. {@link #renderLightningTube} now builds an
+ * <i>elliptical</i> cross-section instead of a circular one - {@link #LIGHTNING_TUBE_WIDTH} (wide) along
+ * {@code basis[0]}, {@link #LIGHTNING_TUBE_THICKNESS} (thin) along {@code basis[1]} - and {@code basis[0]}
+ * is exactly the same axis {@link #renderLightningRibbon} already spreads its parallel strands along, so
+ * each strand's own flat side lines up with the "sheet" the strands together form, reading as overlapping
+ * flat ribbons of wind rather than round rods or pipes. Deliberately still real 3D geometry with a fixed
+ * world-space cross-section, not a revived camera-facing billboard (which is what actually degenerated near
+ * the camera and needed a cutoff hack before) - a real ribbon's width can look thinner from some angles than
+ * others, same as real cloth/wind would, which reads as natural rather than as the earlier bug.
+ * <p>
+ * <b>Fade-out on release, a direct later user request</b> ("instead of instantly making the trail
+ * disappear it should slowly fade out"): {@code client.WindRibbonClientState} used to remove a ribbon the
+ * instant its ability released, so this renderer simply stopped seeing it the next frame - a hard pop, not
+ * a fade. That class now mirrors its own {@code StreakClientState}'s live/fading-out map split (see its own
+ * doc comment) and hands back a {@code fadeMultiplier} (1 while active, ramping to 0 over its fade window)
+ * via {@link WindRibbonClientState.RenderRibbon#fadeMultiplier()} - multiplied into every alpha value this
+ * class computes, at every {@link #renderLightningTube} call site, independent of (not a replacement for)
+ * the existing {@code intensity} scalar.
  */
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class WindRibbonRenderer
 {
-	private static final ResourceLocation TEXTURE = Minestuckuniverseported.id("textures/entity/projectiles/clear_beam.png");
-
 	private static final int OUTWARD_COLOR = 0x47E2FA;
 	private static final int INWARD_COLOR = 0x4379E6;
 
-	// Widened substantially from the first pass's 0.12 (thread-thin) to match the reference look (thick,
-	// unmistakably visible bands, not fine lines).
-	private static final float RADIUS = 0.35F;
 	private static final int SEGMENTS = 20;
-	private static final float ALPHA = 0.6F;
-	private static final double MIN_CAM_DISTANCE_SQR = 0.6 * 0.6;
 
-	// Frequency roughly halved and amplitude reduced relative to spacing (below) from the first pass -
-	// long, lazy curves rather than a tight zigzag, matching the reference's own broad, slow waves and
-	// keeping the per-segment bend shallow (less faceting, since {@link #renderQuad}'s billboards only
-	// look smooth when consecutive segments don't turn too sharply).
+	// Frequency roughly halved and amplitude reduced relative to spacing from the first pass - long, lazy
+	// curves rather than a tight zigzag, matching the reference's own broad, slow waves and keeping the
+	// per-segment bend shallow (less faceting - camera-facing/orientation-recomputed geometry only looks
+	// smooth when consecutive segments don't turn too sharply).
 	private static final double TWIST_FREQ_1 = 0.4;
 	private static final double TWIST_FREQ_2 = 0.7;
 	private static final double TIME_SPEED_1 = 0.08;
 	private static final double TIME_SPEED_2 = -0.05;
 	private static final double TWIST_AMPLITUDE = 0.3;
 
-	// Fewer, wider-spaced streaks than the first pass (4 at 0.4) - matches the reference's own clearly
-	// separated bands with real white gaps between them, rather than a busy cluster of thin threads.
-	private static final int STREAK_COUNT = 3;
-	private static final double STREAK_SPACING = 0.95;
-	/** Per-streak phase stagger, in radians - an irregular multiplier (not a clean fraction of 2*PI) so the streaks don't fall back into sync after a few seconds. */
-	private static final float STREAK_PHASE_STAGGER = 1.7F;
-	/** Per-streak frequency variation, as a fraction bump per streak index - keeps streaks from looking like exact copies of each other, just phase-shifted. */
-	private static final double STREAK_FREQ_VARIATION = 0.09;
-
 	// Well under one full turn (was 1.5) at a wider radius - a gentle wrap around the target, not a tight
-	// coil - see this class's own doc comment for why the tight version was the real flicker source.
+	// coil - see this class's own doc comment for why the tight version was a real flicker source.
 	private static final int VORTEX_SEGMENTS = 24;
 	private static final double VORTEX_TURNS = 0.55;
 	private static final double VORTEX_SPIN_SPEED = 0.05;
 	private static final double VORTEX_HEIGHT = 1.6;
 	private static final double VORTEX_RADIUS_MIN = 0.7;
 	private static final double VORTEX_RADIUS_MAX = 1.7;
+
+	// The glowing "lightning core" layer - see this class's own doc comment. Elliptical, not circular -
+	// flattened along basis[0] (the same axis strands are spread apart along, see ribbonPoint/renderLightningRibbon)
+	// so each strand reads as a flat ribbon rather than a round rope.
+	private static final int LIGHTNING_TUBE_SIDES = 6;
+	private static final float LIGHTNING_TUBE_WIDTH = 0.18F;
+	private static final float LIGHTNING_TUBE_THICKNESS = 0.03F;
+	// Lowered from 0.55 - a direct later user request pivoted the *primary* "this looks like wind" visual to
+	// a soft particle swarm (WindEngine's new wind-wisp system); this mesh is now meant to read as a faint
+	// accent thread underneath that swarm, not compete with it for attention. Not deleted - still a real,
+	// crash-tested, working visual - just de-emphasized.
+	private static final float LIGHTNING_ALPHA = 0.25F;
+	private static final float LIGHTNING_PHASE = 5.0F;
+
+	// Multiple parallel strands rather than one, a direct later user request ("I liked the thickness &
+	// amount the streaks had") - see this class's own doc comment. Same shape the deleted quad-streak style
+	// used to use (offset spacing that doesn't taper, so strands stay visibly spread rather than pinching
+	// back to one point at the endpoints; phase stagger + a small per-strand frequency bump so they wave
+	// independently instead of moving in lockstep).
+	private static final int TRAIL_STRAND_COUNT = 3;
+	private static final double TRAIL_STRAND_SPACING = 0.6;
+	private static final float TRAIL_STRAND_PHASE_STAGGER = 1.7F;
+	private static final double TRAIL_STRAND_FREQ_VARIATION = 0.09;
 
 	private WindRibbonRenderer()
 	{
@@ -128,7 +171,7 @@ public final class WindRibbonRenderer
 		if(event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES)
 			return;
 
-		Map<Integer, WindRibbonClientState.Ribbon> ribbons = WindRibbonClientState.getRibbons();
+		Map<Integer, WindRibbonClientState.RenderRibbon> ribbons = WindRibbonClientState.getRenderRibbons();
 		if(ribbons.isEmpty())
 			return;
 
@@ -142,13 +185,12 @@ public final class WindRibbonRenderer
 		float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
 		float time = (mc.level.getGameTime() + partialTick) / 20.0F;
 
-		VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(TEXTURE));
-
 		poseStack.pushPose();
 		poseStack.translate(-camPos.x, -camPos.y, -camPos.z);
 		PoseStack.Pose pose = poseStack.last();
 
-		for(Map.Entry<Integer, WindRibbonClientState.Ribbon> entry : ribbons.entrySet())
+		VertexConsumer lightningConsumer = bufferSource.getBuffer(RenderType.lightning());
+		for(Map.Entry<Integer, WindRibbonClientState.RenderRibbon> entry : ribbons.entrySet())
 		{
 			Entity caster = mc.level.getEntity(entry.getKey());
 			Entity target = mc.level.getEntity(entry.getValue().targetId());
@@ -158,6 +200,7 @@ public final class WindRibbonRenderer
 
 			boolean inward = entry.getValue().inward();
 			float intensity = entry.getValue().intensity();
+			float fadeMultiplier = entry.getValue().fadeMultiplier();
 			int color = inward ? INWARD_COLOR : OUTWARD_COLOR;
 			float r = ((color >> 16) & 0xFF) / 255F;
 			float g = ((color >> 8) & 0xFF) / 255F;
@@ -166,16 +209,37 @@ public final class WindRibbonRenderer
 			Vec3 start = livingCaster.getPosition(partialTick).add(0, livingCaster.getEyeHeight() * 0.8, 0);
 			Vec3 end = livingTarget.getPosition(partialTick).add(0, livingTarget.getBbHeight() * 0.5, 0);
 
-			renderRibbon(consumer, pose, camPos, start, end, time, r, g, b);
-			renderVortex(consumer, pose, camPos, end, time, inward, Math.max(0.2F, intensity), r, g, b);
+			renderLightningRibbon(lightningConsumer, pose, start, end, time, r, g, b, fadeMultiplier);
+			renderLightningVortex(lightningConsumer, pose, end, time, inward, Math.max(0.2F, intensity), r, g, b, fadeMultiplier);
 		}
+		bufferSource.endBatch(RenderType.lightning());
 
 		poseStack.popPose();
-		bufferSource.endBatch(RenderType.entityTranslucent(TEXTURE));
 	}
 
-	/** {@link #STREAK_COUNT} parallel wavy streaks between caster and target - see this class's own doc comment. */
-	private static void renderRibbon(VertexConsumer consumer, PoseStack.Pose pose, Vec3 camPos, Vec3 start, Vec3 end, float time, float r, float g, float b)
+	/**
+	 * A point on one strand's animated curve - a fixed (untapered) lateral offset from the caster-target
+	 * centerline, plus a tapered, time-animated wobble on top: the fixed offset itself doesn't taper (keeps
+	 * the strands visibly spread the whole way rather than all pinching back together at the caster/target),
+	 * while the wobble does (zeroed at both ends via {@code sin(t*PI)} so each strand anchors cleanly rather
+	 * than flailing right at the endpoints) - see this class's own doc comment.
+	 */
+	private static Vec3 ribbonPoint(Vec3 start, Vec3 end, float t, float length, float time, Vec3[] basis, double strandOffset, float phase, double freqScale)
+	{
+		Vec3 base = start.add(end.subtract(start).scale(t));
+
+		double taper = Math.sin(t * Math.PI);
+		double phase1 = t * length * TWIST_FREQ_1 * freqScale + time * TIME_SPEED_1 * 20.0 + phase;
+		double phase2 = t * length * TWIST_FREQ_2 * freqScale + time * TIME_SPEED_2 * 20.0 + phase * 0.6;
+
+		double offset1 = strandOffset + Math.sin(phase1) * TWIST_AMPLITUDE * taper;
+		double offset2 = Math.cos(phase2) * TWIST_AMPLITUDE * 0.6 * taper;
+
+		return base.add(basis[0].scale(offset1)).add(basis[1].scale(offset2));
+	}
+
+	/** {@link #TRAIL_STRAND_COUNT} parallel glowing lightning-style tubes along the ribbon - see this class's own doc comment. */
+	private static void renderLightningRibbon(VertexConsumer consumer, PoseStack.Pose pose, Vec3 start, Vec3 end, float time, float r, float g, float b, float fadeMultiplier)
 	{
 		Vec3 axis = end.subtract(start);
 		double length = axis.length();
@@ -185,48 +249,25 @@ public final class WindRibbonRenderer
 		Vec3 dir = axis.scale(1.0 / length);
 		Vec3[] basis = perpendicularBasis(dir);
 
-		for(int streak = 0; streak < STREAK_COUNT; streak++)
+		for(int strand = 0; strand < TRAIL_STRAND_COUNT; strand++)
 		{
-			double streakOffset = (streak - (STREAK_COUNT - 1) / 2.0) * STREAK_SPACING;
-			float phase = streak * STREAK_PHASE_STAGGER;
-			double freqScale = 1.0 + streak * STREAK_FREQ_VARIATION;
+			double strandOffset = (strand - (TRAIL_STRAND_COUNT - 1) / 2.0) * TRAIL_STRAND_SPACING;
+			float phase = LIGHTNING_PHASE + strand * TRAIL_STRAND_PHASE_STAGGER;
+			double freqScale = 1.0 + strand * TRAIL_STRAND_FREQ_VARIATION;
 
-			Vec3 prevPoint = start.add(basis[0].scale(streakOffset));
+			Vec3 prevPoint = start.add(basis[0].scale(strandOffset));
 			for(int i = 1; i <= SEGMENTS; i++)
 			{
 				float t = (float) i / SEGMENTS;
-				Vec3 point = ribbonPoint(start, end, t, (float) length, time, basis, streakOffset, phase, freqScale);
-
-				boolean tooClose = camPos.distanceToSqr(prevPoint) < MIN_CAM_DISTANCE_SQR || camPos.distanceToSqr(point) < MIN_CAM_DISTANCE_SQR;
-				if(!tooClose)
-					renderQuad(consumer, pose, camPos, prevPoint, point, (float) (i - 1) / SEGMENTS, t, r, g, b, ALPHA);
+				Vec3 point = ribbonPoint(start, end, t, (float) length, time, basis, strandOffset, phase, freqScale);
+				renderLightningTube(consumer, pose, prevPoint, point, r, g, b, LIGHTNING_ALPHA * fadeMultiplier);
 				prevPoint = point;
 			}
 		}
 	}
 
-	/**
-	 * A point on one streak's animated curve - a fixed (untapered) lateral offset from the caster-target
-	 * centerline, plus a tapered, time-animated wobble on top - see this class's own doc comment for why
-	 * the fixed offset itself doesn't taper (keeps the streaks visibly parallel/spread the whole way) while
-	 * the wobble does (keeps each streak anchored, not flailing, right at the caster/target ends).
-	 */
-	private static Vec3 ribbonPoint(Vec3 start, Vec3 end, float t, float length, float time, Vec3[] basis, double streakOffset, float phase, double freqScale)
-	{
-		Vec3 base = start.add(end.subtract(start).scale(t));
-
-		double taper = Math.sin(t * Math.PI);
-		double phase1 = t * length * TWIST_FREQ_1 * freqScale + time * TIME_SPEED_1 * 20.0 + phase;
-		double phase2 = t * length * TWIST_FREQ_2 * freqScale + time * TIME_SPEED_2 * 20.0 + phase * 0.6;
-
-		double offset1 = streakOffset + Math.sin(phase1) * TWIST_AMPLITUDE * taper;
-		double offset2 = Math.cos(phase2) * TWIST_AMPLITUDE * 0.6 * taper;
-
-		return base.add(basis[0].scale(offset1)).add(basis[1].scale(offset2));
-	}
-
-	/** "Spiral Currents" - see this class's own doc comment. */
-	private static void renderVortex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 camPos, Vec3 center, float time, boolean inward, float intensity, float r, float g, float b)
+	/** The glowing lightning-style core along the vortex's own path - see this class's own doc comment. */
+	private static void renderLightningVortex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 center, float time, boolean inward, float intensity, float r, float g, float b, float fadeMultiplier)
 	{
 		Vec3 prevPoint = null;
 		for(int i = 0; i <= VORTEX_SEGMENTS; i++)
@@ -239,54 +280,49 @@ public final class WindRibbonRenderer
 			Vec3 point = center.add(new Vec3(Math.cos(angle) * radius, height, Math.sin(angle) * radius));
 
 			if(prevPoint != null)
-			{
-				boolean tooClose = camPos.distanceToSqr(prevPoint) < MIN_CAM_DISTANCE_SQR || camPos.distanceToSqr(point) < MIN_CAM_DISTANCE_SQR;
-				if(!tooClose)
-					renderQuad(consumer, pose, camPos, prevPoint, point, t, t, r, g, b, ALPHA * intensity);
-			}
+				renderLightningTube(consumer, pose, prevPoint, point, r, g, b, LIGHTNING_ALPHA * intensity * fadeMultiplier);
 			prevPoint = point;
 		}
 	}
 
 	/**
-	 * Camera-facing billboard strip - see {@code TetherBondRenderer#renderQuad}'s own doc comment, this is
-	 * the same technique. Emitted once (a real fix - see this class's own doc comment for why the earlier
-	 * double emission was a real z-fighting/flicker bug, not a safety net): {@link RenderType#entityTranslucent}
-	 * doesn't cull backfaces, so a single winding is already visible from both sides.
+	 * Real 3D <i>elliptical</i> tube geometry ({@link #LIGHTNING_TUBE_SIDES} sides) between two points,
+	 * rendered through vanilla's real {@link RenderType#lightning()} - see this class's own doc comment for
+	 * why that render type (untextured, {@code POSITION_COLOR} only) needs a genuinely different
+	 * vertex-building technique than a camera-facing billboard, and why a real 3D tube needs no near-camera
+	 * degenerate-quad cutoff - its cross-section is fixed in world space, not scaled by distance to camera.
+	 * Flattened ({@link #LIGHTNING_TUBE_WIDTH} &gt; {@link #LIGHTNING_TUBE_THICKNESS}) along {@code basis[0]}
+	 * rather than a perfect circle - see this class's own doc comment for why.
 	 */
-	private static void renderQuad(VertexConsumer consumer, PoseStack.Pose pose, Vec3 camPos, Vec3 start, Vec3 end, float uStart, float uEnd, float r, float g, float b, float alpha)
+	private static void renderLightningTube(VertexConsumer consumer, PoseStack.Pose pose, Vec3 start, Vec3 end, float r, float g, float b, float alpha)
 	{
 		Vec3 axis = end.subtract(start);
 		if(axis.lengthSqr() < 1.0E-6)
 			return;
 
-		Vec3 mid = start.add(end).scale(0.5);
-		Vec3 toCam = camPos.subtract(mid);
+		Vec3 dir = axis.normalize();
+		Vec3[] basis = perpendicularBasis(dir);
 
-		Vec3 widthDir = axis.cross(toCam);
-		if(widthDir.lengthSqr() < 1.0E-6)
-			widthDir = axis.cross(new Vec3(0, 1, 0));
-		if(widthDir.lengthSqr() < 1.0E-6)
-			return;
-		widthDir = widthDir.normalize().scale(RADIUS);
+		for(int i = 0; i < LIGHTNING_TUBE_SIDES; i++)
+		{
+			double angle1 = (2.0 * Math.PI * i) / LIGHTNING_TUBE_SIDES;
+			double angle2 = (2.0 * Math.PI * (i + 1)) / LIGHTNING_TUBE_SIDES;
 
-		Vec3 s0 = start.subtract(widthDir), s1 = start.add(widthDir);
-		Vec3 e0 = end.subtract(widthDir), e1 = end.add(widthDir);
+			Vec3 offset1 = basis[0].scale(Math.cos(angle1) * LIGHTNING_TUBE_WIDTH).add(basis[1].scale(Math.sin(angle1) * LIGHTNING_TUBE_THICKNESS));
+			Vec3 offset2 = basis[0].scale(Math.cos(angle2) * LIGHTNING_TUBE_WIDTH).add(basis[1].scale(Math.sin(angle2) * LIGHTNING_TUBE_THICKNESS));
 
-		vertex(consumer, pose, s0, uStart, 1F, r, g, b, alpha);
-		vertex(consumer, pose, s1, uStart, 0F, r, g, b, alpha);
-		vertex(consumer, pose, e1, uEnd, 0F, r, g, b, alpha);
-		vertex(consumer, pose, e0, uEnd, 1F, r, g, b, alpha);
+			lightningVertex(consumer, pose, start.add(offset1), r, g, b, alpha);
+			lightningVertex(consumer, pose, start.add(offset2), r, g, b, alpha);
+			lightningVertex(consumer, pose, end.add(offset2), r, g, b, alpha);
+			lightningVertex(consumer, pose, end.add(offset1), r, g, b, alpha);
+		}
 	}
 
-	private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 pos, float u, float v, float r, float g, float b, float alpha)
+	/** A {@code POSITION_COLOR} vertex - no UV/overlay/light/normal, confirmed against vanilla's own {@code LightningBoltRenderer} that {@link RenderType#lightning()} vertices only ever get position + color. */
+	private static void lightningVertex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 pos, float r, float g, float b, float alpha)
 	{
 		consumer.addVertex(pose, (float) pos.x, (float) pos.y, (float) pos.z)
-				.setColor(r, g, b, alpha)
-				.setUv(u, v)
-				.setOverlay(OverlayTexture.NO_OVERLAY)
-				.setLight(LightTexture.FULL_BRIGHT)
-				.setNormal(pose, 0F, 1F, 0F);
+				.setColor(r, g, b, alpha);
 	}
 
 	/** Same helper as {@code skills.abilitech.heroAspect.breath.WindEngine#perpendicularBasis} - duplicated rather than shared, since that one operates purely server-side (spawning particles) and this one is client-render-only; sharing would mean either package would need to depend on the other for one small private method. */
