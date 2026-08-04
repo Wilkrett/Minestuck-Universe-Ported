@@ -87,13 +87,17 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  * {@code WindEngine#ribbon} call was also added to {@code TechBreathConstrain} (a direct user confirmation,
  * both abilities should get it, not just this one).
  * <p>
- * <b>{@code WindEngine#windSwirl} added, a genuine technique pivot from a later reference-screenshot
- * request</b> ("I want something like this [soft, blurred, curling smoke-ring wisps]... though keep the
- * color blue"): the mesh's precise line geometry was never going to read as "natural wind" no matter how
- * its thickness/flatness was retuned - see {@code client.particles.WindWispParticle}'s own doc comment for
- * the full investigation (including why Photon wasn't reintroduced). {@link #onUseTick} now also calls
- * {@code WindEngine#windSwirl} around the target every tick, radius/intensity scaled by the same
- * {@code freedomFraction} the mesh's own vortex already uses, so the two stay visually in sync.
+ * <b>{@code WindEngine#windSwirl} added, then removed again, a genuine technique pivot from a later
+ * reference-screenshot request</b> ("I want something like this [soft, blurred, curling smoke-ring
+ * wisps]... though keep the color blue"): the mesh's precise line geometry was never going to read as
+ * "natural wind" no matter how its thickness/flatness was retuned - see
+ * {@code client.particles.WindWispParticle}'s own doc comment for the full investigation (including why
+ * Photon wasn't reintroduced). {@link #onUseTick} briefly also called {@code WindEngine#windSwirl} around
+ * the target every tick, radius/intensity scaled by the same {@code freedomFraction} the mesh's own vortex
+ * already uses - <b>a direct later user request removed this call again</b> ("don't use the swirl
+ * particles"), leaving {@code WindEngine#ribbon} as this tech's only remaining particle layer on top of the
+ * mesh. {@code windSwirl} itself was deleted from {@code WindEngine} entirely once this was its only caller
+ * (alongside {@link TechBreathConstrain}'s own identical call) - see that class's own doc comment.
  */
 public class TechBreathLiberate extends TechHeroAspect
 {
@@ -109,9 +113,6 @@ public class TechBreathLiberate extends TechHeroAspect
 	private static final float FORCED_FREEDOM_CONFLICT_GAIN = 5F;
 
 	private static final int RIBBON_RESYNC_INTERVAL_TICKS = 10;
-
-	private static final double SWIRL_RADIUS_MIN = 0.5;
-	private static final double SWIRL_RADIUS_MAX = 1.3;
 
 	public TechBreathLiberate()
 	{
@@ -177,10 +178,6 @@ public class TechBreathLiberate extends TechHeroAspect
 		WindEngine.ribbon(level, player.position().add(0, player.getEyeHeight() * 0.8, 0),
 				target.position().add(0, target.getBbHeight() * 0.5, 0),
 				level.getGameTime() / 20F, color, freedomFraction);
-
-		WindEngine.windSwirl(level, target.position().add(0, target.getBbHeight() * 0.5, 0),
-				SWIRL_RADIUS_MIN + freedomFraction * (SWIRL_RADIUS_MAX - SWIRL_RADIUS_MIN),
-				level.getGameTime() / 20F, color, Math.max(0.3F, freedomFraction));
 
 		if(time == 0 || time % RIBBON_RESYNC_INTERVAL_TICKS == 0)
 			syncRibbon(player, target, freedomFraction);

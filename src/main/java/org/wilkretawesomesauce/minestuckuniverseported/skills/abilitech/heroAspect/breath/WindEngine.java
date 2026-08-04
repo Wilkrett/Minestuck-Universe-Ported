@@ -22,18 +22,20 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUParticles;
  * new infrastructure this project's particle system has never needed anywhere else - these methods follow
  * the same call-every-active-tick shape instead, just with wind-specific motion math instead of generic
  * scatter, on top of the same real {@link MSUParticles#spawnPowerParticle}/{@link MSUParticles#spawnWindWisp}
- * primitives every other aspect's own particle calls (or, for {@link #ribbon}/{@link #windSwirl}, this
- * class's own newer wind-specific particle) already use (no hand-drawn placeholder art anywhere - see each
- * primitive's own doc comment for which real vanilla art it reuses).
+ * primitives every other aspect's own particle calls (or, for {@link #ribbon}, this class's own newer
+ * wind-specific particle) already use (no hand-drawn placeholder art anywhere - see each primitive's own
+ * doc comment for which real vanilla art it reuses).
  * <p>
- * <b>{@link #ribbon}/{@link #windSwirl} switched to {@link MSUParticles#spawnWindWisp}, a direct later user
- * request</b> ("I want something like this [a reference screenshot of soft, blurred, curling smoke-ring
- * wisps]... though keep the color blue"): {@link #spiralAroundTarget}/{@link #pressureInward}/
- * {@link #expandingBurst} still use the older, sharper {@code spawnPowerParticle} (vanilla firework-spark
- * art) unchanged - out of scope for this pass, still correct for what they visualize. Only the two methods
- * that needed to read as "soft natural wind" switched to the new wisp particle - see
- * {@code client.particles.WindWispParticle}'s own doc comment for the full reasoning and the real vanilla
- * Wind Charge/Breeze art (`gust_0`-`gust_11`) it reuses.
+ * <b>{@link #ribbon} switched to {@link MSUParticles#spawnWindWisp}, a direct later user request</b> ("I
+ * want something like this [a reference screenshot of soft, blurred, curling smoke-ring wisps]... though
+ * keep the color blue"): {@link #spiralAroundTarget}/{@link #pressureInward}/{@link #expandingBurst} still
+ * use the older, sharper {@code spawnPowerParticle} (vanilla firework-spark art) unchanged - out of scope
+ * for this pass, still correct for what they visualize. Only the one method that needed to read as "soft
+ * natural wind" switched to the new wisp particle - see {@code client.particles.WindWispParticle}'s own doc
+ * comment for the full reasoning and the real vanilla Wind Charge/Breeze art (`gust_0`-`gust_11`) it reuses.
+ * A sibling method, {@code windSwirl}, briefly existed alongside {@link #ribbon} for the same reason (a soft
+ * curling ring around the target) but was removed outright, a direct later user request ("don't use the
+ * swirl particles") - {@link #ribbon} is now this class's only wisp-based visual.
  * <p>
  * <b>The doc's own "Environmental Reactions" list is mostly NOT implemented, for real, confirmed
  * technical reasons, not oversight</b> - leaves/grass/flowers swaying, smoke bending, campfire flames
@@ -56,6 +58,18 @@ public final class WindEngine
 	private static final double RIBBON_JITTER = 0.12;
 	private static final float RIBBON_WISP_SCALE = 0.5F;
 
+	// Extends the sampled curve backward past the caster (opposite the target) so particles appear to
+	// originate from behind them and flow through, rather than popping into existence exactly at the
+	// caster's own position - a direct user request, matching a reference sketch of wind streaks running
+	// through and past both the caster and target rather than starting/ending exactly on them.
+	private static final double RIBBON_BEHIND_CASTER_DISTANCE = 2.5;
+
+	// Bell-curve size pulse (small -> big -> small) along the path, a direct user request ("so it looks
+	// more natural") - reuses the same sin(t*PI) shape curvePoint's own taper already uses for its offset
+	// amplitude, just applied to particle scale instead. Never tapers fully to 0 (RIBBON_SIZE_MIN_FRACTION
+	// floors it) so the wisps stay visible rather than vanishing at the very ends of the extended curve.
+	private static final float RIBBON_SIZE_MIN_FRACTION = 0.35F;
+
 	// Mirrors client.render.WindRibbonRenderer's own TWIST_FREQ_1/2, TIME_SPEED_1/2, TWIST_AMPLITUDE,
 	// LIGHTNING_PHASE exactly - see this class's own ribbon() doc comment for why this is a deliberate
 	// server-side duplicate of that renderer's private ribbonPoint math, not a shared extraction.
@@ -65,12 +79,6 @@ public final class WindEngine
 	private static final double TIME_SPEED_2 = -0.05;
 	private static final double TWIST_AMPLITUDE = 0.3;
 	private static final float TRAIL_PHASE = 5.0F;
-
-	private static final int SWIRL_PARTICLES_PER_TICK = 4;
-	private static final float SWIRL_WISP_SCALE = 1.4F;
-	private static final double SWIRL_TANGENT_SPEED = 0.03;
-	private static final double SWIRL_BOB_AMPLITUDE = 0.4;
-	private static final double SWIRL_BOB_SPEED = 0.6;
 
 	private WindEngine()
 	{
@@ -118,19 +126,23 @@ public final class WindEngine
 		Vec3[] basis = perpendicularBasis(dir);
 		RandomSource random = serverLevel.getRandom();
 
-		int samples = Math.max(1, (int) (length / RIBBON_SAMPLE_SPACING));
+		Vec3 extendedFrom = from.subtract(dir.scale(RIBBON_BEHIND_CASTER_DISTANCE));
+		double extendedLength = length + RIBBON_BEHIND_CASTER_DISTANCE;
+
+		int samples = Math.max(1, (int) (extendedLength / RIBBON_SAMPLE_SPACING));
 		int toSpawn = Math.min(RIBBON_PARTICLES_PER_TICK, samples);
 
 		for(int i = 0; i < toSpawn; i++)
 		{
 			float t = random.nextFloat();
-			Vec3 point = curvePoint(from, to, t, (float) length, time, basis);
+			Vec3 point = curvePoint(extendedFrom, to, t, (float) extendedLength, time, basis);
 			Vec3 jitter = basis[0].scale((random.nextDouble() - 0.5) * RIBBON_JITTER)
 					.add(basis[1].scale((random.nextDouble() - 0.5) * RIBBON_JITTER));
 			point = point.add(jitter);
 			Vec3 vel = dir.scale(0.05 * intensity);
 
-			MSUParticles.spawnWindWisp(level, point.x, point.y, point.z, vel.x, vel.y, vel.z, 14 + random.nextInt(10), color, RIBBON_WISP_SCALE);
+			float sizePulse = RIBBON_SIZE_MIN_FRACTION + (1F - RIBBON_SIZE_MIN_FRACTION) * (float) Math.sin(t * Math.PI);
+			MSUParticles.spawnWindWisp(level, point.x, point.y, point.z, vel.x, vel.y, vel.z, 14 + random.nextInt(10), color, RIBBON_WISP_SCALE * sizePulse);
 		}
 	}
 
@@ -173,37 +185,6 @@ public final class WindEngine
 			Vec3 tangent = new Vec3(-Math.sin(angle), 0.0, Math.cos(angle)).scale(0.06 * intensity);
 
 			MSUParticles.spawnPowerParticle(level, point.x, point.y, point.z, tangent.x, tangent.y, tangent.z, 10 + random.nextInt(6), color);
-		}
-	}
-
-	/**
-	 * A soft, curling ring of {@link MSUParticles#spawnWindWisp} wisps orbiting {@code center} - a direct
-	 * later user request, replacing the geometric mesh's role as the primary "this looks like wind" visual
-	 * with the technique a reference screenshot actually used (soft blurred particles curling around the
-	 * caster in overlapping bands, not a precise line). Reuses {@link #spiralAroundTarget}'s own orbiting
-	 * shape (angle/radius/tangential velocity) but denser, bigger ({@link #SWIRL_WISP_SCALE}), slower
-	 * ({@link #SWIRL_TANGENT_SPEED}), and with a gentle vertical bob ({@code sin(time * SWIRL_BOB_SPEED)})
-	 * layered on top of the usual random height jitter, so it reads as a soft curling ring/aura rather than
-	 * a thin fast vortex of motes.
-	 */
-	public static void windSwirl(Level level, Vec3 center, double radius, float time, int color, float intensity)
-	{
-		if(!(level instanceof ServerLevel serverLevel))
-			return;
-
-		RandomSource random = serverLevel.getRandom();
-		int count = Math.max(1, Math.round(SWIRL_PARTICLES_PER_TICK * intensity));
-		double bob = Math.sin(time * SWIRL_BOB_SPEED) * SWIRL_BOB_AMPLITUDE;
-
-		for(int i = 0; i < count; i++)
-		{
-			double angle = random.nextDouble() * 2.0 * Math.PI;
-			double height = bob + (random.nextDouble() - 0.5) * 0.6;
-			Vec3 offset = new Vec3(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
-			Vec3 point = center.add(offset);
-			Vec3 tangent = new Vec3(-Math.sin(angle), 0.0, Math.cos(angle)).scale(SWIRL_TANGENT_SPEED * intensity);
-
-			MSUParticles.spawnWindWisp(level, point.x, point.y, point.z, tangent.x, tangent.y, tangent.z, 20 + random.nextInt(10), color, SWIRL_WISP_SCALE);
 		}
 	}
 

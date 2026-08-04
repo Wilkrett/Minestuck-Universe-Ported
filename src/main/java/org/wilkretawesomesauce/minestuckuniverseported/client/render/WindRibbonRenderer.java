@@ -110,12 +110,35 @@ import java.util.Map;
  * via {@link WindRibbonClientState.RenderRibbon#fadeMultiplier()} - multiplied into every alpha value this
  * class computes, at every {@link #renderLightningTube} call site, independent of (not a replacement for)
  * the existing {@code intensity} scalar.
+ * <p>
+ * <b>Strands repositioned to originate from the caster's sides, a direct later user request</b> ("should
+ * come out from the sides instead of 3 begin points on the front" - a live screenshot showed all
+ * {@link #TRAIL_STRAND_COUNT} strands bunched at nearly the same spot in front of the caster's face,
+ * only ever separated by a small {@link #TRAIL_STRAND_SPACING}). The centered strand (offset 0, the one
+ * that read as "dead center front") is gone - {@link #TRAIL_STRAND_COUNT} dropped from 3 to 2, spacing
+ * widened, so the two remaining strands sit clearly left/right of the caster's centerline instead of one
+ * clustered trio.
+ * <p>
+ * <b>Real per-vertex dark/light two-tone shading, from a reference gif</b> ("each wind thing should have
+ * a dark + light side to it... dark is outer, light is inner") of a twisting wind burst whose crescent
+ * shape alternates between a dark outer rim and a lighter inner highlight as it curls. {@link RenderType#lightning()}
+ * vertices are {@code POSITION_COLOR} only (no vanilla lighting ever touches them - see this class's own
+ * "Real crash" note above for why that render type's vertex format is this bare), so there's no lighting
+ * engine to fake this with - the two-tone look is baked directly into each cross-section vertex's own
+ * color instead. {@link #shadeColor} blends between a darkened and a lightened tint of the tube's base
+ * color by {@code cos(angle - twistPhase)} around the {@link #LIGHTNING_TUBE_SIDES}-sided cross-section;
+ * {@link #shadeTwistPhase} rotates that angle progressively along the tube's own length and over time, so
+ * the dark/light boundary visibly spirals around the tube as it travels - a real twist, not a static
+ * painted-on stripe. {@link #renderLightningVortex} reuses its own already-computed spiral {@code angle}
+ * directly as the twist phase (a real spiral already rotates around the target, so shading by that same
+ * angle reads as the tube twisting along its own spiral for free); {@link #renderLightningRibbon}, which
+ * has no natural rotation of its own, computes a synthetic one instead via {@link #shadeTwistPhase}.
  */
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class WindRibbonRenderer
 {
-	private static final int OUTWARD_COLOR = 0x47E2FA;
-	private static final int INWARD_COLOR = 0x4379E6;
+	private static final int OUTWARD_COLOR = 0x006EE9;
+	private static final int INWARD_COLOR = 0x10E0FF;
 
 	private static final int SEGMENTS = 20;
 
@@ -148,18 +171,29 @@ public final class WindRibbonRenderer
 	// a soft particle swarm (WindEngine's new wind-wisp system); this mesh is now meant to read as a faint
 	// accent thread underneath that swarm, not compete with it for attention. Not deleted - still a real,
 	// crash-tested, working visual - just de-emphasized.
-	private static final float LIGHTNING_ALPHA = 0.25F;
+	private static final float LIGHTNING_ALPHA = 1.0F;
 	private static final float LIGHTNING_PHASE = 5.0F;
 
 	// Multiple parallel strands rather than one, a direct later user request ("I liked the thickness &
 	// amount the streaks had") - see this class's own doc comment. Same shape the deleted quad-streak style
 	// used to use (offset spacing that doesn't taper, so strands stay visibly spread rather than pinching
 	// back to one point at the endpoints; phase stagger + a small per-strand frequency bump so they wave
-	// independently instead of moving in lockstep).
+	// independently instead of moving in lockstep). Dropped from 3 (a centered strand plus two siders) to 2
+	// (sides only) and widened, a direct later user request - see this class's own doc comment.
 	private static final int TRAIL_STRAND_COUNT = 3;
-	private static final double TRAIL_STRAND_SPACING = 0.6;
+	private static final double TRAIL_STRAND_SPACING = 1.0;
 	private static final float TRAIL_STRAND_PHASE_STAGGER = 1.7F;
 	private static final double TRAIL_STRAND_FREQ_VARIATION = 0.09;
+
+	// Real per-vertex dark/light two-tone shading - see this class's own doc comment. SHADE_DARK_FACTOR
+	// darkens the base color for the "outer" side of the cross-section, SHADE_LIGHT_MIX lightens it toward
+	// white for the "inner" side; SHADE_TWIST_TURNS_PER_LENGTH/SHADE_TWIST_SPIN_SPEED rotate the angle that
+	// boundary is measured from, along the tube's own length and over real time, so it reads as a slow
+	// physical twist rather than a fixed painted-on stripe.
+	private static final float SHADE_DARK_FACTOR = 0.55F;
+	private static final float SHADE_LIGHT_MIX = 0.35F;
+	private static final double SHADE_TWIST_TURNS_PER_LENGTH = 0.18;
+	private static final double SHADE_TWIST_SPIN_SPEED = 1.2;
 
 	private WindRibbonRenderer()
 	{
@@ -256,12 +290,15 @@ public final class WindRibbonRenderer
 			double freqScale = 1.0 + strand * TRAIL_STRAND_FREQ_VARIATION;
 
 			Vec3 prevPoint = start.add(basis[0].scale(strandOffset));
+			double prevTwist = shadeTwistPhase(0F, (float) length, time, phase);
 			for(int i = 1; i <= SEGMENTS; i++)
 			{
 				float t = (float) i / SEGMENTS;
 				Vec3 point = ribbonPoint(start, end, t, (float) length, time, basis, strandOffset, phase, freqScale);
-				renderLightningTube(consumer, pose, prevPoint, point, r, g, b, LIGHTNING_ALPHA * fadeMultiplier);
+				double twist = shadeTwistPhase(t, (float) length, time, phase);
+				renderLightningTube(consumer, pose, prevPoint, point, r, g, b, LIGHTNING_ALPHA * fadeMultiplier, prevTwist, twist);
 				prevPoint = point;
+				prevTwist = twist;
 			}
 		}
 	}
@@ -270,6 +307,7 @@ public final class WindRibbonRenderer
 	private static void renderLightningVortex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 center, float time, boolean inward, float intensity, float r, float g, float b, float fadeMultiplier)
 	{
 		Vec3 prevPoint = null;
+		double prevAngle = 0;
 		for(int i = 0; i <= VORTEX_SEGMENTS; i++)
 		{
 			float t = (float) i / VORTEX_SEGMENTS;
@@ -280,8 +318,9 @@ public final class WindRibbonRenderer
 			Vec3 point = center.add(new Vec3(Math.cos(angle) * radius, height, Math.sin(angle) * radius));
 
 			if(prevPoint != null)
-				renderLightningTube(consumer, pose, prevPoint, point, r, g, b, LIGHTNING_ALPHA * intensity * fadeMultiplier);
+				renderLightningTube(consumer, pose, prevPoint, point, r, g, b, LIGHTNING_ALPHA * intensity * fadeMultiplier, prevAngle, angle);
 			prevPoint = point;
+			prevAngle = angle;
 		}
 	}
 
@@ -293,8 +332,13 @@ public final class WindRibbonRenderer
 	 * degenerate-quad cutoff - its cross-section is fixed in world space, not scaled by distance to camera.
 	 * Flattened ({@link #LIGHTNING_TUBE_WIDTH} &gt; {@link #LIGHTNING_TUBE_THICKNESS}) along {@code basis[0]}
 	 * rather than a perfect circle - see this class's own doc comment for why.
+	 * <p>
+	 * {@code twistStart}/{@code twistEnd} drive the real dark/light two-tone shading (see this class's own
+	 * doc comment) - each ring's own {@link #shadeColor} call is offset by whichever twist phase applies to
+	 * that ring specifically (start ring uses {@code twistStart}, end ring uses {@code twistEnd}), so two
+	 * adjacent tube segments that share a ring always agree on that ring's color instead of seaming.
 	 */
-	private static void renderLightningTube(VertexConsumer consumer, PoseStack.Pose pose, Vec3 start, Vec3 end, float r, float g, float b, float alpha)
+	private static void renderLightningTube(VertexConsumer consumer, PoseStack.Pose pose, Vec3 start, Vec3 end, float r, float g, float b, float alpha, double twistStart, double twistEnd)
 	{
 		Vec3 axis = end.subtract(start);
 		if(axis.lengthSqr() < 1.0E-6)
@@ -311,11 +355,43 @@ public final class WindRibbonRenderer
 			Vec3 offset1 = basis[0].scale(Math.cos(angle1) * LIGHTNING_TUBE_WIDTH).add(basis[1].scale(Math.sin(angle1) * LIGHTNING_TUBE_THICKNESS));
 			Vec3 offset2 = basis[0].scale(Math.cos(angle2) * LIGHTNING_TUBE_WIDTH).add(basis[1].scale(Math.sin(angle2) * LIGHTNING_TUBE_THICKNESS));
 
-			lightningVertex(consumer, pose, start.add(offset1), r, g, b, alpha);
-			lightningVertex(consumer, pose, start.add(offset2), r, g, b, alpha);
-			lightningVertex(consumer, pose, end.add(offset2), r, g, b, alpha);
-			lightningVertex(consumer, pose, end.add(offset1), r, g, b, alpha);
+			float[] start1 = shadeColor(r, g, b, angle1 - twistStart);
+			float[] start2 = shadeColor(r, g, b, angle2 - twistStart);
+			float[] end1 = shadeColor(r, g, b, angle1 - twistEnd);
+			float[] end2 = shadeColor(r, g, b, angle2 - twistEnd);
+
+			lightningVertex(consumer, pose, start.add(offset1), start1[0], start1[1], start1[2], alpha);
+			lightningVertex(consumer, pose, start.add(offset2), start2[0], start2[1], start2[2], alpha);
+			lightningVertex(consumer, pose, end.add(offset2), end2[0], end2[1], end2[2], alpha);
+			lightningVertex(consumer, pose, end.add(offset1), end1[0], end1[1], end1[2], alpha);
 		}
+	}
+
+	/** Progressively rotating angle for {@link #shadeColor}'s twist boundary - see this class's own doc comment for why this needs to be a rotating angle rather than a fixed one. */
+	private static double shadeTwistPhase(float t, float length, float time, float phaseOffset)
+	{
+		return t * length * SHADE_TWIST_TURNS_PER_LENGTH * 2.0 * Math.PI + time * SHADE_TWIST_SPIN_SPEED + phaseOffset;
+	}
+
+	/** Blends between a darkened and a lightened tint of the base color by {@code cos(angle)} - see this class's own doc comment for the real dark/light two-tone shading this drives. */
+	private static float[] shadeColor(float r, float g, float b, double angle)
+	{
+		boolean darkSide = Math.cos(angle) < 0.0;
+
+		if(darkSide)
+		{
+			return new float[]{
+					r * 0.65F,
+					g * 0.65F,
+					b * 0.65F
+			};
+		}
+
+		return new float[]{
+				Math.min(r * 1.15F, 1F),
+				Math.min(g * 1.15F, 1F),
+				Math.min(b * 1.15F, 1F)
+		};
 	}
 
 	/** A {@code POSITION_COLOR} vertex - no UV/overlay/light/normal, confirmed against vanilla's own {@code LightningBoltRenderer} that {@link RenderType#lightning()} vertices only ever get position + color. */

@@ -27,12 +27,8 @@ public final class MSUCommands
 		// sub-literals ("timeline", "itemvoid", "juju", "streak") to nest cleanly here instead.
 		//
 		// itemvoid/juju/shop/streak/unlock moved a second time, under a real "debug" sub-literal - another
-		// explicit user-requested restructure, separating the clearly debug/testing-only commands from
-		// godtier, the one that stayed a direct /msu child (not named in that request). The former
-		// separate "/msu abilitech grant|revoke user <player>" command was later merged into
-		// AbilitechUnlockCommand entirely (same real GodTierData unlock bookkeeping as everything else
-		// under "unlock", it just hadn't been put there originally) - it no longer exists as its own
-		// top-level literal.
+		// explicit user-requested restructure, separating the clearly debug/testing-only commands from the
+		// two that stayed direct /msu children (abilitech, godtier - neither was named in that request).
 		dispatcher.register(Commands.literal("msu")
 				.then(Commands.literal("timeline")
 						.then(TimelineRewindCommand.getArgumentBuilder())
@@ -45,6 +41,7 @@ public final class MSUCommands
 						.then(AbilitechUnlockCommand.getArgumentBuilder())
 						.then(SkillShopCommand.getArgumentBuilder())
 						.then(DoomDebugCommand.getArgumentBuilder()))
-				.then(GodTierDebugCommand.getArgumentBuilder()));
+				.then(GodTierDebugCommand.getArgumentBuilder())
+				.then(AbilitechUserCommand.getArgumentBuilder()));
 	}
 }

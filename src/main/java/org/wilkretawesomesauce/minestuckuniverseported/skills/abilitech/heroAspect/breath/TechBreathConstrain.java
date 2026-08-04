@@ -52,11 +52,12 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  * trail's own glowing core, giving this tech a denser particle stream layered directly on its trail too, on
  * top of (not instead of) the existing {@code pressureInward} compression particles around the target.
  * <p>
- * <b>{@code WindEngine#windSwirl} added, the same technique pivot {@link TechBreathLiberate} got</b> (see
- * that class's own doc comment for the full reference-screenshot story) - here the swirl's radius
- * <i>shrinks</i> as compression increases (mirroring {@code pressureInward}'s own inward-shrinking radius),
- * so the soft curling ring visibly tightens around the target as its Freedom drops, matching this tech's own
- * "air pressure compresses toward the target" motif rather than Liberate's outward-growing one.
+ * <b>{@code WindEngine#windSwirl} added, then removed again, the same technique pivot
+ * {@link TechBreathLiberate} got</b> (see that class's own doc comment for the full reference-screenshot
+ * story and its later removal) - here the swirl's radius briefly <i>shrank</i> as compression increased
+ * (mirroring {@code pressureInward}'s own inward-shrinking radius) instead of Liberate's outward-growing
+ * one, before the same direct user request ("don't use the swirl particles") removed the call and
+ * {@code windSwirl} itself was deleted from {@code WindEngine} entirely.
  */
 public class TechBreathConstrain extends TechHeroAspect
 {
@@ -68,9 +69,6 @@ public class TechBreathConstrain extends TechHeroAspect
 	private static final float PRESSURE_INTENSITY_MAX = 2.2F;
 
 	private static final int RIBBON_RESYNC_INTERVAL_TICKS = 10;
-
-	private static final double SWIRL_RADIUS_MAX = 1.3;
-	private static final double SWIRL_RADIUS_MIN = 0.4;
 
 	public TechBreathConstrain()
 	{
@@ -129,10 +127,6 @@ public class TechBreathConstrain extends TechHeroAspect
 		WindEngine.ribbon(level, player.position().add(0, player.getEyeHeight() * 0.8, 0),
 				target.position().add(0, target.getBbHeight() * 0.5, 0),
 				level.getGameTime() / 20F, color, compressionFraction);
-
-		WindEngine.windSwirl(level, target.position().add(0, target.getBbHeight() * 0.5, 0),
-				SWIRL_RADIUS_MAX - compressionFraction * (SWIRL_RADIUS_MAX - SWIRL_RADIUS_MIN),
-				level.getGameTime() / 20F, color, Math.max(0.3F, compressionFraction));
 
 		if(time == 0 || time % RIBBON_RESYNC_INTERVAL_TICKS == 0)
 			syncRibbon(player, target, compressionFraction);
