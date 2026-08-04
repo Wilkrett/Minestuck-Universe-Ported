@@ -20,6 +20,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * (the renderer's only read path now) hands back a decaying {@code fadeMultiplier} for
  * {@link #FADE_OUT_TICKS} more ticks before self-pruning it, the same "self-prunes on access" shape as
  * {@code StreakClientState#getGhostRenderState}.
+ * <p>
+ * <b>{@code spawnTick}, a direct user correction</b> ("this is only random on game launch... should be
+ * done when spawning in the wind engine"): {@code client.render.WindRibbonRenderer}'s per-strand random
+ * vertical offset used to seed off caster id alone, which is stable for that caster's whole session
+ * rather than re-randomizing per cast. {@link Ribbon} now carries the real game tick the ribbon actually
+ * started on, so the renderer can seed off <i>that</i> instead - {@link #setRibbon} only assigns a fresh
+ * one when there wasn't already a live ribbon for this caster+target (a brand new cast), and preserves the
+ * existing one across the periodic resyncs {@code TechBreathLiberate}/{@code TechBreathConstrain} already
+ * send while the same target stays held, so the random offset doesn't drift mid-cast either.
  */
 public final class WindRibbonClientState
 {
@@ -35,7 +44,9 @@ public final class WindRibbonClientState
 	public static void setRibbon(int casterId, int targetId, boolean inward, float intensity)
 	{
 		fadingRibbons.remove(casterId);
-		ribbons.put(casterId, new Ribbon(targetId, inward, intensity));
+		Ribbon existing = ribbons.get(casterId);
+		long spawnTick = (existing != null && existing.targetId() == targetId) ? existing.spawnTick() : currentGameTime();
+		ribbons.put(casterId, new Ribbon(targetId, inward, intensity, spawnTick));
 	}
 
 	public static void clearRibbon(int casterId)
@@ -58,7 +69,7 @@ public final class WindRibbonClientState
 		for(Map.Entry<Integer, Ribbon> entry : ribbons.entrySet())
 		{
 			Ribbon ribbon = entry.getValue();
-			result.put(entry.getKey(), new RenderRibbon(ribbon.targetId(), ribbon.inward(), ribbon.intensity(), 1F));
+			result.put(entry.getKey(), new RenderRibbon(ribbon.targetId(), ribbon.inward(), ribbon.intensity(), 1F, ribbon.spawnTick()));
 		}
 
 		long now = currentGameTime();
@@ -76,7 +87,7 @@ public final class WindRibbonClientState
 
 			Ribbon ribbon = entry.getValue().ribbon();
 			float fadeMultiplier = 1F - (float) elapsed / FADE_OUT_TICKS;
-			result.put(entry.getKey(), new RenderRibbon(ribbon.targetId(), ribbon.inward(), ribbon.intensity(), fadeMultiplier));
+			result.put(entry.getKey(), new RenderRibbon(ribbon.targetId(), ribbon.inward(), ribbon.intensity(), fadeMultiplier, ribbon.spawnTick()));
 		}
 
 		return result;
@@ -88,7 +99,7 @@ public final class WindRibbonClientState
 		return level == null ? 0L : level.getGameTime();
 	}
 
-	private record Ribbon(int targetId, boolean inward, float intensity)
+	private record Ribbon(int targetId, boolean inward, float intensity, long spawnTick)
 	{
 	}
 
@@ -96,8 +107,8 @@ public final class WindRibbonClientState
 	{
 	}
 
-	/** A render-ready snapshot of one ribbon - see this class's own doc comment for {@code fadeMultiplier}. */
-	public record RenderRibbon(int targetId, boolean inward, float intensity, float fadeMultiplier)
+	/** A render-ready snapshot of one ribbon - see this class's own doc comment for {@code fadeMultiplier}/{@code spawnTick}. */
+	public record RenderRibbon(int targetId, boolean inward, float intensity, float fadeMultiplier, long spawnTick)
 	{
 	}
 }

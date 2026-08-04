@@ -185,6 +185,18 @@ public final class WindRibbonRenderer
 	private static final float TRAIL_STRAND_PHASE_STAGGER = 1.7F;
 	private static final double TRAIL_STRAND_FREQ_VARIATION = 0.09;
 
+	// Starts each strand a bit behind the caster (opposite the target) instead of exactly at their eye
+	// position, and gives each strand its own small stable random vertical offset there - a direct user
+	// request, mirroring WindEngine's own particle trail treatment (see that class's own
+	// RIBBON_BEHIND_CASTER_DISTANCE). The random offset is seeded from caster id + WindRibbonClientState's
+	// own real spawnTick + strand index (stableRandom), not Math.random() and not caster id alone - a
+	// direct user correction ("this is only random on game launch... should be done when spawning in the
+	// wind engine"), since seeding off caster id alone re-derived the exact same offset for that player's
+	// every cast for their whole session rather than a fresh one each time the ribbon actually spawns. See
+	// renderLightningRibbon's own doc comment for the full story.
+	private static final double START_BEHIND_CASTER_DISTANCE = 2.5;
+	private static final double START_RANDOM_Y_RANGE = 2.0;
+
 	// Real per-vertex dark/light two-tone shading - see this class's own doc comment. SHADE_DARK_FACTOR
 	// darkens the base color for the "outer" side of the cross-section, SHADE_LIGHT_MIX lightens it toward
 	// white for the "inner" side; SHADE_TWIST_TURNS_PER_LENGTH/SHADE_TWIST_SPIN_SPEED rotate the angle that
@@ -243,7 +255,7 @@ public final class WindRibbonRenderer
 			Vec3 start = livingCaster.getPosition(partialTick).add(0, livingCaster.getEyeHeight() * 0.8, 0);
 			Vec3 end = livingTarget.getPosition(partialTick).add(0, livingTarget.getBbHeight() * 0.5, 0);
 
-			renderLightningRibbon(lightningConsumer, pose, start, end, time, r, g, b, fadeMultiplier);
+			renderLightningRibbon(lightningConsumer, pose, start, end, time, r, g, b, fadeMultiplier, livingCaster.getId(), entry.getValue().spawnTick());
 			renderLightningVortex(lightningConsumer, pose, end, time, inward, Math.max(0.2F, intensity), r, g, b, fadeMultiplier);
 		}
 		bufferSource.endBatch(RenderType.lightning());
@@ -272,8 +284,19 @@ public final class WindRibbonRenderer
 		return base.add(basis[0].scale(offset1)).add(basis[1].scale(offset2));
 	}
 
-	/** {@link #TRAIL_STRAND_COUNT} parallel glowing lightning-style tubes along the ribbon - see this class's own doc comment. */
-	private static void renderLightningRibbon(VertexConsumer consumer, PoseStack.Pose pose, Vec3 start, Vec3 end, float time, float r, float g, float b, float fadeMultiplier)
+	/**
+	 * {@link #TRAIL_STRAND_COUNT} parallel glowing lightning-style tubes along the ribbon - see this
+	 * class's own doc comment. Each strand's own base line runs from {@link #START_BEHIND_CASTER_DISTANCE}
+	 * behind the caster (opposite the target) to the target, with a small stable random vertical offset
+	 * ({@link #stableRandom}, seeded off {@code casterId} + {@code spawnTick} + strand index) applied at
+	 * that behind-the-caster origin - see this class's own doc comment on
+	 * {@link #START_BEHIND_CASTER_DISTANCE}. Seeding off {@code spawnTick} (the real tick this specific
+	 * ribbon started on, from {@code client.WindRibbonClientState}) rather than {@code casterId} alone is a
+	 * direct user correction ("this is only random on game launch... should be done when spawning in the
+	 * wind engine") - {@code casterId} alone re-derives the exact same offset for every cast a given player
+	 * ever makes, for their whole session, instead of a fresh one each time the ribbon actually spawns.
+	 */
+	private static void renderLightningRibbon(VertexConsumer consumer, PoseStack.Pose pose, Vec3 start, Vec3 end, float time, float r, float g, float b, float fadeMultiplier, int casterId, long spawnTick)
 	{
 		Vec3 axis = end.subtract(start);
 		double length = axis.length();
@@ -283,24 +306,40 @@ public final class WindRibbonRenderer
 		Vec3 dir = axis.scale(1.0 / length);
 		Vec3[] basis = perpendicularBasis(dir);
 
+		Vec3 origin = start.subtract(dir.scale(START_BEHIND_CASTER_DISTANCE));
+		double extendedLength = length + START_BEHIND_CASTER_DISTANCE;
+
 		for(int strand = 0; strand < TRAIL_STRAND_COUNT; strand++)
 		{
 			double strandOffset = (strand - (TRAIL_STRAND_COUNT - 1) / 2.0) * TRAIL_STRAND_SPACING;
 			float phase = LIGHTNING_PHASE + strand * TRAIL_STRAND_PHASE_STAGGER;
 			double freqScale = 1.0 + strand * TRAIL_STRAND_FREQ_VARIATION;
+			int seed = casterId * 31 + strand + (int) (spawnTick * 0x2545F491L);
+			double randomY = (stableRandom(seed) - 0.5) * START_RANDOM_Y_RANGE;
+			Vec3 strandOrigin = origin.add(0, randomY, 0);
 
-			Vec3 prevPoint = start.add(basis[0].scale(strandOffset));
-			double prevTwist = shadeTwistPhase(0F, (float) length, time, phase);
+			Vec3 prevPoint = ribbonPoint(strandOrigin, end, 0F, (float) extendedLength, time, basis, strandOffset, phase, freqScale);
+			double prevTwist = shadeTwistPhase(0F, (float) extendedLength, time, phase);
 			for(int i = 1; i <= SEGMENTS; i++)
 			{
 				float t = (float) i / SEGMENTS;
-				Vec3 point = ribbonPoint(start, end, t, (float) length, time, basis, strandOffset, phase, freqScale);
-				double twist = shadeTwistPhase(t, (float) length, time, phase);
+				Vec3 point = ribbonPoint(strandOrigin, end, t, (float) extendedLength, time, basis, strandOffset, phase, freqScale);
+				double twist = shadeTwistPhase(t, (float) extendedLength, time, phase);
 				renderLightningTube(consumer, pose, prevPoint, point, r, g, b, LIGHTNING_ALPHA * fadeMultiplier, prevTwist, twist);
 				prevPoint = point;
 				prevTwist = twist;
 			}
 		}
+	}
+
+	/** Deterministic pseudo-random in [0, 1) from an integer seed - not {@link java.util.Random}, so the same seed always gives the same value across frames without needing to store any per-ribbon state. */
+	private static double stableRandom(int seed)
+	{
+		int h = seed * 0x9E3779B1;
+		h ^= h >>> 15;
+		h *= 0x85EBCA6B;
+		h ^= h >>> 13;
+		return (h & 0xFFFFFF) / (double) 0xFFFFFF;
 	}
 
 	/** The glowing lightning-style core along the vortex's own path - see this class's own doc comment. */
