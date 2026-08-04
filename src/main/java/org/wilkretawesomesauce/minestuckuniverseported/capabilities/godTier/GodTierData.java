@@ -160,7 +160,7 @@ public class GodTierData implements INBTSerializable<CompoundTag>
 
 	/** Revokes one previously-unlocked tech - a no-op for a tech with no real cost concept (see
 	 * {@link #isUnlocked}, those are always considered unlocked and can't be revoked). Used by
-	 * {@code command.AbilitechUserCommand}'s debug "revoke" action. */
+	 * {@code command.AbilitechUnlockCommand}'s debug "revoke" action. */
 	public void revokeUnlocked(Abilitech tech)
 	{
 		unlockedTechs.remove(tech.getId());
