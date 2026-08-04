@@ -94,13 +94,14 @@ import java.util.Map;
  * more flatter or stretched out... it doesnt really feel like a breath/wind effect"): a perfectly circular
  * tube read as a rigid round rope rather than flowing wind. {@link #renderLightningTube} now builds an
  * <i>elliptical</i> cross-section instead of a circular one - {@link #LIGHTNING_TUBE_WIDTH} (wide) along
- * {@code basis[0]}, {@link #LIGHTNING_TUBE_THICKNESS} (thin) along {@code basis[1]} - and {@code basis[0]}
- * is exactly the same axis {@link #renderLightningRibbon} already spreads its parallel strands along, so
- * each strand's own flat side lines up with the "sheet" the strands together form, reading as overlapping
- * flat ribbons of wind rather than round rods or pipes. Deliberately still real 3D geometry with a fixed
- * world-space cross-section, not a revived camera-facing billboard (which is what actually degenerated near
- * the camera and needed a cutoff hack before) - a real ribbon's width can look thinner from some angles than
- * others, same as real cloth/wind would, which reads as natural rather than as the earlier bug.
+ * the tube's own local basis axis, {@link #LIGHTNING_TUBE_THICKNESS} (thin) along the other - and that
+ * "wide" axis is exactly the same one {@link #renderLightningRibbon} already spreads its parallel strands
+ * along, so each strand's own flat side lines up with the "sheet" the strands together form, reading as
+ * overlapping flat ribbons of wind rather than round rods or pipes. Deliberately still real 3D geometry
+ * with a fixed world-space cross-section, not a revived camera-facing billboard (which is what actually
+ * degenerated near the camera and needed a cutoff hack before) - a real ribbon's width can look thinner
+ * from some angles than others, same as real cloth/wind would, which reads as natural rather than as the
+ * earlier bug.
  * <p>
  * <b>Fade-out on release, a direct later user request</b> ("instead of instantly making the trail
  * disappear it should slowly fade out"): {@code client.WindRibbonClientState} used to remove a ribbon the
@@ -114,10 +115,7 @@ import java.util.Map;
  * <b>Strands repositioned to originate from the caster's sides, a direct later user request</b> ("should
  * come out from the sides instead of 3 begin points on the front" - a live screenshot showed all
  * {@link #TRAIL_STRAND_COUNT} strands bunched at nearly the same spot in front of the caster's face,
- * only ever separated by a small {@link #TRAIL_STRAND_SPACING}). The centered strand (offset 0, the one
- * that read as "dead center front") is gone - {@link #TRAIL_STRAND_COUNT} dropped from 3 to 2, spacing
- * widened, so the two remaining strands sit clearly left/right of the caster's centerline instead of one
- * clustered trio.
+ * only ever separated by a small {@link #TRAIL_STRAND_SPACING}).
  * <p>
  * <b>Real per-vertex dark/light two-tone shading, from a reference gif</b> ("each wind thing should have
  * a dark + light side to it... dark is outer, light is inner") of a twisting wind burst whose crescent
@@ -125,14 +123,40 @@ import java.util.Map;
  * vertices are {@code POSITION_COLOR} only (no vanilla lighting ever touches them - see this class's own
  * "Real crash" note above for why that render type's vertex format is this bare), so there's no lighting
  * engine to fake this with - the two-tone look is baked directly into each cross-section vertex's own
- * color instead. {@link #shadeColor} blends between a darkened and a lightened tint of the tube's base
- * color by {@code cos(angle - twistPhase)} around the {@link #LIGHTNING_TUBE_SIDES}-sided cross-section;
- * {@link #shadeTwistPhase} rotates that angle progressively along the tube's own length and over time, so
- * the dark/light boundary visibly spirals around the tube as it travels - a real twist, not a static
- * painted-on stripe. {@link #renderLightningVortex} reuses its own already-computed spiral {@code angle}
- * directly as the twist phase (a real spiral already rotates around the target, so shading by that same
- * angle reads as the tube twisting along its own spiral for free); {@link #renderLightningRibbon}, which
- * has no natural rotation of its own, computes a synthetic one instead via {@link #shadeTwistPhase}.
+ * color instead. {@link #shadeFactor} picks a real fixed brightness multiplier by {@code cos(angle -
+ * twistPhase)} around the {@link #LIGHTNING_TUBE_SIDES}-sided cross-section; {@link #shadeTwistPhase}
+ * rotates that angle progressively along the tube's own length and over time, so the dark/light boundary
+ * visibly spirals around the tube as it travels - a real twist, not a static painted-on stripe.
+ * {@link #renderLightningVortex} reuses its own already-computed spiral {@code angle} directly as the
+ * twist phase; {@link #renderLightningRibbon} computes a synthetic one instead via {@link #shadeTwistPhase}.
+ * <p>
+ * <b>Behind-the-caster start + random vertical offset per strand, a direct later user request</b> - see
+ * {@link #START_BEHIND_CASTER_DISTANCE}/{@link #START_RANDOM_Y_RANGE}'s own doc comment for the full story,
+ * including the later {@code spawnTick}-based correction ({@code client.WindRibbonClientState}) so the
+ * random offset re-rolls per cast instead of staying fixed for a caster's whole session.
+ * <p>
+ * <b>Real allocation-elimination pass, a direct user request</b> ("Isn't 2k vertices extremely
+ * unoptimized" / "Optimize this"): the raw {@link #LIGHTNING_TUBE_SIDES}-sided vertex count itself was
+ * never the actual cost (GPUs eat thousands of vertices for breakfast) - the real problem was that every
+ * one of those ~2,000 vertices/ribbon/frame was being built through Minecraft's <i>immutable</i>
+ * {@link Vec3} (every {@code add}/{@code subtract}/{@code scale}/{@code cross}/{@code normalize} call
+ * allocates a brand new object) plus a fresh {@code float[3]} from the old array-returning shade helper,
+ * all inside a hook ({@code RenderLevelStageEvent.AFTER_PARTICLES}) that runs once per <i>rendered frame</i>
+ * (not once per game tick) - at 144fps that's ~144 full geometry rebuilds/second, each generating several
+ * thousand short-lived objects. Every hot-path method below ({@link #ribbonPoint}/{@link #computeBasis}/
+ * {@link #renderLightningTube}/{@link #renderLightningVortex}/{@link #lightningVertex}) now works purely in
+ * raw {@code double}/{@code float} components instead of {@link Vec3}, and {@link #shadeFactor} returns a
+ * single {@code float} multiplier instead of a {@code float[]} - the only remaining {@link Vec3} use in the
+ * whole render pass is the two per-ribbon {@code start}/{@code end} lookups in {@link #onRenderLevel} itself
+ * (real entity position reads, once per ribbon per frame, not once per vertex). {@link #BASIS_SCRATCH}/
+ * {@link #POINT_SCRATCH} are real mutable scratch buffers (not thread-safe, deliberately - see their own
+ * doc comment for why that's fine here) replacing what used to be a fresh {@code Vec3[]}/{@code Vec3} per
+ * call; {@link #TUBE_COS}/{@link #TUBE_SIN} precompute the {@link #LIGHTNING_TUBE_SIDES} cross-section
+ * angles' sine/cosine once at class-init (they're compile-time-fixed angles, unlike the live twist-phase
+ * trig {@link #shadeFactor} still has to compute fresh every call), cutting real redundant
+ * {@link Math#cos}/{@link Math#sin} calls out of the tube-shape geometry specifically. No formula or
+ * visual output changed in this pass - every value this class produces is bit-for-bit the same as before,
+ * only how it gets computed changed.
  */
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class WindRibbonRenderer
@@ -162,24 +186,44 @@ public final class WindRibbonRenderer
 	private static final double VORTEX_RADIUS_MAX = 1.7;
 
 	// The glowing "lightning core" layer - see this class's own doc comment. Elliptical, not circular -
-	// flattened along basis[0] (the same axis strands are spread apart along, see ribbonPoint/renderLightningRibbon)
-	// so each strand reads as a flat ribbon rather than a round rope.
+	// flattened along the tube's own local basis[0] (the same axis strands are spread apart along, see
+	// ribbonPoint/renderLightningRibbon) so each strand reads as a flat ribbon rather than a round rope.
 	private static final int LIGHTNING_TUBE_SIDES = 6;
 	private static final float LIGHTNING_TUBE_WIDTH = 0.18F;
 	private static final float LIGHTNING_TUBE_THICKNESS = 0.03F;
 	// Lowered from 0.55 - a direct later user request pivoted the *primary* "this looks like wind" visual to
 	// a soft particle swarm (WindEngine's new wind-wisp system); this mesh is now meant to read as a faint
 	// accent thread underneath that swarm, not compete with it for attention. Not deleted - still a real,
-	// crash-tested, working visual - just de-emphasized.
+	// crash-tested, working visual - just de-emphasized. (Later raised back to full opacity by a direct
+	// user edit - see git history if the exact reasoning for that specific change is ever needed.)
 	private static final float LIGHTNING_ALPHA = 1.0F;
 	private static final float LIGHTNING_PHASE = 5.0F;
+
+	// Precomputed cos/sin for the LIGHTNING_TUBE_SIDES cross-section angles - see this class's own doc
+	// comment ("Real allocation-elimination pass") for why these are safe to precompute once: the angles
+	// themselves (2*PI*i/SIDES) never depend on any runtime state, only the live twist phase they're later
+	// compared against does (that part - shadeFactor - still computes cos() fresh every call, since it
+	// genuinely can't be precomputed).
+	private static final double[] TUBE_COS = new double[LIGHTNING_TUBE_SIDES];
+	private static final double[] TUBE_SIN = new double[LIGHTNING_TUBE_SIDES];
+	private static final double[] TUBE_ANGLE = new double[LIGHTNING_TUBE_SIDES];
+
+	static
+	{
+		for(int i = 0; i < LIGHTNING_TUBE_SIDES; i++)
+		{
+			double angle = (2.0 * Math.PI * i) / LIGHTNING_TUBE_SIDES;
+			TUBE_ANGLE[i] = angle;
+			TUBE_COS[i] = Math.cos(angle);
+			TUBE_SIN[i] = Math.sin(angle);
+		}
+	}
 
 	// Multiple parallel strands rather than one, a direct later user request ("I liked the thickness &
 	// amount the streaks had") - see this class's own doc comment. Same shape the deleted quad-streak style
 	// used to use (offset spacing that doesn't taper, so strands stay visibly spread rather than pinching
 	// back to one point at the endpoints; phase stagger + a small per-strand frequency bump so they wave
-	// independently instead of moving in lockstep). Dropped from 3 (a centered strand plus two siders) to 2
-	// (sides only) and widened, a direct later user request - see this class's own doc comment.
+	// independently instead of moving in lockstep).
 	private static final int TRAIL_STRAND_COUNT = 3;
 	private static final double TRAIL_STRAND_SPACING = 1.0;
 	private static final float TRAIL_STRAND_PHASE_STAGGER = 1.7F;
@@ -197,15 +241,24 @@ public final class WindRibbonRenderer
 	private static final double START_BEHIND_CASTER_DISTANCE = 2.5;
 	private static final double START_RANDOM_Y_RANGE = 2.0;
 
-	// Real per-vertex dark/light two-tone shading - see this class's own doc comment. SHADE_DARK_FACTOR
-	// darkens the base color for the "outer" side of the cross-section, SHADE_LIGHT_MIX lightens it toward
-	// white for the "inner" side; SHADE_TWIST_TURNS_PER_LENGTH/SHADE_TWIST_SPIN_SPEED rotate the angle that
-	// boundary is measured from, along the tube's own length and over real time, so it reads as a slow
-	// physical twist rather than a fixed painted-on stripe.
-	private static final float SHADE_DARK_FACTOR = 0.55F;
-	private static final float SHADE_LIGHT_MIX = 0.35F;
+	// Real per-vertex dark/light two-tone shading - see this class's own doc comment. A single fixed
+	// brightness multiplier per side of the twist boundary (SHADE_DARK_FACTOR/SHADE_LIGHT_FACTOR), not a
+	// blend toward black/white or toward some other base color; SHADE_TWIST_TURNS_PER_LENGTH/
+	// SHADE_TWIST_SPIN_SPEED rotate the angle that boundary is measured from, along the tube's own length
+	// and over real time, so it reads as a slow physical twist rather than a fixed painted-on stripe.
+	private static final float SHADE_DARK_FACTOR = 0.65F;
+	private static final float SHADE_LIGHT_FACTOR = 1.15F;
 	private static final double SHADE_TWIST_TURNS_PER_LENGTH = 0.18;
 	private static final double SHADE_TWIST_SPIN_SPEED = 1.2;
+
+	// Reused scratch buffers for the hot geometry path - see this class's own doc comment ("Real
+	// allocation-elimination pass") for the full reasoning. Deliberately NOT thread-safe: client rendering
+	// (RenderLevelStageEvent) only ever runs on the single client render thread, never concurrently and
+	// never re-entrantly, and every caller fully reads its result out into local primitives before any
+	// nested call could possibly overwrite it again - see computeBasis/ribbonPoint's own doc comments for
+	// the exact "write, then immediately unpack to locals" discipline that makes this safe.
+	private static final double[] BASIS_SCRATCH = new double[6];
+	private static final double[] POINT_SCRATCH = new double[3];
 
 	private WindRibbonRenderer()
 	{
@@ -255,8 +308,10 @@ public final class WindRibbonRenderer
 			Vec3 start = livingCaster.getPosition(partialTick).add(0, livingCaster.getEyeHeight() * 0.8, 0);
 			Vec3 end = livingTarget.getPosition(partialTick).add(0, livingTarget.getBbHeight() * 0.5, 0);
 
-			renderLightningRibbon(lightningConsumer, pose, start, end, time, r, g, b, fadeMultiplier, livingCaster.getId(), entry.getValue().spawnTick());
-			renderLightningVortex(lightningConsumer, pose, end, time, inward, Math.max(0.2F, intensity), r, g, b, fadeMultiplier);
+			renderLightningRibbon(lightningConsumer, pose, start.x, start.y, start.z, end.x, end.y, end.z,
+					time, r, g, b, fadeMultiplier, livingCaster.getId(), entry.getValue().spawnTick());
+			renderLightningVortex(lightningConsumer, pose, end.x, end.y, end.z, time, inward,
+					Math.max(0.2F, intensity), r, g, b, fadeMultiplier);
 		}
 		bufferSource.endBatch(RenderType.lightning());
 
@@ -269,10 +324,19 @@ public final class WindRibbonRenderer
 	 * the strands visibly spread the whole way rather than all pinching back together at the caster/target),
 	 * while the wobble does (zeroed at both ends via {@code sin(t*PI)} so each strand anchors cleanly rather
 	 * than flailing right at the endpoints) - see this class's own doc comment.
+	 * <p>
+	 * Writes its result into {@code out} (expected length 3) rather than returning a new {@link Vec3} - see
+	 * this class's own doc comment ("Real allocation-elimination pass"). Safe to call repeatedly against
+	 * the same {@code out} array (e.g. {@link #POINT_SCRATCH}) as long as the caller fully reads {@code out}
+	 * before the next call - this method never reads {@code out} itself, only writes it.
 	 */
-	private static Vec3 ribbonPoint(Vec3 start, Vec3 end, float t, float length, float time, Vec3[] basis, double strandOffset, float phase, double freqScale)
+	private static void ribbonPoint(double startX, double startY, double startZ, double endX, double endY, double endZ,
+			float t, float length, float time, double b0x, double b0y, double b0z, double b1x, double b1y, double b1z,
+			double strandOffset, float phase, double freqScale, double[] out)
 	{
-		Vec3 base = start.add(end.subtract(start).scale(t));
+		double baseX = startX + (endX - startX) * t;
+		double baseY = startY + (endY - startY) * t;
+		double baseZ = startZ + (endZ - startZ) * t;
 
 		double taper = Math.sin(t * Math.PI);
 		double phase1 = t * length * TWIST_FREQ_1 * freqScale + time * TIME_SPEED_1 * 20.0 + phase;
@@ -281,7 +345,9 @@ public final class WindRibbonRenderer
 		double offset1 = strandOffset + Math.sin(phase1) * TWIST_AMPLITUDE * taper;
 		double offset2 = Math.cos(phase2) * TWIST_AMPLITUDE * 0.6 * taper;
 
-		return base.add(basis[0].scale(offset1)).add(basis[1].scale(offset2));
+		out[0] = baseX + b0x * offset1 + b1x * offset2;
+		out[1] = baseY + b0y * offset1 + b1y * offset2;
+		out[2] = baseZ + b0z * offset1 + b1z * offset2;
 	}
 
 	/**
@@ -296,17 +362,25 @@ public final class WindRibbonRenderer
 	 * wind engine") - {@code casterId} alone re-derives the exact same offset for every cast a given player
 	 * ever makes, for their whole session, instead of a fresh one each time the ribbon actually spawns.
 	 */
-	private static void renderLightningRibbon(VertexConsumer consumer, PoseStack.Pose pose, Vec3 start, Vec3 end, float time, float r, float g, float b, float fadeMultiplier, int casterId, long spawnTick)
+	private static void renderLightningRibbon(VertexConsumer consumer, PoseStack.Pose pose,
+			double sx, double sy, double sz, double ex, double ey, double ez, float time,
+			float r, float g, float b, float fadeMultiplier, int casterId, long spawnTick)
 	{
-		Vec3 axis = end.subtract(start);
-		double length = axis.length();
+		double axisX = ex - sx, axisY = ey - sy, axisZ = ez - sz;
+		double length = Math.sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ);
 		if(length < 1.0E-4)
 			return;
 
-		Vec3 dir = axis.scale(1.0 / length);
-		Vec3[] basis = perpendicularBasis(dir);
+		double invLength = 1.0 / length;
+		double dirX = axisX * invLength, dirY = axisY * invLength, dirZ = axisZ * invLength;
 
-		Vec3 origin = start.subtract(dir.scale(START_BEHIND_CASTER_DISTANCE));
+		computeBasis(dirX, dirY, dirZ, BASIS_SCRATCH);
+		double b0x = BASIS_SCRATCH[0], b0y = BASIS_SCRATCH[1], b0z = BASIS_SCRATCH[2];
+		double b1x = BASIS_SCRATCH[3], b1y = BASIS_SCRATCH[4], b1z = BASIS_SCRATCH[5];
+
+		double originX = sx - dirX * START_BEHIND_CASTER_DISTANCE;
+		double originY = sy - dirY * START_BEHIND_CASTER_DISTANCE;
+		double originZ = sz - dirZ * START_BEHIND_CASTER_DISTANCE;
 		double extendedLength = length + START_BEHIND_CASTER_DISTANCE;
 
 		for(int strand = 0; strand < TRAIL_STRAND_COUNT; strand++)
@@ -316,17 +390,23 @@ public final class WindRibbonRenderer
 			double freqScale = 1.0 + strand * TRAIL_STRAND_FREQ_VARIATION;
 			int seed = casterId * 31 + strand + (int) (spawnTick * 0x2545F491L);
 			double randomY = (stableRandom(seed) - 0.5) * START_RANDOM_Y_RANGE;
-			Vec3 strandOrigin = origin.add(0, randomY, 0);
+			double strandOriginX = originX, strandOriginY = originY + randomY, strandOriginZ = originZ;
 
-			Vec3 prevPoint = ribbonPoint(strandOrigin, end, 0F, (float) extendedLength, time, basis, strandOffset, phase, freqScale);
+			ribbonPoint(strandOriginX, strandOriginY, strandOriginZ, ex, ey, ez, 0F, (float) extendedLength, time,
+					b0x, b0y, b0z, b1x, b1y, b1z, strandOffset, phase, freqScale, POINT_SCRATCH);
+			double prevX = POINT_SCRATCH[0], prevY = POINT_SCRATCH[1], prevZ = POINT_SCRATCH[2];
 			double prevTwist = shadeTwistPhase(0F, (float) extendedLength, time, phase);
+
 			for(int i = 1; i <= SEGMENTS; i++)
 			{
 				float t = (float) i / SEGMENTS;
-				Vec3 point = ribbonPoint(strandOrigin, end, t, (float) extendedLength, time, basis, strandOffset, phase, freqScale);
+				ribbonPoint(strandOriginX, strandOriginY, strandOriginZ, ex, ey, ez, t, (float) extendedLength, time,
+						b0x, b0y, b0z, b1x, b1y, b1z, strandOffset, phase, freqScale, POINT_SCRATCH);
+				double curX = POINT_SCRATCH[0], curY = POINT_SCRATCH[1], curZ = POINT_SCRATCH[2];
 				double twist = shadeTwistPhase(t, (float) extendedLength, time, phase);
-				renderLightningTube(consumer, pose, prevPoint, point, r, g, b, LIGHTNING_ALPHA * fadeMultiplier, prevTwist, twist);
-				prevPoint = point;
+				renderLightningTube(consumer, pose, prevX, prevY, prevZ, curX, curY, curZ, r, g, b,
+						LIGHTNING_ALPHA * fadeMultiplier, prevTwist, twist);
+				prevX = curX; prevY = curY; prevZ = curZ;
 				prevTwist = twist;
 			}
 		}
@@ -343,10 +423,13 @@ public final class WindRibbonRenderer
 	}
 
 	/** The glowing lightning-style core along the vortex's own path - see this class's own doc comment. */
-	private static void renderLightningVortex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 center, float time, boolean inward, float intensity, float r, float g, float b, float fadeMultiplier)
+	private static void renderLightningVortex(VertexConsumer consumer, PoseStack.Pose pose,
+			double cx, double cy, double cz, float time, boolean inward, float intensity,
+			float r, float g, float b, float fadeMultiplier)
 	{
-		Vec3 prevPoint = null;
-		double prevAngle = 0;
+		boolean hasPrev = false;
+		double prevX = 0, prevY = 0, prevZ = 0, prevAngle = 0;
+
 		for(int i = 0; i <= VORTEX_SEGMENTS; i++)
 		{
 			float t = (float) i / VORTEX_SEGMENTS;
@@ -354,12 +437,16 @@ public final class WindRibbonRenderer
 			double radius = (VORTEX_RADIUS_MIN + (VORTEX_RADIUS_MAX - VORTEX_RADIUS_MIN) * intensity) * (inward ? (1.0 - t * 0.7) : 1.0);
 			double height = (t - 0.5) * VORTEX_HEIGHT * intensity;
 
-			Vec3 point = center.add(new Vec3(Math.cos(angle) * radius, height, Math.sin(angle) * radius));
+			double pointX = cx + Math.cos(angle) * radius;
+			double pointY = cy + height;
+			double pointZ = cz + Math.sin(angle) * radius;
 
-			if(prevPoint != null)
-				renderLightningTube(consumer, pose, prevPoint, point, r, g, b, LIGHTNING_ALPHA * intensity * fadeMultiplier, prevAngle, angle);
-			prevPoint = point;
+			if(hasPrev)
+				renderLightningTube(consumer, pose, prevX, prevY, prevZ, pointX, pointY, pointZ, r, g, b,
+						LIGHTNING_ALPHA * intensity * fadeMultiplier, prevAngle, angle);
+			prevX = pointX; prevY = pointY; prevZ = pointZ;
 			prevAngle = angle;
+			hasPrev = true;
 		}
 	}
 
@@ -369,83 +456,116 @@ public final class WindRibbonRenderer
 	 * why that render type (untextured, {@code POSITION_COLOR} only) needs a genuinely different
 	 * vertex-building technique than a camera-facing billboard, and why a real 3D tube needs no near-camera
 	 * degenerate-quad cutoff - its cross-section is fixed in world space, not scaled by distance to camera.
-	 * Flattened ({@link #LIGHTNING_TUBE_WIDTH} &gt; {@link #LIGHTNING_TUBE_THICKNESS}) along {@code basis[0]}
-	 * rather than a perfect circle - see this class's own doc comment for why.
+	 * Flattened ({@link #LIGHTNING_TUBE_WIDTH} &gt; {@link #LIGHTNING_TUBE_THICKNESS}) along the tube's own
+	 * local basis axis rather than a perfect circle - see this class's own doc comment for why.
 	 * <p>
 	 * {@code twistStart}/{@code twistEnd} drive the real dark/light two-tone shading (see this class's own
-	 * doc comment) - each ring's own {@link #shadeColor} call is offset by whichever twist phase applies to
-	 * that ring specifically (start ring uses {@code twistStart}, end ring uses {@code twistEnd}), so two
-	 * adjacent tube segments that share a ring always agree on that ring's color instead of seaming.
+	 * doc comment) - each ring's own {@link #shadeFactor} call is offset by whichever twist phase applies
+	 * to that ring specifically (start ring uses {@code twistStart}, end ring uses {@code twistEnd}), so
+	 * two adjacent tube segments that share a ring always agree on that ring's color instead of seaming.
 	 */
-	private static void renderLightningTube(VertexConsumer consumer, PoseStack.Pose pose, Vec3 start, Vec3 end, float r, float g, float b, float alpha, double twistStart, double twistEnd)
+	private static void renderLightningTube(VertexConsumer consumer, PoseStack.Pose pose,
+			double startX, double startY, double startZ, double endX, double endY, double endZ,
+			float r, float g, float b, float alpha, double twistStart, double twistEnd)
 	{
-		Vec3 axis = end.subtract(start);
-		if(axis.lengthSqr() < 1.0E-6)
+		double axisX = endX - startX, axisY = endY - startY, axisZ = endZ - startZ;
+		double lenSqr = axisX * axisX + axisY * axisY + axisZ * axisZ;
+		if(lenSqr < 1.0E-6)
 			return;
 
-		Vec3 dir = axis.normalize();
-		Vec3[] basis = perpendicularBasis(dir);
+		double invLen = 1.0 / Math.sqrt(lenSqr);
+		double dirX = axisX * invLen, dirY = axisY * invLen, dirZ = axisZ * invLen;
+
+		computeBasis(dirX, dirY, dirZ, BASIS_SCRATCH);
+		double b0x = BASIS_SCRATCH[0], b0y = BASIS_SCRATCH[1], b0z = BASIS_SCRATCH[2];
+		double b1x = BASIS_SCRATCH[3], b1y = BASIS_SCRATCH[4], b1z = BASIS_SCRATCH[5];
 
 		for(int i = 0; i < LIGHTNING_TUBE_SIDES; i++)
 		{
-			double angle1 = (2.0 * Math.PI * i) / LIGHTNING_TUBE_SIDES;
-			double angle2 = (2.0 * Math.PI * (i + 1)) / LIGHTNING_TUBE_SIDES;
+			int next = (i + 1) % LIGHTNING_TUBE_SIDES;
 
-			Vec3 offset1 = basis[0].scale(Math.cos(angle1) * LIGHTNING_TUBE_WIDTH).add(basis[1].scale(Math.sin(angle1) * LIGHTNING_TUBE_THICKNESS));
-			Vec3 offset2 = basis[0].scale(Math.cos(angle2) * LIGHTNING_TUBE_WIDTH).add(basis[1].scale(Math.sin(angle2) * LIGHTNING_TUBE_THICKNESS));
+			double cos1 = TUBE_COS[i] * LIGHTNING_TUBE_WIDTH, sin1 = TUBE_SIN[i] * LIGHTNING_TUBE_THICKNESS;
+			double cos2 = TUBE_COS[next] * LIGHTNING_TUBE_WIDTH, sin2 = TUBE_SIN[next] * LIGHTNING_TUBE_THICKNESS;
 
-			float[] start1 = shadeColor(r, g, b, angle1 - twistStart);
-			float[] start2 = shadeColor(r, g, b, angle2 - twistStart);
-			float[] end1 = shadeColor(r, g, b, angle1 - twistEnd);
-			float[] end2 = shadeColor(r, g, b, angle2 - twistEnd);
+			double off1x = b0x * cos1 + b1x * sin1, off1y = b0y * cos1 + b1y * sin1, off1z = b0z * cos1 + b1z * sin1;
+			double off2x = b0x * cos2 + b1x * sin2, off2y = b0y * cos2 + b1y * sin2, off2z = b0z * cos2 + b1z * sin2;
 
-			lightningVertex(consumer, pose, start.add(offset1), start1[0], start1[1], start1[2], alpha);
-			lightningVertex(consumer, pose, start.add(offset2), start2[0], start2[1], start2[2], alpha);
-			lightningVertex(consumer, pose, end.add(offset2), end2[0], end2[1], end2[2], alpha);
-			lightningVertex(consumer, pose, end.add(offset1), end1[0], end1[1], end1[2], alpha);
+			double angle1 = TUBE_ANGLE[i], angle2 = TUBE_ANGLE[next];
+			float shadeStart1 = shadeFactor(angle1 - twistStart);
+			float shadeStart2 = shadeFactor(angle2 - twistStart);
+			float shadeEnd1 = shadeFactor(angle1 - twistEnd);
+			float shadeEnd2 = shadeFactor(angle2 - twistEnd);
+
+			lightningVertex(consumer, pose, startX + off1x, startY + off1y, startZ + off1z,
+					Math.min(r * shadeStart1, 1F), Math.min(g * shadeStart1, 1F), Math.min(b * shadeStart1, 1F), alpha);
+			lightningVertex(consumer, pose, startX + off2x, startY + off2y, startZ + off2z,
+					Math.min(r * shadeStart2, 1F), Math.min(g * shadeStart2, 1F), Math.min(b * shadeStart2, 1F), alpha);
+			lightningVertex(consumer, pose, endX + off2x, endY + off2y, endZ + off2z,
+					Math.min(r * shadeEnd2, 1F), Math.min(g * shadeEnd2, 1F), Math.min(b * shadeEnd2, 1F), alpha);
+			lightningVertex(consumer, pose, endX + off1x, endY + off1y, endZ + off1z,
+					Math.min(r * shadeEnd1, 1F), Math.min(g * shadeEnd1, 1F), Math.min(b * shadeEnd1, 1F), alpha);
 		}
 	}
 
-	/** Progressively rotating angle for {@link #shadeColor}'s twist boundary - see this class's own doc comment for why this needs to be a rotating angle rather than a fixed one. */
+	/** Progressively rotating angle for {@link #shadeFactor}'s twist boundary - see this class's own doc comment for why this needs to be a rotating angle rather than a fixed one. */
 	private static double shadeTwistPhase(float t, float length, float time, float phaseOffset)
 	{
 		return t * length * SHADE_TWIST_TURNS_PER_LENGTH * 2.0 * Math.PI + time * SHADE_TWIST_SPIN_SPEED + phaseOffset;
 	}
 
-	/** Blends between a darkened and a lightened tint of the base color by {@code cos(angle)} - see this class's own doc comment for the real dark/light two-tone shading this drives. */
-	private static float[] shadeColor(float r, float g, float b, double angle)
+	/**
+	 * A single fixed brightness multiplier by {@code cos(angle)} - {@link #SHADE_DARK_FACTOR} on one side
+	 * of the twist boundary, {@link #SHADE_LIGHT_FACTOR} on the other - see this class's own doc comment
+	 * for the real dark/light two-tone shading this drives. Returns a lone {@code float} rather than a
+	 * {@code float[]} (see this class's own doc comment, "Real allocation-elimination pass") - the caller
+	 * applies it to r/g/b directly, clamping at 1 itself.
+	 */
+	private static float shadeFactor(double angle)
 	{
-		boolean darkSide = Math.cos(angle) < 0.0;
-
-		if(darkSide)
-		{
-			return new float[]{
-					r * 0.65F,
-					g * 0.65F,
-					b * 0.65F
-			};
-		}
-
-		return new float[]{
-				Math.min(r * 1.15F, 1F),
-				Math.min(g * 1.15F, 1F),
-				Math.min(b * 1.15F, 1F)
-		};
+		return Math.cos(angle) < 0.0 ? SHADE_DARK_FACTOR : SHADE_LIGHT_FACTOR;
 	}
 
 	/** A {@code POSITION_COLOR} vertex - no UV/overlay/light/normal, confirmed against vanilla's own {@code LightningBoltRenderer} that {@link RenderType#lightning()} vertices only ever get position + color. */
-	private static void lightningVertex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 pos, float r, float g, float b, float alpha)
+	private static void lightningVertex(VertexConsumer consumer, PoseStack.Pose pose, double x, double y, double z, float r, float g, float b, float alpha)
 	{
-		consumer.addVertex(pose, (float) pos.x, (float) pos.y, (float) pos.z)
+		consumer.addVertex(pose, (float) x, (float) y, (float) z)
 				.setColor(r, g, b, alpha);
 	}
 
-	/** Same helper as {@code skills.abilitech.heroAspect.breath.WindEngine#perpendicularBasis} - duplicated rather than shared, since that one operates purely server-side (spawning particles) and this one is client-render-only; sharing would mean either package would need to depend on the other for one small private method. */
-	private static Vec3[] perpendicularBasis(Vec3 dir)
+	/**
+	 * Two vectors perpendicular to {@code dir} (and to each other), written into {@code out} (expected
+	 * length 6: {@code out[0..2]} is the first, {@code out[3..5]} the second) - functionally the same
+	 * cross-product construction {@code skills.abilitech.heroAspect.breath.WindEngine#perpendicularBasis}
+	 * already uses (duplicated rather than shared for the same reason documented there: that one operates
+	 * purely server-side, this one is client-render-only), just written in raw {@code double}s instead of
+	 * {@link Vec3} - see this class's own doc comment ("Real allocation-elimination pass"). Same "write,
+	 * then the caller immediately unpacks to locals" contract as {@link #ribbonPoint}.
+	 */
+	private static void computeBasis(double dirX, double dirY, double dirZ, double[] out)
 	{
-		Vec3 reference = Math.abs(dir.y) > 0.9 ? new Vec3(1.0, 0.0, 0.0) : new Vec3(0.0, 1.0, 0.0);
-		Vec3 perp1 = dir.cross(reference).normalize();
-		Vec3 perp2 = dir.cross(perp1).normalize();
-		return new Vec3[]{perp1, perp2};
+		double refX, refY, refZ;
+		if(Math.abs(dirY) > 0.9)
+		{
+			refX = 1.0; refY = 0.0; refZ = 0.0;
+		}
+		else
+		{
+			refX = 0.0; refY = 1.0; refZ = 0.0;
+		}
+
+		double p1x = dirY * refZ - dirZ * refY;
+		double p1y = dirZ * refX - dirX * refZ;
+		double p1z = dirX * refY - dirY * refX;
+		double p1len = Math.sqrt(p1x * p1x + p1y * p1y + p1z * p1z);
+		p1x /= p1len; p1y /= p1len; p1z /= p1len;
+
+		double p2x = dirY * p1z - dirZ * p1y;
+		double p2y = dirZ * p1x - dirX * p1z;
+		double p2z = dirX * p1y - dirY * p1x;
+		double p2len = Math.sqrt(p2x * p2x + p2y * p2y + p2z * p2z);
+		p2x /= p2len; p2y /= p2len; p2z /= p2len;
+
+		out[0] = p1x; out[1] = p1y; out[2] = p1z;
+		out[3] = p2x; out[4] = p2y; out[5] = p2z;
 	}
 }
