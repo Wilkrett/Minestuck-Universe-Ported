@@ -9,6 +9,7 @@ public final class MSUModelLayers
 	public static final ModelLayerLocation WIZARD_HAT = new ModelLayerLocation(Minestuckuniverseported.id("wizard_hat"), "main");
 	public static final ModelLayerLocation ARCHMAGE_HAT = new ModelLayerLocation(Minestuckuniverseported.id("archmage_hat"), "main");
 	public static final ModelLayerLocation FROG_HAT = new ModelLayerLocation(Minestuckuniverseported.id("frog_hat"), "main");
+	public static final ModelLayerLocation GOLEM = new ModelLayerLocation(Minestuckuniverseported.id("golem"), "main");
 
 	private MSUModelLayers()
 	{

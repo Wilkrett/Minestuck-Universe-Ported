@@ -61,6 +61,7 @@ public class Minestuckuniverseported {
                         output.accept(MSUItems.MOONSTONE.get());
                         output.accept(org.wilkretawesomesauce.minestuckuniverseported.juju.MSUJujuRegistry.JUJU_MODUS_ITEM.get());
                         output.accept(org.wilkretawesomesauce.minestuckuniverseported.juju.MSUJujuRegistry.CUE_BALL.get());
+                        output.accept(MSUItems.GOLEM_SPAWN_EGG.get());
                     })
                     .build());
 
@@ -109,11 +110,27 @@ public class Minestuckuniverseported {
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
+        modEventBus.addListener(this::commonSetup);
+    }
+
+    /**
+     * Ported from ModularBosses (1.8)'s {@code items.dispenser.BehaviorDispenseCustomMobEgg} - lets a
+     * dispenser throw a golem spawn egg the same way it can throw a vanilla egg, via the same generic
+     * {@code ProjectileItem} hook {@code GolemSpawnEggItem} itself implements. Deferred to
+     * {@code FMLCommonSetupEvent} rather than run directly in the constructor, since
+     * {@code MSUItems.GOLEM_SPAWN_EGG.get()} isn't safely resolvable until the item registry has actually
+     * finished registering.
+     */
+    private void commonSetup(final net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+        net.minecraft.world.level.block.DispenserBlock.registerBehavior(MSUItems.GOLEM_SPAWN_EGG.get(),
+                new net.minecraft.core.dispenser.ProjectileDispenseBehavior(MSUItems.GOLEM_SPAWN_EGG.get()));
     }
 
     private void registerEntityAttributes(final EntityAttributeCreationEvent event) {
         // HopeGolemEntity extends vanilla IronGolem directly and adds no new attributes of its own,
         // so its own attribute map is just IronGolem's, unmodified.
         event.put(MSUEntityTypes.HOPE_GOLEM.get(), net.minecraft.world.entity.animal.IronGolem.createAttributes().build());
+        event.put(MSUEntityTypes.GOLEM.get(), org.wilkretawesomesauce.minestuckuniverseported.entity.GolemEntity.createAttributes().build());
     }
 }

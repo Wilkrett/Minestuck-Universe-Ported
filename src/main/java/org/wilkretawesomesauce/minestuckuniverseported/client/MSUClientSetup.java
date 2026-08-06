@@ -26,8 +26,11 @@ import org.wilkretawesomesauce.minestuckuniverseported.client.particles.InkParti
 import org.wilkretawesomesauce.minestuckuniverseported.client.particles.PowerParticle;
 import org.wilkretawesomesauce.minestuckuniverseported.client.particles.TimeGearsRiseParticle;
 import org.wilkretawesomesauce.minestuckuniverseported.client.particles.WindWispParticle;
+import org.wilkretawesomesauce.minestuckuniverseported.client.model.golem.GolemModel;
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.BubbleRenderer;
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.FrogHatLayer;
+import org.wilkretawesomesauce.minestuckuniverseported.client.render.GolemBoulderRenderer;
+import org.wilkretawesomesauce.minestuckuniverseported.client.render.GolemRenderer;
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.HopeGolemRenderer;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifeSpecibusData;
 import com.mraof.minestuck.client.renderer.entity.frog.FrogRenderer;
@@ -85,6 +88,7 @@ public final class MSUClientSetup
 		event.registerLayerDefinition(MSUModelLayers.WIZARD_HAT, WizardHatModel::createLayer);
 		event.registerLayerDefinition(MSUModelLayers.ARCHMAGE_HAT, ArchmageHatModel::createLayer);
 		event.registerLayerDefinition(MSUModelLayers.FROG_HAT, FrogHatModel::createLayer);
+		event.registerLayerDefinition(MSUModelLayers.GOLEM, GolemModel::createBodyLayer);
 	}
 
 	@SubscribeEvent
@@ -93,6 +97,10 @@ public final class MSUClientSetup
 		event.registerEntityRenderer(MSUEntityTypes.BUBBLE.get(), BubbleRenderer::new);
 		event.registerEntityRenderer(MSUEntityTypes.HOPE_GOLEM.get(), HopeGolemRenderer::new);
 		event.registerEntityRenderer(MSUEntityTypes.MSU_THROWABLE.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
+		event.registerEntityRenderer(MSUEntityTypes.GOLEM.get(), GolemRenderer::new);
+		event.registerEntityRenderer(MSUEntityTypes.GOLEM_BOULDER.get(), GolemBoulderRenderer::new);
+		event.registerEntityRenderer(MSUEntityTypes.GOLEM_FALLING_BLOCK.get(), org.wilkretawesomesauce.minestuckuniverseported.client.render.GolemFallingBlockRenderer::new);
+		event.registerEntityRenderer(MSUEntityTypes.GOLEM_EGG.get(), org.wilkretawesomesauce.minestuckuniverseported.client.render.GolemEggRenderer::new);
 	}
 
 	/**

@@ -4,6 +4,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import org.wilkretawesomesauce.minestuckuniverseported.item.GolemSpawnEggItem;
 import org.wilkretawesomesauce.minestuckuniverseported.item.StrifeCardItem;
 
 /**
@@ -116,6 +117,12 @@ public final class MSUItems
 	// for the real, new per-player Aspect/Class eligibility gate the original never actually had.
 	public static final DeferredItem<Item> SKAIAN_SCROLL = REGISTER.register("skaian_scroll",
 			() -> new org.wilkretawesomesauce.minestuckuniverseported.item.SkaianScrollItem(new Item.Properties()));
+
+	// Ported from ModularBosses (1.8)'s items.ItemCustomEgg - a real throwable spawn egg (see
+	// GolemSpawnEggItem's own doc comment), not vanilla's own instant-place SpawnEggItem. No spawn egg of
+	// any kind existed in this project before this (see MSUEntityTypes' own doc comment on that gap).
+	public static final DeferredItem<Item> GOLEM_SPAWN_EGG = REGISTER.register("golem_spawn_egg",
+			() -> new GolemSpawnEggItem(new Item.Properties()));
 
 	private MSUItems()
 	{

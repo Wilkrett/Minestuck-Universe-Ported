@@ -115,6 +115,10 @@ public class Config {
     private static final ModConfigSpec.ConfigValue<List<? extends String>> STRIFE_CARD_MOB_DROPS_WHITELIST;
     private static final ModConfigSpec.IntValue STRIFE_DECK_MAX_SIZE;
     private static final ModConfigSpec.DoubleValue WEAPON_ATTACK_MULTIPLIER;
+    private static final ModConfigSpec.DoubleValue GOLEM_MAX_HEALTH_MULTIPLIER;
+    private static final ModConfigSpec.DoubleValue GOLEM_DAMAGE_MULTIPLIER;
+    private static final ModConfigSpec.IntValue GOLEM_ATTACK_COOLDOWN_TICKS;
+    private static final ModConfigSpec.IntValue GOLEM_EXP_DROP;
 
     static
     {
@@ -602,6 +606,32 @@ public class Config {
                 .defineInRange("relationshipNearbyFamiliarityGain", 1.0, 0.0, 100.0);
 
         BUILDER.pop();
+
+        // ============================================================================================
+        // Golem - ported from ModularBosses (1.8)'s "206 Golem" config category (entity.EntityGolem).
+        // The original's own configurable loot-string-list isn't ported - see GolemEntity's own doc
+        // comment for why a flat drop of the mimicked block is used instead.
+        // ============================================================================================
+
+        BUILDER.push("golem");
+
+        GOLEM_MAX_HEALTH_MULTIPLIER = BUILDER
+                .comment("The golem's max health is its mimicked spawn block's own hardness multiplied by this.")
+                .defineInRange("golemMaxHealthMultiplier", 20.0, 1.0, 1000.0);
+
+        GOLEM_DAMAGE_MULTIPLIER = BUILDER
+                .comment("The golem's attack damage is its mimicked spawn block's own hardness multiplied by this.")
+                .defineInRange("golemDamageMultiplier", 1.0, 0.0, 1000.0);
+
+        GOLEM_ATTACK_COOLDOWN_TICKS = BUILDER
+                .comment("Minimum ticks between the golem picking a new attack (Throw/Stomp/Roll) while it has a target.")
+                .defineInRange("golemAttackCooldownTicks", 40, 1, Integer.MAX_VALUE);
+
+        GOLEM_EXP_DROP = BUILDER
+                .comment("Experience dropped on killing a golem.")
+                .defineInRange("golemExpDrop", 10, 0, Integer.MAX_VALUE);
+
+        BUILDER.pop();
     }
 
     static final ModConfigSpec SPEC = BUILDER.build();
@@ -703,6 +733,10 @@ public class Config {
     public static Set<String> strifeCardMobDropsWhitelist;
     public static int strifeDeckMaxSize;
     public static double weaponAttackMultiplier;
+    public static double golemMaxHealthMultiplier;
+    public static double golemDamageMultiplier;
+    public static int golemAttackCooldownTicks;
+    public static int golemExpDrop;
 
     private static boolean validateNonBlankString(final Object obj) {
         return obj instanceof String str && !str.isBlank();
@@ -807,5 +841,9 @@ public class Config {
         strifeCardMobDropsWhitelist = Set.copyOf(STRIFE_CARD_MOB_DROPS_WHITELIST.get());
         strifeDeckMaxSize = STRIFE_DECK_MAX_SIZE.get();
         weaponAttackMultiplier = WEAPON_ATTACK_MULTIPLIER.get();
+        golemMaxHealthMultiplier = GOLEM_MAX_HEALTH_MULTIPLIER.get();
+        golemDamageMultiplier = GOLEM_DAMAGE_MULTIPLIER.get();
+        golemAttackCooldownTicks = GOLEM_ATTACK_COOLDOWN_TICKS.get();
+        golemExpDrop = GOLEM_EXP_DROP.get();
     }
 }

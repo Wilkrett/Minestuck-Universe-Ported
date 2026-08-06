@@ -55,7 +55,15 @@ import java.util.function.BiConsumer;
  * with this class, {@link #ensureNaturalRelationship} auto-detects a real vanilla {@link TamableAnimal}
  * owner or this project's own {@link HopeGolemEntity} owner on demand, the first time anything actually
  * asks about that entity's relationships - called from both Blood Insight (before displaying) and the
- * Schism Aura (before deciding whether to redirect a pet's aggression). {@link #onAnimalTame} additionally
+ * Schism Aura (before deciding whether to redirect a pet's aggression). {@code entity.GolemEntity}'s own
+ * Ownership relationship (see {@code heroClass.maid.mind.TechMaidMindConstructGolem}) is a deliberate,
+ * direct exception to this laziness instead - that tech calls {@link #getOrCreate} the instant it summons
+ * a golem, for a tech whose entire stated point is an <i>instant</i> bond, not one that has to wait for
+ * something else to first ask about it; {@code entity.GolemEntity} itself carries no owner field of its
+ * own at all - {@code mechanics.relationship.RelationshipCombatEvents} is what actually makes that Ownership
+ * relationship mean anything behaviorally (never targeting/damaging the other side, defending/assisting
+ * them) - see that class's own doc comment for why this is generic, relationship-driven enforcement
+ * rather than bespoke per-entity owner-tracking. {@link #onAnimalTame} additionally
  * creates one immediately at the real moment of vanilla taming, for the "spending time nearby"/history
  * flavor of having a record from the actual tame event rather than only from the first time someone asks.
  * <p>
@@ -995,7 +1003,8 @@ public final class RelationshipManager
 		remove(dead.getUUID());
 	}
 
-	private static boolean isPositive(RelationshipType type)
+	/** Public for {@code mechanics.relationship.RelationshipCombatEvents}' own generic "don't fight someone you're bonded with" enforcement - see that class's own doc comment. */
+	public static boolean isPositive(RelationshipType type)
 	{
 		return type == RelationshipType.LOYALTY || type == RelationshipType.FRIENDSHIP
 				|| type == RelationshipType.FAMILY || type == RelationshipType.OWNERSHIP

@@ -1,8 +1,12 @@
 package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech;
 
 import com.mraof.minestuck.player.EnumAspect;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.network.PacketDistributor;
+import org.wilkretawesomesauce.minestuckuniverseported.network.FociFlashPacket;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUParticles;
 
 /**
@@ -49,6 +53,35 @@ public final class MSUAbilitechParticles
 	public static void oneshot(Level level, Entity entity, EnumAspect aspect, int count)
 	{
 		burst(level, entity, aspect, count);
+	}
+
+	/**
+	 * The "easy util" entry point for {@code client.render.FociFlashRenderer}'s real generalized effect -
+	 * flashes a fading {@code textures/foci/<aspect>.png} icon at {@code pos}, tinted with that aspect's
+	 * own color, for every player in the same dimension. One line, fire-and-forget - matching every other
+	 * method in this class, this is meant to be safe to call from any tech's {@code onUseTick} the instant
+	 * something worth marking happens (a golem waking up, a bond forming, whatever), without needing to
+	 * think about networking. No-op on the client (server-authoritative, like every other real effect call
+	 * in this class) and if the aspect has no real color table entry.
+	 */
+	public static void focusFlash(Level level, Vec3 pos, EnumAspect aspect)
+	{
+		focusFlash(level, pos, aspect, org.wilkretawesomesauce.minestuckuniverseported.client.render.FociFlashRenderer.DEFAULT_SIZE,
+				org.wilkretawesomesauce.minestuckuniverseported.client.render.FociFlashRenderer.DEFAULT_LIFETIME_TICKS);
+	}
+
+	/**
+	 * Same as {@link #focusFlash(Level, Vec3, EnumAspect)}, but with an explicit icon size (world-space
+	 * width/height, in blocks) and fade-out duration (in ticks) instead of
+	 * {@code FociFlashRenderer}'s own defaults - for a tech that wants a bigger/smaller or longer/shorter
+	 * flash than the standard one.
+	 */
+	public static void focusFlash(Level level, Vec3 pos, EnumAspect aspect, float size, int lifetimeTicks)
+	{
+		if(!(level instanceof ServerLevel serverLevel) || MSUAspectColors.get(aspect) == null)
+			return;
+
+		PacketDistributor.sendToPlayersInDimension(serverLevel, new FociFlashPacket(pos.x, pos.y, pos.z, aspect.ordinal(), size, lifetimeTicks));
 	}
 
 	/**
