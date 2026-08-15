@@ -68,8 +68,12 @@ public abstract class GolemThrowableEntity extends ThrowableProjectile
 
 		if(horizDist >= 1.0E-7)
 		{
+			// Ported from EntityMobThrowable's own "float f4 = (float) d3 * 0.2F" arc bias, added back onto
+			// dy (d1) right before firing - dy alone aims 2 blocks below the target (see above), and this
+			// term is what arcs the throw back up into a real trajectory instead of nosing into the ground.
+			double arcBias = horizDist * 0.2;
 			setPos(shooter.getX() + xOff, eyeY - yOffset, shooter.getZ() + zOff);
-			shoot(dx - xOff, dy, dz - zOff, velocity, wobble);
+			shoot(dx - xOff, dy + arcBias, dz - zOff, velocity, wobble);
 		}
 	}
 

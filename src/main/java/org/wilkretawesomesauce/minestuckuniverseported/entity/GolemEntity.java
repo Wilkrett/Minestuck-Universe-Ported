@@ -107,7 +107,7 @@ public class GolemEntity extends Monster
 				.add(Attributes.MAX_HEALTH, 10.0)
 				.add(Attributes.FOLLOW_RANGE, 20.0)
 				.add(Attributes.KNOCKBACK_RESISTANCE, 1.0)
-				.add(Attributes.MOVEMENT_SPEED, 0.25)
+				.add(Attributes.MOVEMENT_SPEED, 0.699)
 				.add(Attributes.ATTACK_DAMAGE, 2.0);
 	}
 
@@ -124,7 +124,7 @@ public class GolemEntity extends Monster
 	protected void registerGoals()
 	{
 		this.goalSelector.addGoal(1, new GolemCombatGoal(this));
-		this.goalSelector.addGoal(2, new GolemWanderGoal(this, 0.35));
+		this.goalSelector.addGoal(2, new GolemWanderGoal(this, 0.25));
 		this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0F));
 		this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
 

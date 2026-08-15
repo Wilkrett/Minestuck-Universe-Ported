@@ -1,11 +1,19 @@
 package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath;
 
 import com.mraof.minestuck.player.EnumAspect;
+import net.minecraft.client.player.Input;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
+import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
@@ -103,5 +111,56 @@ public class TechBreathWindVessel extends TechHeroAspect
 		MSUAbilitechParticles.aura(level, player, EnumAspect.BREATH, 10);
 
 		return true;
+	}
+
+	/**
+	 * Marker effect - carries no attribute modifiers or tick behavior of its own, it exists purely so
+	 * "is this player currently wind-formed" is automatically network-synced to every observing client
+	 * for free (the same way any potion effect already is), which {@link ClientEvents} needs to decide
+	 * whether to hide the player's render and dampen their movement input.
+	 */
+	public static class WindFormedEffect extends MobEffect
+	{
+		public WindFormedEffect()
+		{
+			super(MobEffectCategory.BENEFICIAL, 0x47E2FA);
+		}
+	}
+
+	/**
+	 * Client-side half of this tech - both hooks are real, direct modern equivalents of the original's
+	 * own {@code RenderLivingEvent.Pre}/{@code InputUpdateEvent} tricks (see this class's own doc comment
+	 * for the one piece of the original - sub-block gap collision-phasing - that does <i>not</i> have
+	 * one). Whether a given player is "wind formed" is read directly off {@link MSUMobEffects#WIND_FORMED}
+	 * rather than a bespoke synced flag - a plain potion effect is already network-synced to every
+	 * observing client for free, which is exactly what both hooks below need (one checks a possibly-remote
+	 * player being rendered, the other only ever runs for the local player already).
+	 */
+	@EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+	public static final class ClientEvents
+	{
+		private ClientEvents()
+		{
+		}
+
+		@SubscribeEvent
+		private static void onRenderPlayer(RenderPlayerEvent.Pre event)
+		{
+			if(event.getEntity().hasEffect(MSUMobEffects.WIND_FORMED))
+				event.setCanceled(true);
+		}
+
+		@SubscribeEvent
+		private static void onMovementInput(MovementInputUpdateEvent event)
+		{
+			if(!event.getEntity().hasEffect(MSUMobEffects.WIND_FORMED))
+				return;
+
+			Input input = event.getInput();
+			input.forwardImpulse *= 0.1F;
+			input.leftImpulse *= 0.1F;
+
+			event.getEntity().setDeltaMovement(event.getEntity().getDeltaMovement().add(0, 0.05, 0));
+		}
 	}
 }

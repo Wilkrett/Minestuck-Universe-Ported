@@ -1,11 +1,18 @@
 package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.mind;
 
 import com.mraof.minestuck.player.EnumAspect;
+import net.minecraft.client.player.Input;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
@@ -68,5 +75,43 @@ public class TechMindConfusion extends TechHeroAspect
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - ENERGY_USE);
 
 		return true;
+	}
+
+	/**
+	 * Marker effect - carries no attribute modifiers, real modern equivalent of the original's custom
+	 * {@code MSUPotions.MIND_CONFUSION}. Whether a player has it is what {@link ClientEvents} checks to
+	 * reverse their movement input, the same "marker effect + MovementInputUpdateEvent" pattern already
+	 * used by Wind Vessel and Hopeful Outburst.
+	 */
+	public static class MindConfusionEffect extends MobEffect
+	{
+		public MindConfusionEffect()
+		{
+			super(MobEffectCategory.HARMFUL, 0x7B2FBE);
+		}
+	}
+
+	/**
+	 * Client-side half of this tech - reverses the local player's own movement input for as long as
+	 * {@link MSUMobEffects#MIND_CONFUSION} is active, the same marker-effect-plus-
+	 * {@code MovementInputUpdateEvent} pattern already used by Wind Vessel and Hopeful Outburst.
+	 */
+	@EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+	public static final class ClientEvents
+	{
+		private ClientEvents()
+		{
+		}
+
+		@SubscribeEvent
+		private static void onMovementInput(MovementInputUpdateEvent event)
+		{
+			if(!event.getEntity().hasEffect(MSUMobEffects.MIND_CONFUSION))
+				return;
+
+			Input input = event.getInput();
+			input.forwardImpulse *= -1F;
+			input.leftImpulse *= -1F;
+		}
 	}
 }

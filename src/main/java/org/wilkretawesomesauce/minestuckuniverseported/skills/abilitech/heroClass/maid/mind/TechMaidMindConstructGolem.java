@@ -62,8 +62,19 @@ public class TechMaidMindConstructGolem extends TechHeroClass
 		if(time == SUMMON_CHARGE_TICKS)
 		{
 			GolemEntity golem = new GolemEntity(org.wilkretawesomesauce.minestuckuniverseported.MSUEntityTypes.GOLEM.get(), serverLevel);
-			golem.setPos(player.getX() + serverLevel.getRandom().nextDouble() * 6 - 3,
-					player.getY(), player.getZ() + serverLevel.getRandom().nextDouble() * 6 - 3);
+			double spawnX = player.getX() + serverLevel.getRandom().nextDouble() * 6 - 3;
+			double spawnZ = player.getZ() + serverLevel.getRandom().nextDouble() * 6 - 3;
+			// Real fix: this used to place the golem at the player's own Y with no ground check at all, so
+			// on anything but flat terrain the golem could spawn mid-air, embedded in a hillside, or over a
+			// completely different block than what's under the player's feet - GolemEntity#resolveMimicBlock
+			// would still pick *something* from wherever it actually landed, making the block (and therefore
+			// the health/damage it scales off) effectively random rather than reflecting the ground the
+			// player is actually standing near. Snap to the real surface at that X/Z first, matching how
+			// GolemSpawnEggItem#useOn already places its golem precisely on a clicked block's top face.
+			net.minecraft.core.BlockPos surfacePos = serverLevel.getHeightmapPos(
+					net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
+					net.minecraft.core.BlockPos.containing(spawnX, player.getY(), spawnZ));
+			golem.setPos(spawnX, surfacePos.getY(), spawnZ);
 			serverLevel.addFreshEntity(golem);
 
 			RelationshipManager.getOrCreate(golem.getUUID(), player.getUUID(), RelationshipType.OWNERSHIP,

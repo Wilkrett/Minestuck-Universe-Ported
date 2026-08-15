@@ -1,13 +1,22 @@
 package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time;
 
 import com.mraof.minestuck.player.EnumAspect;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
@@ -239,5 +248,79 @@ public class TechTimeAccelerateSelf extends TechHeroAspect
 
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(serverPlayer, new StreakStateSyncPacket(serverPlayer.getId(),
 				preference.isEnabled(), preference.resolveFlavour(), preference.isHideTrail(), preference.isGhostsIgnoreSprint(), preference.getGhostTint()));
+	}
+
+	/**
+	 * Marker effect - carries no attribute modifiers of its own, it exists purely so the caster's own
+	 * client can see how far into its charge-up this ability currently is, the same "marker effect synced
+	 * automatically like any potion" idiom {@code TechBreathWindVessel.WindFormedEffect}/
+	 * {@code TechHopeyShit.HopingEffect} already use for their own client-only hooks.
+	 * <p>
+	 * The amplifier is repurposed to carry the current charge percentage (0-100, refreshed every tick
+	 * while charging - see {@link #onUseTick}), not a real effect strength - a variant of the "duration as
+	 * a free synced timer" idiom this project's other marker effects use ({@code TimeDilationEffect}/
+	 * {@code CalculatingEffect}), just using the amplifier slot instead of the duration one since this
+	 * needs to represent an accumulating value rather than a countdown. {@link ClientEvents} is the sole
+	 * consumer.
+	 */
+	public static class AcceleratingEffect extends MobEffect
+	{
+		public AcceleratingEffect()
+		{
+			super(MobEffectCategory.BENEFICIAL, 0xFF4040);
+		}
+	}
+
+	/**
+	 * Client-only "charging up" overlay for whoever is actually holding this tech - only ever true for the
+	 * local player, same reasoning as {@code TechTimeDilation.ClientEvents} (a screen effect makes no
+	 * sense for anyone but the one player actually looking through it).
+	 * <p>
+	 * Rendered as the same red-tinted top/bottom gradient-band shape {@code TechTimeDilation.ClientEvents}
+	 * already established for this project (see that class's own doc comment for why bands, not a true
+	 * radial vignette), except intensity here is driven directly by {@link AcceleratingEffect}'s
+	 * amplifier - which {@link #onUseTick} refreshes every charging tick to the current charge percentage
+	 * (0-100) - rather than a fixed pulse cycle, so the vignette simply gets stronger the longer the
+	 * ability is held, capping out alongside the burst itself at {@link #MAX_CHARGE_TICKS}.
+	 */
+	@EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+	public static final class ClientEvents
+	{
+		private static final int MAX_ALPHA = 160;
+		private static final float BAND_FRACTION = 0.25F;
+		private static final int TINT = 0xFF4040;
+
+		private ClientEvents()
+		{
+		}
+
+		@SubscribeEvent
+		private static void onRenderGui(RenderGuiEvent.Post event)
+		{
+			Minecraft mc = Minecraft.getInstance();
+			LocalPlayer player = mc.player;
+			if(player == null)
+				return;
+
+			MobEffectInstance instance = player.getEffect(MSUMobEffects.ACCELERATING);
+			if(instance == null)
+				return;
+
+			float chargeRatio = Mth.clamp(instance.getAmplifier() / 100F, 0F, 1F);
+			if(chargeRatio <= 0F)
+				return;
+
+			GuiGraphics guiGraphics = event.getGuiGraphics();
+			int screenWidth = guiGraphics.guiWidth();
+			int screenHeight = guiGraphics.guiHeight();
+
+			int alpha = (int) (MAX_ALPHA * chargeRatio);
+			int dark = (alpha << 24) | (TINT & 0xFFFFFF);
+			int clear = 0;
+			int bandHeight = (int) (screenHeight * BAND_FRACTION * chargeRatio);
+
+			guiGraphics.fillGradient(0, 0, screenWidth, bandHeight, dark, clear);
+			guiGraphics.fillGradient(0, screenHeight - bandHeight, screenWidth, screenHeight, clear, dark);
+		}
 	}
 }

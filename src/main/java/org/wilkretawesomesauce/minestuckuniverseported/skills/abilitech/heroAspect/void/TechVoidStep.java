@@ -2,9 +2,15 @@ package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAsp
 
 import com.mraof.minestuck.player.EnumAspect;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
@@ -85,5 +91,46 @@ public class TechVoidStep extends TechHeroAspect
 	{
 		super.onPassiveToggle(level, player, active);
 		sendToggleMessage(player, active);
+	}
+
+	/**
+	 * Marker effect - carries no attribute modifiers or tick behavior of its own, it exists purely so
+	 * "is this player currently voidstepping" is automatically network-synced to every observing client
+	 * for free (the same way any potion effect already is), which {@link ClientEvents} needs to set
+	 * {@link Player#noPhysics} on the client's own copy of the player - same real shape as
+	 * {@code breath.TechBreathWindVessel}'s own marker/client-events pair.
+	 */
+	public static class VoidStepEffect extends MobEffect
+	{
+		public VoidStepEffect()
+		{
+			super(MobEffectCategory.BENEFICIAL, 0x104EA2);
+		}
+	}
+
+	/**
+	 * Client-side half of this tech - sets the client's own copy of {@link Player#noPhysics} when the
+	 * synced {@link MSUMobEffects#VOID_STEP} marker is present, since that field isn't otherwise exposed
+	 * through any event - hooked at {@link PlayerTickEvent.Post} (after {@code Player#tick()}'s own
+	 * unconditional {@code this.noPhysics = this.isSpectator()} reset for that same tick, so this actually
+	 * sticks instead of being immediately overwritten) on the client only. Fires for every client-visible
+	 * {@code Player} entity that ticks locally (the real local player, and any other nearby real players
+	 * also voidstepping), not just the local one - correct either way, since the marker effect is only
+	 * ever actually applied to whoever equipped the tech.
+	 */
+	@EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+	public static final class ClientEvents
+	{
+		private ClientEvents()
+		{
+		}
+
+		@SubscribeEvent
+		private static void onPlayerTick(PlayerTickEvent.Post event)
+		{
+			Player player = event.getEntity();
+			if(player.hasEffect(MSUMobEffects.VOID_STEP))
+				player.noPhysics = true;
+		}
 	}
 }

@@ -12,6 +12,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.entity.GolemEntity;
 import org.wilkretawesomesauce.minestuckuniverseported.entity.GolemFallingBlockEntity;
 import org.wilkretawesomesauce.minestuckuniverseported.entity.HopeGolemEntity;
 import org.wilkretawesomesauce.minestuckuniverseported.entity.MSUThrowableEntity;
+import org.wilkretawesomesauce.minestuckuniverseported.entity.TornadoEntity;
 
 public final class MSUEntityTypes
 {
@@ -48,10 +49,10 @@ public final class MSUEntityTypes
 					.clientTrackingRange(10)
 					.build(Minestuckuniverseported.id("golem").toString()));
 
-	/** Ported from ModularBosses (1.8)'s {@code entity.projectile.EntityBoulder} - see {@link GolemBoulderEntity}'s own doc comment. */
+	/** Ported from ModularBosses (1.8)'s {@code entity.projectile.EntityBoulder} - see {@link GolemBoulderEntity}'s own doc comment. Sized to match the original's own {@code setSize(1, 1)} call in its target-throwing constructor. */
 	public static final DeferredHolder<EntityType<?>, EntityType<GolemBoulderEntity>> GOLEM_BOULDER = REGISTER.register("golem_boulder",
 			() -> EntityType.Builder.<GolemBoulderEntity>of(GolemBoulderEntity::new, MobCategory.MISC)
-					.sized(0.75F, 0.75F)
+					.sized(1.0F, 1.0F)
 					.clientTrackingRange(6)
 					.updateInterval(10)
 					.build(Minestuckuniverseported.id("golem_boulder").toString()));
@@ -71,6 +72,15 @@ public final class MSUEntityTypes
 					.clientTrackingRange(6)
 					.updateInterval(10)
 					.build(Minestuckuniverseported.id("golem_falling_block").toString()));
+
+	/** Original design for this project, no 1.12.2 counterpart - see {@link TornadoEntity}'s own doc comment. Purely cosmetic, transient (never saved), sized to roughly cover the funnel's default footprint/height. */
+	public static final DeferredHolder<EntityType<?>, EntityType<TornadoEntity>> TORNADO = REGISTER.register("tornado",
+			() -> EntityType.Builder.of(TornadoEntity::new, MobCategory.MISC)
+					.sized(2.2F, 3.5F)
+					.noSave()
+					.clientTrackingRange(10)
+					.updateInterval(20)
+					.build(Minestuckuniverseported.id("tornado").toString()));
 
 	private MSUEntityTypes()
 	{

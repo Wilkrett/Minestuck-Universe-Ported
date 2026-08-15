@@ -9,7 +9,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.space.ManipulatorSelectionClientState;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.space.TechSpaceManipulator.ManipulatorSelectionClientState;
 
 /**
  * Broadcasts the caster's own in-progress Matter Manipulator corner selection to their client. Unlike

@@ -1,9 +1,13 @@
 package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.mind;
 
 import com.mraof.minestuck.player.EnumAspect;
+import net.minecraft.client.player.Input;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,6 +15,10 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
@@ -18,6 +26,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.mind.DecisionManager;
+import org.wilkretawesomesauce.minestuckuniverseported.network.MindControlInputPacket;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
@@ -172,5 +181,134 @@ public class TechMindControl extends TechHeroAspect
 
 		if(!stillControllingAPlayer)
 			player.removeEffect(MSUMobEffects.MIND_CONTROLLING);
+	}
+
+	/**
+	 * Marker effect applied to the <i>controller</i> (not the target) while this tech is actively
+	 * possessing a real player - carries no attribute modifiers, exists purely so the controller's own
+	 * client can tell (via the free network sync every potion effect already gets) whether to start
+	 * forwarding its own movement input to the server, the same marker-effect idiom this project already
+	 * uses for {@code TechBreathWindVessel.WindFormedEffect}/{@code TechHopeyShit.HopingEffect}.
+	 */
+	public static class MindControllingEffect extends MobEffect
+	{
+		public MindControllingEffect()
+		{
+			super(MobEffectCategory.NEUTRAL, 0x4B0082);
+		}
+	}
+
+	/**
+	 * Client-only holder for whatever {@link MindControlSyncPacket} most recently told this client - i.e.
+	 * whether (and how) the local player is currently being puppeted by someone else's {@code TechMindControl}
+	 * ("Mindflayer's Spell"). Read by {@link ClientEvents}'s target-side hook every
+	 * {@code MovementInputUpdateEvent}.
+	 */
+	public static final class MindControlClientState
+	{
+		private static boolean active;
+		private static float worldX;
+		private static float worldZ;
+		private static boolean jump;
+		private static boolean sneak;
+
+		private MindControlClientState()
+		{
+		}
+
+		public static void update(boolean active, float worldX, float worldZ, boolean jump, boolean sneak)
+		{
+			MindControlClientState.active = active;
+			MindControlClientState.worldX = worldX;
+			MindControlClientState.worldZ = worldZ;
+			MindControlClientState.jump = jump;
+			MindControlClientState.sneak = sneak;
+		}
+
+		public static boolean isActive()
+		{
+			return active;
+		}
+
+		public static float getWorldX()
+		{
+			return worldX;
+		}
+
+		public static float getWorldZ()
+		{
+			return worldZ;
+		}
+
+		public static boolean isJump()
+		{
+			return jump;
+		}
+
+		public static boolean isSneak()
+		{
+			return sneak;
+		}
+	}
+
+	/**
+	 * Client-side real movement-puppeting for this tech - both directions of the original's
+	 * {@code InputUpdateEvent} hook, ported 1:1 including its exact world-relative rotation math (the
+	 * original's {@code Vec3d#rotateYaw}, reproduced directly rather than trusting a
+	 * differently-conventioned modern equivalent).
+	 * <p>
+	 * <b>Controller side:</b> while carrying {@link MindControllingEffect} (a real player target is
+	 * currently tethered), captures this client's own movement input, converts it to a world-relative
+	 * vector using its own head yaw, sends it to the server every tick via {@link MindControlInputPacket},
+	 * and zeroes its own local input so the controller doesn't also move themselves while puppeteering -
+	 * exactly matching the original.
+	 * <p>
+	 * <b>Target side:</b> whenever {@link MindControlClientState} says a possession is active, overrides
+	 * this client's own local input with the received world-relative vector, re-projected onto this
+	 * client's own current head yaw - so a target's actual movement direction stays correct as the
+	 * controller (and therefore the target's own forced look direction, see this tech's real
+	 * {@code ServerPlayer#lookAt} call) keeps turning.
+	 */
+	@EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+	public static final class ClientEvents
+	{
+		private ClientEvents()
+		{
+		}
+
+		@SubscribeEvent
+		private static void onMovementInput(MovementInputUpdateEvent event)
+		{
+			Player player = event.getEntity();
+			Input input = event.getInput();
+
+			if(player.hasEffect(MSUMobEffects.MIND_CONTROLLING))
+			{
+				float[] world = rotateYaw(input.leftImpulse, input.forwardImpulse, -player.getYHeadRot() * Mth.DEG_TO_RAD);
+				PacketDistributor.sendToServer(new MindControlInputPacket(world[0], world[1], input.jumping, input.shiftKeyDown));
+
+				input.leftImpulse = 0;
+				input.forwardImpulse = 0;
+				input.jumping = false;
+				input.shiftKeyDown = false;
+			}
+
+			if(MindControlClientState.isActive())
+			{
+				float[] local = rotateYaw(MindControlClientState.getWorldX(), MindControlClientState.getWorldZ(), player.getYHeadRot() * Mth.DEG_TO_RAD);
+				input.leftImpulse = local[0];
+				input.forwardImpulse = local[1];
+				input.jumping = MindControlClientState.isJump();
+				input.shiftKeyDown = MindControlClientState.isSneak();
+			}
+		}
+
+		/** Reproduces {@code net.minecraft.world.phys.Vec3}'s 1.12.2 ancestor {@code Vec3d#rotateYaw} exactly. */
+		private static float[] rotateYaw(float x, float z, float yaw)
+		{
+			float cos = Mth.cos(yaw);
+			float sin = Mth.sin(yaw);
+			return new float[]{x * cos + z * sin, z * cos - x * sin};
+		}
 	}
 }

@@ -1,6 +1,7 @@
 package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath;
 
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
@@ -272,6 +273,61 @@ public final class WindEngine
 			Vec3 direction = away.length() > 1.0E-4 ? away.normalize() : new Vec3(0.0, 1.0, 0.0);
 			item.setDeltaMovement(item.getDeltaMovement().add(direction.scale(strength)));
 			item.hurtMarked = true;
+		}
+	}
+
+	// Funnel shape for tornado() - wide at the base, narrowing toward the top, same "few random
+	// samples per tick, density comes from overlapping particle lifetimes" trick ribbon() already
+	// uses rather than spawning every ring every tick.
+	private static final int TORNADO_SAMPLES_PER_TICK = 6;
+	private static final double TORNADO_BASE_RADIUS = 1.1;
+	private static final double TORNADO_TOP_RADIUS = 0.35;
+	private static final double TORNADO_HEIGHT = 3.5;
+	private static final double TORNADO_ROTATION_SPEED = 0.12;
+	private static final double TORNADO_TWIST_PER_BLOCK = 1.4;
+	private static final float TORNADO_WISP_SCALE = 0.55F;
+
+	/**
+	 * A small, stationary swirling funnel of wind - visual-only, no gameplay effect, deliberately not
+	 * called from any tech yet (see {@code entity.TornadoEntity}'s own doc comment for the real
+	 * caller). Same shape as every other method in this class: stateless, called fresh every active
+	 * tick with the caller's own live {@code time} value (typically {@code tickCount}), reusing
+	 * {@link MSUParticles#spawnWindWisp}'s already-established soft blurred wisp (vanilla's own
+	 * Breeze/Wind Charge {@code gust_0}-{@code gust_11} art) rather than any new particle or mesh work.
+	 * <p>
+	 * Each call samples a few random points across the funnel's height, computes that ring's radius by
+	 * interpolating from a wide base to a narrow top (the taper that actually reads as "funnel" rather
+	 * than a plain cylinder), and offsets the spawn angle by both height (a twist, so the funnel reads
+	 * as a coherent spiral rather than flat stacked rings) and {@code time} (continuous rotation).
+	 * Tangential velocity gives the orbit; a small upward drift lets wisps visibly rise and fade,
+	 * leaning entirely on {@link org.wilkretawesomesauce.minestuckuniverseported.client.particles.WindWispParticle}'s
+	 * own already-existing fade-in/out and puff-grow behavior rather than adding new particle logic here.
+	 */
+	public static void tornado(Level level, Vec3 base, float size, float time, int color, float intensity)
+	{
+		if(!(level instanceof ServerLevel serverLevel))
+			return;
+
+		RandomSource random = serverLevel.getRandom();
+		double height = TORNADO_HEIGHT * size;
+
+		for(int i = 0; i < TORNADO_SAMPLES_PER_TICK; i++)
+		{
+			double heightFraction = random.nextDouble();
+			double y = base.y + heightFraction * height;
+			double radius = Mth.lerp(heightFraction, TORNADO_BASE_RADIUS, TORNADO_TOP_RADIUS) * size;
+
+			double angle = heightFraction * height * TORNADO_TWIST_PER_BLOCK + time * TORNADO_ROTATION_SPEED;
+			double x = base.x + Math.cos(angle) * radius;
+			double z = base.z + Math.sin(angle) * radius;
+
+			double tangentialSpeed = 0.05 * intensity;
+			double xVel = -Math.sin(angle) * tangentialSpeed;
+			double zVel = Math.cos(angle) * tangentialSpeed;
+			double yVel = 0.02 * intensity;
+
+			float scale = TORNADO_WISP_SCALE * size * (float) Mth.lerp(heightFraction, 1.0, 0.5);
+			MSUParticles.spawnWindWisp(level, x, y, z, xVel, yVel, zVel, 14 + random.nextInt(10), color, scale);
 		}
 	}
 

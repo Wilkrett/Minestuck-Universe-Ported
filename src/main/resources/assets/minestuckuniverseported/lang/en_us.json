@@ -107,6 +107,7 @@
   "status.minestuckuniverseported.streak.flavour_set": "Streak flavour set to %s",
   "status.minestuckuniverseported.streak.invalid_flavour": "Unknown streak flavour: %s",
   "status.minestuckuniverseported.streak.enabled_flavour": "Streak enabled with flavour %s",
+  "status.minestuckuniverseported.tornado.spawned": "Spawned a tornado",
   "death.attack.minestuckuniverseported.beam": "%1$s was zapped by a beam",
   "death.attack.minestuckuniverseported.beam.player": "%1$s was zapped by a beam while fighting %2$s",
   "item.minestuckuniverseported.god_tier_hood": "God Tier Hood",

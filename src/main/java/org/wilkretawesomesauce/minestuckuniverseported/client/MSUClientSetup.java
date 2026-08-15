@@ -32,6 +32,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.client.render.FrogHatLaye
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.GolemBoulderRenderer;
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.GolemRenderer;
 import org.wilkretawesomesauce.minestuckuniverseported.client.render.HopeGolemRenderer;
+import org.wilkretawesomesauce.minestuckuniverseported.client.render.TornadoRenderer;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifeSpecibusData;
 import com.mraof.minestuck.client.renderer.entity.frog.FrogRenderer;
 import com.mraof.minestuck.entity.MSEntityTypes;
@@ -101,6 +102,7 @@ public final class MSUClientSetup
 		event.registerEntityRenderer(MSUEntityTypes.GOLEM_BOULDER.get(), GolemBoulderRenderer::new);
 		event.registerEntityRenderer(MSUEntityTypes.GOLEM_FALLING_BLOCK.get(), org.wilkretawesomesauce.minestuckuniverseported.client.render.GolemFallingBlockRenderer::new);
 		event.registerEntityRenderer(MSUEntityTypes.GOLEM_EGG.get(), org.wilkretawesomesauce.minestuckuniverseported.client.render.GolemEggRenderer::new);
+		event.registerEntityRenderer(MSUEntityTypes.TORNADO.get(), TornadoRenderer::new);
 	}
 
 	/**

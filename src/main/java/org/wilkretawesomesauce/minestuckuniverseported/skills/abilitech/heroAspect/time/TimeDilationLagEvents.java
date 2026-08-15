@@ -11,6 +11,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeDilation.TimeDilationEffect;
 
 import java.util.HashMap;
 import java.util.Map;

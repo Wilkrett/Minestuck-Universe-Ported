@@ -629,7 +629,7 @@ public class Config {
 
         GOLEM_EXP_DROP = BUILDER
                 .comment("Experience dropped on killing a golem.")
-                .defineInRange("golemExpDrop", 10, 0, Integer.MAX_VALUE);
+                .defineInRange("golemExpDrop", 100, 0, Integer.MAX_VALUE);
 
         BUILDER.pop();
     }
