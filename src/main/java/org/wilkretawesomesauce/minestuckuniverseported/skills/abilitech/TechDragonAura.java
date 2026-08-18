@@ -18,6 +18,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.MSUItems;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.TechBoondollarCost;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 
@@ -37,7 +38,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  * {@code LivingDamageEvent.Post} equivalent - see {@code heroClass.heir.TechHeir}'s own doc comment for why
  * that's this project's real substitute) detonates a real AoE retaliation nova (8x3x8 box, 10 explosion
  * damage to everyone else in range) and locks the caster out of every God Tier-gated tech for 30 real
- * seconds via {@code heroAspect.heart.GodTierLockEffect} at amplifier 3 - identical numbers to the original.
+ * seconds via {@code potions.GodTierLockEffect} at amplifier 3 - identical numbers to the original.
  * <p>
  * <b>Real simplification, not the original's own shape</b>: this flag used to be a registered
  * {@code MobEffect} ({@code DragonAuraEffect}, since deleted) purely so the static

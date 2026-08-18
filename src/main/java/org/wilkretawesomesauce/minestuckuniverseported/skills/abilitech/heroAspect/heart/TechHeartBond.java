@@ -9,9 +9,9 @@ import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 
@@ -26,7 +26,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
  * already linked to someone else, or already linking someone else, couldn't be re-linked), and had an
  * entire death-prevention mechanic for linked entities - which was already fully commented out in the
  * original source itself, dead code, not something this port is removing. This version locks on
- * immediately on press (reusing {@code AbilitechLoadout}'s existing slot-tether, the same mechanism
+ * immediately on press (reusing {@code BadgeEffects}'s existing slot-tether, the same mechanism
  * {@code TechTimeTickUp} already uses) and drops the exclusivity bookkeeping - nothing else in this
  * project's Heart aspect creates a second, competing link, so it wasn't worth the added state.
  */
@@ -40,7 +40,7 @@ public class TechHeartBond extends TechHeroAspect
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 
 		if(state == AbilitechKeyState.NONE || state == AbilitechKeyState.RELEASED)
 		{
@@ -87,6 +87,6 @@ public class TechHeartBond extends TechHeroAspect
 	@Override
 	public void onUnequipped(Level level, Player player, int techSlot)
 	{
-		player.getData(MSUAttachments.ABILITECH_LOADOUT).setTether(techSlot, null);
+		player.getData(MSUAttachments.BADGE_EFFECTS).setTether(techSlot, null);
 	}
 }

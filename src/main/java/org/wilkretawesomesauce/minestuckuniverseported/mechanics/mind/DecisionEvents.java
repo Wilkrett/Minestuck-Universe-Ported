@@ -61,7 +61,7 @@ import java.util.UUID;
  * a pause needs to start and end precisely, not on a coarse polling cadence), this class splices real
  * {@link MeleeAttackGoal} instances out of the mob's own {@code goalSelector} for the pause's duration and
  * restores them (at their original priority) once it elapses - the same real goal-splicing idiom
- * {@code heroAspect.rage.RageAI}/{@code mechanics.freedom.FreedomEvents} already established. Only the
+ * {@code heroAspect.rage.TechRageManagement}/{@code mechanics.freedom.FreedomEvents} already established. Only the
  * attack goal is touched, deliberately: movement/look/flee/wander goals are untouched, so a hesitating
  * entity can still react to its surroundings in every way except actually committing to a swing - a real,
  * literal distinction from a stun (which the source doc explicitly says this isn't), not just a renamed

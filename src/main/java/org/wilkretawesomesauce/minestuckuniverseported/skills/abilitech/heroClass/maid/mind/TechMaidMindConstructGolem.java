@@ -10,7 +10,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.Ab
 import org.wilkretawesomesauce.minestuckuniverseported.entity.GolemEntity;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.RelationshipManager;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.RelationshipType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 

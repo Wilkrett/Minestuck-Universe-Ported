@@ -14,9 +14,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.Relationship;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.RelationshipManager;
 import org.wilkretawesomesauce.minestuckuniverseported.network.WindBurstPacket;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.WindEngine;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.WindEngine;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
@@ -145,7 +145,7 @@ public class TechPageBreathFreeWill extends TechHeroClass
 
 		applySharedFreedom(now, nearby);
 
-		int color = MSUAspectColors.get(EnumAspect.BREATH)[0];
+		int color = AspectColorHandler.get(EnumAspect.BREATH)[0];
 		WindEngine.expandingBurst(level, player.position(), RADIUS * 0.35, color, 12);
 		WindEngine.expandingBurst(level, player.position(), RADIUS * 0.65, color, 10);
 		WindEngine.expandingBurst(level, player.position(), RADIUS, color, 8);

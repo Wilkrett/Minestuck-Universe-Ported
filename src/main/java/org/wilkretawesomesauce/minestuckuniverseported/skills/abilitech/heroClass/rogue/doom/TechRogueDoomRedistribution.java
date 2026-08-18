@@ -10,10 +10,10 @@ import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.doom.IDoomData;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
@@ -60,7 +60,7 @@ public class TechRogueDoomRedistribution extends TechHeroClass
 			targetData.transferTo(casterData, Config.doomRedistributionAmount);
 
 		MSUAbilitechParticles.oneshot(level, target, EnumAspect.DOOM, 10);
-		MSUAbilitechParticles.oneshot(level, player, 10, MSUClassColors.get(EnumClass.ROGUE));
+		MSUAbilitechParticles.oneshot(level, player, 10, ClasspectColorHandler.get(EnumClass.ROGUE));
 		return false;
 	}
 }

@@ -6,8 +6,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
@@ -43,7 +43,7 @@ public class TechThiefDash extends TechHeroClass
 		player.setDeltaMovement(player.getDeltaMovement().add(Math.sin(yaw) * DASH_STRENGTH, 0.0, Math.cos(yaw) * DASH_STRENGTH));
 		player.hurtMarked = true;
 
-		MSUAbilitechParticles.aura(level, player, 20, MSUClassColors.get(EnumClass.THIEF));
+		MSUAbilitechParticles.aura(level, player, 20, ClasspectColorHandler.get(EnumClass.THIEF));
 
 		if(!player.isCreative())
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 4);

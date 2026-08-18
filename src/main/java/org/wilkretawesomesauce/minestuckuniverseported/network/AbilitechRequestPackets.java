@@ -12,7 +12,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRegistry;
 
 /**
  * Client -> server requests sent by {@code client.gui.MSUAbilitechScreen}, the ported

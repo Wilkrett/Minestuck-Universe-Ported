@@ -5,13 +5,19 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.badges.Badge;
+import org.wilkretawesomesauce.minestuckuniverseported.network.MSUAbilitechPackets;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.TechBoondollarCost;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRegistry;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -54,7 +60,16 @@ import java.util.Set;
  * {@code network.AbilitechLoadoutSyncPacket} that already existed for {@code AbilitechLoadout} - see that
  * class's own doc comment for why one combined packet was kept rather than building this attachment its
  * own separate sync path.
+ * <p>
+ * {@link #onPlayerLoggedIn}/{@link #onPlayerRespawn} trigger that sync - genuinely new NeoForge-only
+ * plumbing with no 1.12.2 counterpart at all (data attachments aren't automatically network-synced the way
+ * old Forge capabilities implicitly were), the same category {@code strife.StrifePortfolioEvents}
+ * already established for {@code StrifeData}'s own login/respawn sync - kept directly on this class rather
+ * than a separate one-off "Events" file, since (unlike {@code StrifePortfolioEvents}, which also does
+ * genuine per-tick reconciliation work) this attachment has nothing else that would justify a whole
+ * sibling class.
  */
+@EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME)
 public class GodTierData implements INBTSerializable<CompoundTag>
 {
 	private boolean ascended = false;
@@ -379,5 +394,19 @@ public class GodTierData implements INBTSerializable<CompoundTag>
 			for(int i = 0; i < unlockedList.size(); i++)
 				unlockedTechs.add(ResourceLocation.parse(unlockedList.getString(i)));
 		}
+	}
+
+	@SubscribeEvent
+	private static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event)
+	{
+		if(event.getEntity() instanceof ServerPlayer player)
+			MSUAbilitechPackets.sendLoadoutSync(player);
+	}
+
+	@SubscribeEvent
+	private static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event)
+	{
+		if(event.getEntity() instanceof ServerPlayer player)
+			MSUAbilitechPackets.sendLoadoutSync(player);
 	}
 }

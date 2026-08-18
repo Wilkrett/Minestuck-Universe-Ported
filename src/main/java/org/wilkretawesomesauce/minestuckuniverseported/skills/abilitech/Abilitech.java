@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.Skill;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRegistry;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 
 /**

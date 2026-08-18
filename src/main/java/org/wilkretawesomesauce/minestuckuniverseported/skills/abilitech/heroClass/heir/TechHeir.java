@@ -18,9 +18,9 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.MSUNegativeAspectEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
@@ -80,7 +80,7 @@ public class TechHeir extends TechHeroClass
 
 		MobEffectInstance base = MSUNegativeAspectEffects.get(aspect);
 		trueSource.addEffect(new MobEffectInstance(base.getEffect(), base.getDuration(), base.getAmplifier()));
-		MSUAbilitechParticles.oneshot(trueSource.level(), trueSource, 5, MSUClassColors.get(EnumClass.HEIR));
+		MSUAbilitechParticles.oneshot(trueSource.level(), trueSource, 5, ClasspectColorHandler.get(EnumClass.HEIR));
 	}
 
 	@SubscribeEvent
@@ -109,7 +109,7 @@ public class TechHeir extends TechHeroClass
 			EnumAspect aspect = targetTitle.isPresent() ? targetTitle.get().heroAspect() : sourceTitle.get().heroAspect();
 			MobEffectInstance base = MSUNegativeAspectEffects.get(aspect);
 			target.addEffect(new MobEffectInstance(base.getEffect(), base.getDuration(), base.getAmplifier()));
-			MSUAbilitechParticles.oneshot(target.level(), target, 3, MSUClassColors.get(EnumClass.HEIR));
+			MSUAbilitechParticles.oneshot(target.level(), target, 3, ClasspectColorHandler.get(EnumClass.HEIR));
 		}
 	}
 

@@ -17,7 +17,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.client.TetherBondClientState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
 
 import java.util.Map;
 
@@ -28,7 +28,7 @@ import java.util.Map;
  * {@code client.TetherBondClientState}'s synced (caster id -> target id + aspect) cache every frame and
  * draws a real textured, sagging-curve tether (see {@link #renderTether}) per active bond between the two
  * entities' current interpolated eye positions - not a single straight quad, which read as too
- * harsh/distracting - tinted per-bond via {@link MSUAspectColors} using whichever aspect that bond's own
+ * harsh/distracting - tinted per-bond via {@link AspectColorHandler} using whichever aspect that bond's own
  * {@code TechTetherBond} subclass reported.
  * <p>
  * Deliberately self-contained, not routed through {@code client.render.BeamRenderer}/{@code capabilities.beam.Beam}:
@@ -105,7 +105,7 @@ public final class TetherBondRenderer
 			}
 			else
 			{
-				int[] colors = MSUAspectColors.get(bond.getValue().aspect());
+				int[] colors = AspectColorHandler.get(bond.getValue().aspect());
 				color = colors != null && colors.length > 0 ? colors[0] : 0xFFFFFF;
 			}
 			float r = ((color >> 16) & 0xFF) / 255F;

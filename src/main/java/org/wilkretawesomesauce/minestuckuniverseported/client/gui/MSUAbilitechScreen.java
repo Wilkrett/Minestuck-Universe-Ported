@@ -8,13 +8,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.wilkretawesomesauce.minestuckuniverseported.block.AbilitechnosynthBlock;
-import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
+import org.wilkretawesomesauce.minestuckuniverseported.util.*;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
 import org.wilkretawesomesauce.minestuckuniverseported.network.AbilitechRequestPackets;
-import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -305,16 +303,16 @@ public class MSUAbilitechScreen extends Screen
 			for(com.mraof.minestuck.player.EnumClass flavorClass : heroAspectTech.getFlavorClasses())
 			{
 				Component flavorTag = Component.literal("[")
-						.append(Component.translatable(org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUHeroClass.from(flavorClass).unloc))
+						.append(Component.translatable(MSUHeroClass.from(flavorClass).unloc))
 						.append(Component.literal("]"));
-				int[] flavorColor = org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors.get(flavorClass);
+				int[] flavorColor = ClasspectColorHandler.get(flavorClass);
 				lines.add(new DescLine(flavorTag.getVisualOrderText(), flavorColor != null && flavorColor.length > 0 ? flavorColor[0] : 0xFFFFFF));
 			}
 		}
 		else if(tech instanceof org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass heroClassTech)
 		{
 			Component classTag = Component.literal("[").append(Component.translatable(heroClassTech.getHeroClass().unloc)).append(Component.literal("]"));
-			int[] classColor = org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors.get(heroClassTech.getRealHeroClass());
+			int[] classColor = ClasspectColorHandler.get(heroClassTech.getRealHeroClass());
 			lines.add(new DescLine(classTag.getVisualOrderText(), classColor != null && classColor.length > 0 ? classColor[0] : 0xFFFFFF));
 
 			// A real, load-bearing requirement, not a cosmetic flavor tag like heroAspect's flavorClasses -

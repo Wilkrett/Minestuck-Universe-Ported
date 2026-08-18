@@ -10,11 +10,11 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
 /**
@@ -47,7 +47,7 @@ public class TechWitch extends TechHeroClass
 
 		if(state != AbilitechKeyState.RELEASED)
 		{
-			MSUAbilitechParticles.aura(level, player, time > 20 ? 5 : 1, MSUClassColors.get(EnumClass.WITCH));
+			MSUAbilitechParticles.aura(level, player, time > 20 ? 5 : 1, ClasspectColorHandler.get(EnumClass.WITCH));
 			return true;
 		}
 
@@ -58,7 +58,7 @@ public class TechWitch extends TechHeroClass
 		if(target == null || NeoForge.EVENT_BUS.post(new AbilitechTargetedEvent(player, target, this, techSlot, false)).isCanceled())
 			return false;
 
-		MSUAbilitechParticles.oneshot(level, target, 20, MSUClassColors.get(EnumClass.WITCH));
+		MSUAbilitechParticles.oneshot(level, target, 20, ClasspectColorHandler.get(EnumClass.WITCH));
 		target.addEffect(new MobEffectInstance(MSUMobEffects.GOD_TIER_LOCK, 800, 1));
 		if(!player.isCreative())
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 8);

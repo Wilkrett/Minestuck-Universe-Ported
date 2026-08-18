@@ -9,14 +9,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
+import org.wilkretawesomesauce.minestuckuniverseported.util.*;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
-import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.network.SkillShopRequestPackets;
@@ -199,7 +195,7 @@ public class SkillShopScreen extends Screen
 		{
 			EnumAspect aspect = heroAspectTech.getHeroAspect();
 			Component aspectTag = Component.literal("[").append(aspect.asTextComponent()).append(Component.literal("]"));
-			lines.add(new DescLine(aspectTag.getVisualOrderText(), MSUAspectColors.get(aspect)[0]));
+			lines.add(new DescLine(aspectTag.getVisualOrderText(), AspectColorHandler.get(aspect)[0]));
 
 			MSUTechType techType = heroAspectTech.getTechType();
 			Component typeTag = Component.literal("[").append(Component.translatable(techType.unloc)).append(Component.literal("]"));
@@ -211,9 +207,9 @@ public class SkillShopScreen extends Screen
 			for(com.mraof.minestuck.player.EnumClass flavorClass : heroAspectTech.getFlavorClasses())
 			{
 				Component flavorTag = Component.literal("[")
-						.append(Component.translatable(org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUHeroClass.from(flavorClass).unloc))
+						.append(Component.translatable(MSUHeroClass.from(flavorClass).unloc))
 						.append(Component.literal("]"));
-				int[] flavorColor = MSUClassColors.get(flavorClass);
+				int[] flavorColor = ClasspectColorHandler.get(flavorClass);
 				lines.add(new DescLine(flavorTag.getVisualOrderText(), flavorColor != null && flavorColor.length > 0 ? flavorColor[0] : 0xFFFFFF));
 			}
 		}
@@ -224,7 +220,7 @@ public class SkillShopScreen extends Screen
 		else if(selected instanceof TechHeroClass heroClassTech)
 		{
 			Component classTag = Component.literal("[").append(Component.translatable(heroClassTech.getHeroClass().unloc)).append(Component.literal("]"));
-			int[] classColor = MSUClassColors.get(heroClassTech.getRealHeroClass());
+			int[] classColor = ClasspectColorHandler.get(heroClassTech.getRealHeroClass());
 			lines.add(new DescLine(classTag.getVisualOrderText(), classColor != null && classColor.length > 0 ? classColor[0] : 0xFFFFFF));
 
 			for(MSUTechType type : heroClassTech.getTechTypes())

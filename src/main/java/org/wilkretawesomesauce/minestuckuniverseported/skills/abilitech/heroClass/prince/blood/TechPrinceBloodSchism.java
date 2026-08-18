@@ -11,10 +11,10 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.InstabilityStage;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.Relationship;
@@ -95,7 +95,7 @@ public class TechPrinceBloodSchism extends TechHeroClass
 			}
 			case CLEANSED ->
 			{
-				MSUAbilitechParticles.oneshot(level, target, 15, MSUAspectColors.get(EnumAspect.BLOOD));
+				MSUAbilitechParticles.oneshot(level, target, 15, AspectColorHandler.get(EnumAspect.BLOOD));
 				player.displayClientMessage(Component.translatable("status.minestuckuniverseported.schismRemoved"), true);
 			}
 		}

@@ -10,7 +10,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.network.TimeRequestSyncPa
 
 /**
  * Login/respawn sync for {@link TimeRequestData} - same reasoning and same event pair as
- * {@code abilitech.AbilitechEvents}' own login/respawn sync for {@code AbilitechLoadout}.
+ * {@code capabilities.godTier.GodTierData}'s own login/respawn sync.
  */
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class TimeRequestEvents

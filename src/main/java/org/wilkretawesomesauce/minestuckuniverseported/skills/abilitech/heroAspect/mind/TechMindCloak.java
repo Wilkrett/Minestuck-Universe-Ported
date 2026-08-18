@@ -16,15 +16,17 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.network.CloakSyncPacket;
@@ -50,6 +52,15 @@ import java.util.Map;
  * original's own "harder to detect while cloaked" side effect for real via
  * {@link LivingEvent.LivingVisibilityEvent}, the same hook {@code blood.TechBloodReformer} already uses
  * for its own visibility reduction - no vanilla Invisibility stand-in needed anymore.
+ * <p>
+ * The chain-copy branch (disguising as an already-cloaked player) now fires a real
+ * {@link AbilitechTargetedEvent} (caster, the copied-from player, this tech, {@code null} beneficial - a
+ * read/copy, neither help nor harm, the same ambiguity {@code heroClass.rogue.TechRogue}'s own potion-copy
+ * already uses that field for) before applying the copy, cancellable the same way every {@code heroClass}
+ * tech that fires it already is - {@link AbilitechTargetedEvent}'s own doc comment calls out
+ * {@code heroClass.mage.TechMageStudy} as the original's real single listener, and a chain-copied disguise
+ * is exactly the kind of "someone else's ability just targeted me" moment that listener exists to catch.
+ * The non-player branch (disguising as an ordinary entity) targets no other player, so it doesn't fire this.
  */
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME)
 public class TechMindCloak extends TechHeroAspect
@@ -70,7 +81,7 @@ public class TechMindCloak extends TechHeroAspect
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 		boolean wasCloaked = badgeEffects.getCloakType() != null;
 
 		if(wasCloaked)
@@ -97,8 +108,8 @@ public class TechMindCloak extends TechHeroAspect
 
 			if(target instanceof Player targetPlayer)
 			{
-				EntityType<?> theirCloak = targetPlayer.getData(MSUAttachments.ABILITECH_LOADOUT).getCloakType();
-				if(theirCloak != null)
+				EntityType<?> theirCloak = targetPlayer.getData(MSUAttachments.BADGE_EFFECTS).getCloakType();
+				if(theirCloak != null && !NeoForge.EVENT_BUS.post(new AbilitechTargetedEvent(player, targetPlayer, this, techSlot, null)).isCanceled())
 				{
 					cloakAs(player, theirCloak);
 					player.displayClientMessage(Component.translatable("status.tech.illusoryCloak.disguise", targetPlayer.getDisplayName()), true);
@@ -124,7 +135,7 @@ public class TechMindCloak extends TechHeroAspect
 
 	private static void cloakAs(Player player, EntityType<?> type)
 	{
-		player.getData(MSUAttachments.ABILITECH_LOADOUT).setCloakType(type);
+		player.getData(MSUAttachments.BADGE_EFFECTS).setCloakType(type);
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
 				new CloakSyncPacket(player.getId(), true, BuiltInRegistries.ENTITY_TYPE.getKey(type)));
 		MSUAbilitechParticles.aura(player.level(), player, EnumAspect.MIND, 5);
@@ -132,7 +143,7 @@ public class TechMindCloak extends TechHeroAspect
 
 	private static void uncloak(Player player)
 	{
-		player.getData(MSUAttachments.ABILITECH_LOADOUT).setCloakType(null);
+		player.getData(MSUAttachments.BADGE_EFFECTS).setCloakType(null);
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
 				new CloakSyncPacket(player.getId(), false, BuiltInRegistries.ENTITY_TYPE.getKey(EntityType.PIG)));
 		MSUAbilitechParticles.aura(player.level(), player, EnumAspect.MIND, 5);
@@ -141,7 +152,7 @@ public class TechMindCloak extends TechHeroAspect
 	@SubscribeEvent
 	private static void onVisibilityCheck(LivingEvent.LivingVisibilityEvent event)
 	{
-		if(event.getEntity() instanceof Player player && player.getData(MSUAttachments.ABILITECH_LOADOUT).getCloakType() != null)
+		if(event.getEntity() instanceof Player player && player.getData(MSUAttachments.BADGE_EFFECTS).getCloakType() != null)
 			event.modifyVisibility(0.0);
 	}
 

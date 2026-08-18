@@ -32,9 +32,9 @@ import org.wilkretawesomesauce.minestuckuniverseported.MSUItems;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.network.ManipulatorSelectionSyncPacket;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 
@@ -69,7 +69,7 @@ public class TechSpaceManipulator extends TechHeroAspect
 		if(state == AbilitechKeyState.NONE)
 			return false;
 
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 		BlockPos pos1 = badgeEffects.getManipulatedPos1();
 		BlockPos pos2 = badgeEffects.getManipulatedPos2();
 
@@ -175,7 +175,7 @@ public class TechSpaceManipulator extends TechHeroAspect
 		return true;
 	}
 
-	private static void sendSelectionSync(Player player, AbilitechLoadout badgeEffects)
+	private static void sendSelectionSync(Player player, BadgeEffects badgeEffects)
 	{
 		if(!(player instanceof ServerPlayer serverPlayer))
 			return;
@@ -191,7 +191,7 @@ public class TechSpaceManipulator extends TechHeroAspect
 
 	/**
 	 * Client-side cache of the local player's own in-progress Matter Manipulator corner selection, kept in
-	 * sync via {@code network.ManipulatorSelectionSyncPacket}. {@code AbilitechLoadout} (which this tech
+	 * sync via {@code network.ManipulatorSelectionSyncPacket}. {@code BadgeEffects} (which this tech
 	 * mutates server-side) is never synced to the client, so {@link ClientEvents} reads from here instead
 	 * of the attachment directly.
 	 */

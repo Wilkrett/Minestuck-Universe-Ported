@@ -13,10 +13,10 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.Relationship;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.RelationshipManager;
@@ -91,7 +91,7 @@ public class TechBloodWitchCultOfPersonality extends TechHeroClass
 		// would otherwise just fall through to the (pointless) already-bonded relink attempt below.
 		if(CultOfPersonalityManager.isCorrupted(target) && CultOfPersonalityManager.cleanseByWitch(serverLevel, target))
 		{
-			MSUAbilitechParticles.oneshot(level, target, 15, MSUAspectColors.get(EnumAspect.BLOOD));
+			MSUAbilitechParticles.oneshot(level, target, 15, AspectColorHandler.get(EnumAspect.BLOOD));
 			player.displayClientMessage(Component.translatable("status.minestuckuniverseported.cultOfPersonalityRestored"), true);
 			return false;
 		}
@@ -106,7 +106,7 @@ public class TechBloodWitchCultOfPersonality extends TechHeroClass
 
 		boolean linked = CultOfPersonalityManager.tryLink(serverLevel, witch, target);
 
-		MSUAbilitechParticles.oneshot(level, target, 15, MSUAspectColors.get(EnumAspect.BLOOD));
+		MSUAbilitechParticles.oneshot(level, target, 15, AspectColorHandler.get(EnumAspect.BLOOD));
 		player.displayClientMessage(Component.translatable(linked
 				? "status.minestuckuniverseported.cultOfPersonalityLinked"
 				: "status.minestuckuniverseported.cultOfPersonalityMarked"), true);
@@ -133,7 +133,7 @@ public class TechBloodWitchCultOfPersonality extends TechHeroClass
 			}
 		}
 
-		MSUAbilitechParticles.oneshot(level, selectedMob, 15, MSUAspectColors.get(EnumAspect.BLOOD));
+		MSUAbilitechParticles.oneshot(level, selectedMob, 15, AspectColorHandler.get(EnumAspect.BLOOD));
 	}
 
 	/** A small, real "Can reduce Instability" side effect of a Witch's own attention - see this class's own doc comment. Not a full Blood Guidance-strength reinforcement (that's {@code heroClass.mage.blood.TechMageBloodGuidance}'s own, larger job). */

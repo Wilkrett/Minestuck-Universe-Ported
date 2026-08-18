@@ -17,6 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUItems;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;

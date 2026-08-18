@@ -16,7 +16,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.MSUItemComponents;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 import org.wilkretawesomesauce.minestuckuniverseported.network.MSUAbilitechPackets;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRegistry;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 
 import javax.annotation.Nullable;

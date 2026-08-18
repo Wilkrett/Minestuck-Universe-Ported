@@ -17,10 +17,10 @@ import net.minecraft.world.phys.HitResult;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.MSUNegativeAspectEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
@@ -60,7 +60,7 @@ public class TechWitchTrap extends TechHeroClass
 		if(!(trace instanceof BlockHitResult) && !(trace instanceof EntityHitResult))
 			return false;
 
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 		AreaEffectCloud cloud = badgeEffects.getTether(techSlot) instanceof AreaEffectCloud existing ? existing : null;
 
 		if(cloud != null && cloud.isRemoved())
@@ -107,7 +107,7 @@ public class TechWitchTrap extends TechHeroClass
 		if(!player.isCreative() && time % 20 == 0)
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 1);
 		else
-			MSUAbilitechParticles.aura(level, player, 2, MSUClassColors.get(EnumClass.WITCH));
+			MSUAbilitechParticles.aura(level, player, 2, ClasspectColorHandler.get(EnumClass.WITCH));
 
 		return true;
 	}

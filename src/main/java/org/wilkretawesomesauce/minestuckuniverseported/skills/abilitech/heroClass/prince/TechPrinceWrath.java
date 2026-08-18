@@ -11,11 +11,11 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
 /**
@@ -57,7 +57,7 @@ public class TechPrinceWrath extends TechHeroClass
 			float dmg = 10 * Math.min(3.0F, Math.max(1.0F, time / 20F));
 			if(target != null && !NeoForge.EVENT_BUS.post(new AbilitechTargetedEvent(player, target, this, techSlot, false)).isCanceled())
 			{
-				MSUAbilitechParticles.oneshot(level, target, 20, MSUClassColors.get(EnumClass.PRINCE));
+				MSUAbilitechParticles.oneshot(level, target, 20, ClasspectColorHandler.get(EnumClass.PRINCE));
 				target.hurt(player.damageSources().playerAttack(player), dmg);
 				if(level instanceof ServerLevel serverLevel)
 					serverLevel.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(), 15, 0.3, 0.3, 0.3, 0.2);
@@ -67,7 +67,7 @@ public class TechPrinceWrath extends TechHeroClass
 			}
 		}
 		else if((int) (time % (120F / Math.max(time, 1F))) == 0)
-			MSUAbilitechParticles.aura(level, player, 2, MSUClassColors.get(EnumClass.PRINCE));
+			MSUAbilitechParticles.aura(level, player, 2, ClasspectColorHandler.get(EnumClass.PRINCE));
 
 		return true;
 	}

@@ -10,7 +10,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUEntityTypes;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.breath.WindEngine;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.WindEngine;
 
 /**
  * Original design for this project, no 1.12.2 counterpart - a small, stationary, purely cosmetic

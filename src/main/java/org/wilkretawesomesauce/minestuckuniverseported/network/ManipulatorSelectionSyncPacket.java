@@ -13,7 +13,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
 
 /**
  * Broadcasts the caster's own in-progress Matter Manipulator corner selection to their client. Unlike
- * {@code GodTierData}, {@code AbilitechLoadout} (which holds {@code manipulatedPos1/2}) is never synced
+ * {@code GodTierData}, {@code BadgeEffects} (which holds {@code manipulatedPos1/2}) is never synced
  * wholesale, and {@code TechSpaceManipulator#onUseTick} only ever runs on the logical server side
  * ({@code AbilitechEvents} skips the client side entirely) - so without this packet the client's own copy
  * of {@code getManipulatedPos1/2} stayed permanently null and {@code SpaceManipulatorClientEvents} never

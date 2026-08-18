@@ -8,8 +8,8 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRegistry;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
@@ -21,7 +21,7 @@ import java.util.List;
  * Metronome") - holding it picks a uniformly-random other registered {@link Abilitech} (that's currently
  * {@link Abilitech#isUsableExternally usable externally}) and drives it on the caster's behalf for as long
  * as the key is held, matching the original's own {@code IBadgeEffects#getExternalTech}-backed "borrow a
- * random ability" idiom - now real via {@link AbilitechLoadout#getExternalTech}/{@code #setExternalTech}
+ * random ability" idiom - now real via {@link BadgeEffects#getExternalTech}/{@code #setExternalTech}
  * and the real {@link MSUAbilitechRegistry}. Only appears/unlocks for an ascended God Tier player, matching
  * the original's own real gate.
  */
@@ -35,7 +35,7 @@ public class TechBardMetronome extends TechHeroClass
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 
 		if(state == AbilitechKeyState.NONE)
 		{

@@ -18,16 +18,18 @@ import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodT
  * something else happened to trigger a sync. Sent on login/respawn and after any equip/unequip/passive
  * toggle/unlock.
  * <p>
- * Carries {@code capabilities.godTier.GodTierData}'s NBT (the real tech-equip-slot/unlock-tracking data
+ * Carries {@code capabilities.godTier.GodTierData}'s NBT (the tech-equip-slot/unlock-tracking data
  * {@code MSUAbilitechScreen}/{@code SkillShopScreen} both read) - <i>not</i> {@code AbilitechLoadout}'s,
  * despite the packet's name. That's a holdover from when this packet carried both (back when
  * {@code AbilitechLoadout} still held the tech-equip-slot fields): once those moved to
- * {@code GodTierData} and the badgeEffects-derived scratch fields moved to a real
+ * {@code GodTierData} and the badgeEffects-derived scratch fields moved to their own
  * {@code capabilities.badgeEffects.BadgeEffects} attachment (see each class's own doc comment),
- * {@code AbilitechLoadout} itself was left with nothing that actually needs client-side visibility -
- * its own {@code serializeNBT} is now always empty, so sending it here would've been pure waste. The
- * packet keeps its established name/id rather than churning every call site for a rename; what it
- * carries is what actually needs syncing, not what the name literally says.
+ * {@code AbilitechLoadout} was left holding only genuinely new scratch state
+ * ({@code slotHistory}/{@code dragonAuraActive}/the land-entry point) - none of which any client screen
+ * reads, so it never needed a sync packet of its own even though its own {@code serializeNBT} isn't
+ * empty (the land-entry point is still persisted). The packet keeps its established name/id rather than
+ * churning every call site for a rename; what it carries is what actually needs syncing, not what the
+ * name literally says.
  */
 public record AbilitechLoadoutSyncPacket(CompoundTag godTierNbt) implements MSPacket.PlayToClient
 {

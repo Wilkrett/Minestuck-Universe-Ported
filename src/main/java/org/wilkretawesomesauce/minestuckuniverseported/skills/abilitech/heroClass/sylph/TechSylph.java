@@ -11,18 +11,18 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
 /**
  * Ported from MinestuckUniverse (1.12.2)'s {@code skills.abilitech.heroClass.TechSylph} ("Sylph's Mend") -
  * hold while looking at a hurt (or hungry) target to lock onto them (the same real per-slot tether
- * {@code time.TechTimeTickUp} already established, via {@link AbilitechLoadout#getTether}), healing 2
+ * {@code time.TechTimeTickUp} already established, via {@link BadgeEffects#getTether}), healing 2
  * HP and 1 hunger point every second at 1 food/second cost to the caster.
  */
 public class TechSylph extends TechHeroClass
@@ -35,7 +35,7 @@ public class TechSylph extends TechHeroClass
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 
 		if(state == AbilitechKeyState.RELEASED)
 			badgeEffects.setTether(techSlot, null);
@@ -63,7 +63,7 @@ public class TechSylph extends TechHeroClass
 		if(NeoForge.EVENT_BUS.post(new AbilitechTargetedEvent(player, target, this, techSlot, true)).isCanceled())
 			return false;
 
-		MSUAbilitechParticles.aura(level, player, 5, MSUClassColors.get(EnumClass.SYLPH));
+		MSUAbilitechParticles.aura(level, player, 5, ClasspectColorHandler.get(EnumClass.SYLPH));
 
 		if(time % 20 == 0)
 		{

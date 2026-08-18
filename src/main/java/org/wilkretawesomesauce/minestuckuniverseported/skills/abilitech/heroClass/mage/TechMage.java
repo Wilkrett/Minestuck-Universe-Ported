@@ -10,8 +10,8 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
@@ -60,7 +60,7 @@ public class TechMage extends TechHeroClass
 			alignmentColor = 0xB200FF;
 
 		MSUAbilitechParticles.aura(level, player, 5, alignmentColor);
-		MSUAbilitechParticles.aura(level, player, 2, MSUClassColors.get(EnumClass.MAGE));
+		MSUAbilitechParticles.aura(level, player, 2, ClasspectColorHandler.get(EnumClass.MAGE));
 
 		if(time > 50)
 		{

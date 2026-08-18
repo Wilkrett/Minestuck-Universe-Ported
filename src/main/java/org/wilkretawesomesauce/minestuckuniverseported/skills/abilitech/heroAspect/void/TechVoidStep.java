@@ -13,7 +13,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 
@@ -41,7 +41,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
  * <p>
  * <b>Real bug fix, from a live report ("void step doesn't work")</b>: setting {@code player.noPhysics}
  * only ever touched the <i>server's</i> own {@code Player} instance - the whole Abilitech tick framework
- * ({@code AbilitechEvents#onPlayerTick}) is explicitly server-only, and {@code Entity#noPhysics} is a
+ * ({@code SkillKeyStates#onPlayerTick}) is explicitly server-only, and {@code Entity#noPhysics} is a
  * plain, unsynced field, so the real connected client never found out Void Step was active and kept
  * resolving its own local collision normally. See {@link VoidStepEffect}'s own doc comment for the full
  * explanation. Fixed the same way {@code breath.TechBreathWindVessel} already had to solve this exact

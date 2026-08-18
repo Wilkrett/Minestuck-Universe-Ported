@@ -15,7 +15,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,7 @@ import java.util.Locale;
  * General-purpose "flash an aspect's {@code textures/foci/<aspect>.png} icon at a fixed world position,
  * fading out over a second" effect - a generalization of {@code TetherBondImpactRenderer}'s own real
  * technique (that class's own doc comment covers the rendering math in full; this is the same
- * camera-facing billboard icon, tinted with the aspect's own {@link MSUAspectColors} entry, just anchored
+ * camera-facing billboard icon, tinted with the aspect's own {@link AspectColorHandler} entry, just anchored
  * to a fixed {@link Vec3} instead of tracking a living entity - "the place something happened", not "a
  * thing that's still there to follow"). Not a replacement for {@code TetherBondImpactRenderer} (which
  * stays scoped to its own one caller) - this is the reusable version any tech can call into via
@@ -99,7 +99,7 @@ public final class FociFlashRenderer
 			if(alpha <= 0F)
 				continue;
 
-			int[] colors = MSUAspectColors.get(flash.aspect);
+			int[] colors = AspectColorHandler.get(flash.aspect);
 			int tint = colors != null && colors.length > 0 ? colors[0] : 0xFFFFFF;
 			float r = ((tint >> 16) & 0xFF) / 255F;
 			float g = ((tint >> 8) & 0xFF) / 255F;

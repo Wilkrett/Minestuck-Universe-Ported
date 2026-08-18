@@ -3,8 +3,6 @@ package org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAsp
 import com.mraof.minestuck.player.EnumAspect;
 import net.minecraft.client.player.Input;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -17,8 +15,9 @@ import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.mind.DecisionManager;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.potions.MindConfusionEffect;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 
@@ -26,8 +25,9 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
  * Ported from MinestuckUniverse (1.12.2)'s {@code skills.abilitech.heroAspect.mind.TechMindConfusion}
  * ("Sensory Break") - press and aim at a target to scramble their mind for 20 seconds
  * ({@link #DURATION_TICKS}, matching the original's 400-tick duration exactly), reversing their controls
- * for as long as it lasts. See {@link MindConfusionEffect}'s own doc comment for how the reversal itself
- * is implemented client-side.
+ * for as long as it lasts. See {@link MindConfusionEffect}'s own doc comment (now a standalone
+ * {@code potions} class, matching where the original's real {@code potions.PotionConfusion} actually
+ * lived, rather than nested here) for how the reversal itself is implemented client-side.
  * <p>
  * <b>Real Resolve resistance</b>, from the later "Mind Aspect System Design" document (no 1.12.2
  * counterpart): {@code mechanics.mind.DecisionManager#resistsInfluence} - "harder to confuse" at high
@@ -75,20 +75,6 @@ public class TechMindConfusion extends TechHeroAspect
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - ENERGY_USE);
 
 		return true;
-	}
-
-	/**
-	 * Marker effect - carries no attribute modifiers, real modern equivalent of the original's custom
-	 * {@code MSUPotions.MIND_CONFUSION}. Whether a player has it is what {@link ClientEvents} checks to
-	 * reverse their movement input, the same "marker effect + MovementInputUpdateEvent" pattern already
-	 * used by Wind Vessel and Hopeful Outburst.
-	 */
-	public static class MindConfusionEffect extends MobEffect
-	{
-		public MindConfusionEffect()
-		{
-			super(MobEffectCategory.HARMFUL, 0x7B2FBE);
-		}
 	}
 
 	/**

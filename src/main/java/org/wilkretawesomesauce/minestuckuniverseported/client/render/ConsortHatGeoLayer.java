@@ -60,12 +60,12 @@ import software.bernie.geckolib.util.RenderUtil;
  * {@code HumanoidModel} part, because GeckoLib bone space is mirrored on X/Y relative to vanilla
  * {@code ModelPart} space - {@link #renderForBone} now applies the same correction.
  * <p>
- * <b>Known open issue</b>: with the real conical {@code WizardHatModel}/{@code ArchmageHatModel} now
- * rendered here instead of the old generic flat box, the archmage hat renders as a wide floppy disc (just
- * the brim) with the tall cone missing/hidden - a real, confirmed-via-screenshot regression this class's
- * existing {@code (-1,-1,1)} correction doesn't handle correctly for tall, directional geometry the way it
- * did for the old small box. An attempted fix (dropping the Y flip) made it render upside-down instead, so
- * that attempt was reverted rather than left half-verified - the real fix is still open.
+ * <b>Confirmed correct in a live client</b>: an earlier screenshot briefly showed the archmage hat's tall
+ * cone missing (just the brim rendering), suspected to be this class's {@code (-1,-1,1)} correction
+ * mishandling tall, directional geometry - a fix attempt (dropping the Y flip) was tried, made it render
+ * upside-down instead, and was reverted. Re-checked directly in-game since: the conical
+ * {@code WizardHatModel}/{@code ArchmageHatModel} geometry renders correctly as-is, so whatever produced
+ * that one screenshot wasn't a standing bug in this transform - no further change needed here.
  * <p>
  * <b>Model selection, real fix over an earlier hardcoded-dispatch draft</b>: which {@link HumanoidModel} to
  * render is no longer this class deciding "is this a WizardHatItem/ArchmageHatItem/FrogHatItem" by

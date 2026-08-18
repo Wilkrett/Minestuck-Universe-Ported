@@ -69,7 +69,7 @@ import java.util.List;
  *     ({@link AvoidEntityGoal}, {@link PanicGoal}, {@link RandomStrollGoal}, {@link WaterAvoidingRandomStrollGoal})
  *     are spliced out of its {@code goalSelector} on bracket entry and spliced back in (at their original
  *     priority) on bracket exit - the same real {@code GoalSelector#addGoal}/{@code removeGoal} splicing
- *     idiom {@code heroAspect.rage.RageAI} already established in this project. <b>A heuristic, not
+ *     idiom {@code heroAspect.rage.TechRageManagement} already established in this project. <b>A heuristic, not
  *     exhaustive</b>: matches by exact vanilla class only, so a modded/custom mob's own equivalent goal
  *     class won't be recognized - stated plainly rather than silently incomplete.</li>
  * </ul>

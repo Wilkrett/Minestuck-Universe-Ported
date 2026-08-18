@@ -13,8 +13,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.client.StreakClientState;
-import org.wilkretawesomesauce.minestuckuniverseported.client.StreakTracker;
+import org.wilkretawesomesauce.minestuckuniverseported.client.streak.StreakClientState;
+import org.wilkretawesomesauce.minestuckuniverseported.client.streak.StreakTracker;
 import org.wilkretawesomesauce.minestuckuniverseported.client.util.StreakGhostUtils;
 import org.wilkretawesomesauce.minestuckuniverseported.client.util.StreakSettings;
 

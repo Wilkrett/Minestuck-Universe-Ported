@@ -9,8 +9,8 @@ import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.entity.BubbleEntity;
@@ -44,7 +44,7 @@ public class TechLightBubble extends TechHeroAspect
 		if(!(level instanceof ServerLevel serverLevel))
 			return false;
 
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 
 		if(!player.isCreative() && player.getFoodData().getFoodLevel() < 1)
 		{
@@ -82,10 +82,10 @@ public class TechLightBubble extends TechHeroAspect
 	public void onUnequipped(Level level, Player player, int techSlot)
 	{
 		super.onUnequipped(level, player, techSlot);
-		despawn(player.getData(MSUAttachments.ABILITECH_LOADOUT), techSlot);
+		despawn(player.getData(MSUAttachments.BADGE_EFFECTS), techSlot);
 	}
 
-	private static void despawn(AbilitechLoadout badgeEffects, int techSlot)
+	private static void despawn(BadgeEffects badgeEffects, int techSlot)
 	{
 		if(badgeEffects.getTether(techSlot) instanceof BubbleEntity bubble)
 			bubble.discard();

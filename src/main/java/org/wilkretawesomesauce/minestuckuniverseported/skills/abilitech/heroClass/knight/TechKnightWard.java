@@ -10,11 +10,11 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
 /**
@@ -61,11 +61,11 @@ public class TechKnightWard extends TechHeroClass
 		}
 
 		if(time > 36)
-			MSUAbilitechParticles.oneshot(level, player, 20, MSUClassColors.get(EnumClass.KNIGHT));
+			MSUAbilitechParticles.oneshot(level, player, 20, ClasspectColorHandler.get(EnumClass.KNIGHT));
 
 		LivingEntity target = MSUAbilitechRayTrace.getTargetEntity(player);
 		if(time <= 40)
-			MSUAbilitechParticles.aura(level, player, target == null ? 1 : 5, MSUClassColors.get(EnumClass.KNIGHT));
+			MSUAbilitechParticles.aura(level, player, target == null ? 1 : 5, ClasspectColorHandler.get(EnumClass.KNIGHT));
 
 		if(state == AbilitechKeyState.PRESS && target != null
 				&& !NeoForge.EVENT_BUS.post(new AbilitechTargetedEvent(player, target, this, techSlot, true)).isCanceled())

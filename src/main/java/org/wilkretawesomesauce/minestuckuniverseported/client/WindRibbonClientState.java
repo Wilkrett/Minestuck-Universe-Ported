@@ -1,6 +1,7 @@
 package org.wilkretawesomesauce.minestuckuniverseported.client;
 
 import net.minecraft.client.Minecraft;
+import org.wilkretawesomesauce.minestuckuniverseported.client.streak.StreakClientState;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

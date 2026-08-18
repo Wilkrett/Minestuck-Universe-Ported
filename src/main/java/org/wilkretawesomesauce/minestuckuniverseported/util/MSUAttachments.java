@@ -5,6 +5,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.beam.BeamData;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.consortCosmetics.ConsortHatsData;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
@@ -41,13 +42,19 @@ public final class MSUAttachments
 	public static final Supplier<AttachmentType<StrifeData>> STRIFE_PORTFOLIO = REGISTER.register(
 			"strife_portfolio", () -> AttachmentType.serializable(StrifeData::new).copyOnDeath().build());
 
-	// User-requested consolidation: the real capabilities.badgeEffects.IBadgeEffects fields (tether,
-	// external-tech borrowing, warp point, manipulated-matter corners, etc.) that used to live on their own
-	// dedicated BADGE_EFFECTS attachment are merged back onto AbilitechLoadout itself now - see that
-	// class's own doc comment for the tradeoff this re-introduces (several of those fields are genuinely
-	// shared across a dozen-plus unrelated tech classes, not single-tech scratch state).
+	// Genuinely new, no-original-counterpart scratch state only (slotHistory/dragonAuraActive/landEntryPos)
+	// - the capabilities.badgeEffects.IBadgeEffects fields (tether, external-tech borrowing, warp point,
+	// manipulated-matter corners, etc.) that briefly lived here (a user-requested consolidation) moved back
+	// out to their own BADGE_EFFECTS attachment below per a later, explicit correction - see
+	// capabilities.badgeEffects.BadgeEffects's own doc comment for why.
 	public static final Supplier<AttachmentType<AbilitechLoadout>> ABILITECH_LOADOUT = REGISTER.register(
 			"abilitech_loadout", () -> AttachmentType.serializable(AbilitechLoadout::new).copyOnDeath().build());
+
+	// The capabilities.badgeEffects.IBadgeEffects fields - see BadgeEffects's own doc comment for the full
+	// accounting of which original fields these are. copyOnDeath() for the same reason as
+	// STRIFE_PORTFOLIO/ABILITECH_LOADOUT/GOD_TIER above - a warp point shouldn't silently vanish on respawn.
+	public static final Supplier<AttachmentType<BadgeEffects>> BADGE_EFFECTS = REGISTER.register(
+			"badge_effects", () -> AttachmentType.serializable(BadgeEffects::new).copyOnDeath().build());
 
 	// Attaches to any LivingEntity, mirroring the 1.12.2 capability which was attached to EntityLivingBase -
 	// see capabilities.keyStates.SkillKeyStates's own doc comment. copyOnDeath() for the same reason as

@@ -9,8 +9,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUHeroClass;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.TechBoondollarCost;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.Skill;
@@ -29,7 +29,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.Skill;
  * {@code godtier.MediumData}'s Quest Bed position before any structure consumed it.
  * <p>
  * {@link #getColor()}/{@link #canAppearOnList} are real ports now too (using this project's own real
- * {@link MSUAspectColors} table and Minestuck's real {@link Title#isPlayerOfAspect} - both already-proven
+ * {@link AspectColorHandler} table and Minestuck's real {@link Title#isPlayerOfAspect} - both already-proven
  * modern APIs, not guessed). <b>{@code getDisplayTooltip()} is deliberately NOT overridden</b>, unlike the
  * original (which substituted the real secondary-action keybind name into the tooltip): doing so would
  * require referencing the client-only {@code KeyMapping} type from this common-loaded class, which - since
@@ -129,10 +129,10 @@ public class TechHeroAspect extends TechBoondollarCost
 		return super.canUnlock(level, player) && canAppearOnList(level, player);
 	}
 
-	/** Real port of the original's {@code getColor()} via this project's own real {@link MSUAspectColors} table. */
+	/** Real port of the original's {@code getColor()} via this project's own real {@link AspectColorHandler} table. */
 	@Override
 	public int getColor()
 	{
-		return heroAspect == EnumAspect.SPACE ? 0x202020 : MSUAspectColors.get(heroAspect)[0];
+		return heroAspect == EnumAspect.SPACE ? 0x202020 : AspectColorHandler.get(heroAspect)[0];
 	}
 }

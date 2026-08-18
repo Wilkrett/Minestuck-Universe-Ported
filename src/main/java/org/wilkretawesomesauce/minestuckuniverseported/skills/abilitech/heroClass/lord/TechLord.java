@@ -16,10 +16,10 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.MSUNegativeAspectEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
@@ -65,9 +65,9 @@ public class TechLord extends TechHeroClass
 		}
 
 		if(time > chargeTime - 3)
-			MSUAbilitechParticles.burst(level, player, 20, MSUClassColors.get(EnumClass.LORD));
+			MSUAbilitechParticles.burst(level, player, 20, ClasspectColorHandler.get(EnumClass.LORD));
 		else
-			MSUAbilitechParticles.aura(level, player, 20, MSUClassColors.get(EnumClass.LORD));
+			MSUAbilitechParticles.aura(level, player, 20, ClasspectColorHandler.get(EnumClass.LORD));
 
 		if(time >= chargeTime)
 		{
@@ -109,7 +109,7 @@ public class TechLord extends TechHeroClass
 				MobEffectInstance base = MSUNegativeAspectEffects.get(title.get().heroAspect());
 				target.addEffect(new MobEffectInstance(base.getEffect(), base.getDuration() * 2 * (isOverlord ? 2 : 1),
 						(int) ((base.getAmplifier() + 1) * 1.5F * (isOverlord ? 2 : 1)) - 1));
-				MSUAbilitechParticles.oneshot(level, target, 10, MSUClassColors.get(EnumClass.LORD));
+				MSUAbilitechParticles.oneshot(level, target, 10, ClasspectColorHandler.get(EnumClass.LORD));
 			}
 			if(!player.isCreative())
 				player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - energy);

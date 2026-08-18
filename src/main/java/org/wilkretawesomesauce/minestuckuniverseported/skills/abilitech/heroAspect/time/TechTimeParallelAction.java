@@ -25,8 +25,8 @@ import net.minecraft.world.phys.Vec3;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.strife.StrifeData;
@@ -46,7 +46,7 @@ import java.util.UUID;
  * <p>
  * <b>No longer a pure stub</b> - it used to just stand there ("doesn't act on its own yet", a stated,
  * deliberate gap). It now actually fights: every tick (driven straight out of the existing
- * {@code onUseTick} call in {@code AbilitechEvents#onPlayerTick}, which already runs every player-tick
+ * {@code onUseTick} call in {@code SkillKeyStates#onPlayerTick}, which already runs every player-tick
  * regardless of key state - no separate driver needed), {@link #tickCombat} looks for the nearest
  * hostile (any {@link LivingEntity} implementing vanilla's {@code Enemy} marker interface - see
  * {@link #tickCombat}'s own doc comment for a real bug this used to have with Minestuck's own Underlings)
@@ -128,7 +128,7 @@ public class TechTimeParallelAction extends TechHeroAspect
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 		Entity existing = badgeEffects.getTether(techSlot);
 
 		if(state != AbilitechKeyState.PRESS)
@@ -296,7 +296,7 @@ public class TechTimeParallelAction extends TechHeroAspect
 		fake.broadcastMovement();
 	}
 
-	private static void despawn(Level level, AbilitechLoadout badgeEffects, int techSlot, ServerPlayer fake)
+	private static void despawn(Level level, BadgeEffects badgeEffects, int techSlot, ServerPlayer fake)
 	{
 		if(level instanceof ServerLevel serverLevel)
 		{
@@ -312,7 +312,7 @@ public class TechTimeParallelAction extends TechHeroAspect
 	@Override
 	public void onUnequipped(Level level, Player player, int techSlot)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 		if(badgeEffects.getTether(techSlot) instanceof ServerPlayer fake && fake.isAlive())
 			despawn(level, badgeEffects, techSlot, fake);
 	}

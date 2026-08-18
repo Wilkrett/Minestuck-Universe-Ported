@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRegistry;
 
 /**
  * {@code /msu unlock <tech>} - a permission-level-2-gated ("cheats"/op, same bar vanilla's own

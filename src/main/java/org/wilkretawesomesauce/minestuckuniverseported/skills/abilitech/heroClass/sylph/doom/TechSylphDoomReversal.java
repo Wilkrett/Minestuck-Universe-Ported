@@ -10,10 +10,10 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
@@ -24,7 +24,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  * Doom... stabilizing doomed situations." The direct inverse of {@code heroClass.maid.doom.TechMaidDoomforge}:
  * hold while aiming at a target to lock onto them (the same real per-slot tether
  * {@code heroClass.sylph.TechSylph}'s own healing hold already established via
- * {@code AbilitechLoadout#getTether}), removing {@link Config#doomReversalAmountPerSecond} from their
+ * {@code BadgeEffects#getTether}), removing {@link Config#doomReversalAmountPerSecond} from their
  * {@code mechanics.doom.DoomData} every second at 1 food/second cost to the caster - the exact same cost shape as
  * {@code TechSylph} itself.
  * <p>
@@ -41,7 +41,7 @@ public class TechSylphDoomReversal extends TechHeroClass
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 
 		if(state == AbilitechKeyState.RELEASED)
 			badgeEffects.setTether(techSlot, null);

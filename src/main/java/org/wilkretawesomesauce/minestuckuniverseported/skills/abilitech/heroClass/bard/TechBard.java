@@ -13,9 +13,9 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.MSUAspectAmbientEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.MSUNegativeAspectEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
@@ -71,14 +71,14 @@ public class TechBard extends TechHeroClass
 					for(MobEffectInstance effect : MSUAspectAmbientEffects.getAspectEffects(serverPlayer).values())
 						target.addEffect(new MobEffectInstance(effect.getEffect(), 1200, 9));
 
-				MSUAbilitechParticles.oneshot(level, target, 10, MSUClassColors.get(EnumClass.MUSE));
+				MSUAbilitechParticles.oneshot(level, target, 10, ClasspectColorHandler.get(EnumClass.MUSE));
 			}
 		}
 
 		if(!player.isCreative())
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 6);
 
-		MSUAbilitechParticles.burst(level, player, 20, MSUClassColors.get(EnumClass.BARD));
+		MSUAbilitechParticles.burst(level, player, 20, ClasspectColorHandler.get(EnumClass.BARD));
 
 		return true;
 	}

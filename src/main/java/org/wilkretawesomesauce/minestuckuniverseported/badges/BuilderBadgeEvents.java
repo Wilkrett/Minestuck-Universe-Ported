@@ -11,7 +11,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.network.BuilderBadgeSyncP
 import org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills;
 
 /**
- * Login/respawn sync for {@link BadgeBuilder} - same reasoning as {@code skills.abilitech.AbilitechEvents}'
+ * Login/respawn sync for {@link BadgeBuilder} - same reasoning as {@code capabilities.godTier.GodTierData}'s
  * own login/respawn sync: attachments aren't automatically synced to the client, so without this a
  * relogged player's client wouldn't know the badge is active until the next unlock. {@link #sync} is also
  * called directly by {@code command.GodTierDebugCommand} right after a real Builder Badge unlock - the

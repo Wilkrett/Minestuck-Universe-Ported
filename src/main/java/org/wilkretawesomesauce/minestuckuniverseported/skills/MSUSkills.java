@@ -8,7 +8,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.badges.BadgeKarma;
 import org.wilkretawesomesauce.minestuckuniverseported.badges.BadgeOverlord;
 import org.wilkretawesomesauce.minestuckuniverseported.badges.BadgePage;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitech;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRegistry;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.TechDragonAura;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.TechReturn;

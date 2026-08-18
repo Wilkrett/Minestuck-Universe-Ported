@@ -13,9 +13,9 @@ import net.minecraft.world.phys.HitResult;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.entity.BubbleEntity;
@@ -56,7 +56,7 @@ public class TechBreathBubble extends TechHeroAspect
 		if(hit.getType() == HitResult.Type.MISS)
 			return false;
 
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 		Entity tether = badgeEffects.getTether(techSlot);
 		BubbleEntity bubble = tether instanceof BubbleEntity existing && existing.isAlive() ? existing : null;
 
@@ -106,7 +106,7 @@ public class TechBreathBubble extends TechHeroAspect
 	@Override
 	public void onUnequipped(Level level, Player player, int techSlot)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 		if(badgeEffects.getTether(techSlot) instanceof BubbleEntity bubble && bubble.isAlive())
 			bubble.remove(Entity.RemovalReason.DISCARDED);
 		badgeEffects.setTether(techSlot, null);

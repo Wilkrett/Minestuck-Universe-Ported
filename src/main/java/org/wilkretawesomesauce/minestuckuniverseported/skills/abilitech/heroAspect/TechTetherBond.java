@@ -17,8 +17,8 @@ import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodT
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.network.TetherBondImpactPacket;
 import org.wilkretawesomesauce.minestuckuniverseported.network.TetherBondSyncPacket;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 
@@ -94,7 +94,7 @@ public abstract class TechTetherBond extends TechHeroAspect
 		// Snaps once the moment the target leaves range, rather than repeatedly ticking damage for as
 		// long as they stay out of range - the bond breaks immediately after, same as any other way it ends.
 		target.hurt(serverLevel.damageSources().magic(), getFarDamageAmount());
-		MSUAbilitechParticles.oneshot(level, target, 10, MSUAspectColors.get(getHeroAspect()));
+		MSUAbilitechParticles.oneshot(level, target, 10, AspectColorHandler.get(getHeroAspect()));
 		PacketDistributor.sendToPlayersInDimension(serverLevel, new TetherBondImpactPacket(target.getId(), getHeroAspect().ordinal()));
 
 		clearBond(serverLevel, player);

@@ -12,13 +12,13 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.Abilitec
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKey;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRegistry;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRegistry;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
 /**
@@ -38,7 +38,7 @@ public class TechRogueSteal extends TechHeroClass
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 
 		if(state == AbilitechKeyState.NONE)
 		{
@@ -71,13 +71,13 @@ public class TechRogueSteal extends TechHeroClass
 				if(found != null)
 				{
 					badgeEffects.setExternalTech(techSlot, found.getId());
-					MSUAbilitechParticles.oneshot(level, player, 10, MSUClassColors.get(EnumClass.ROGUE));
+					MSUAbilitechParticles.oneshot(level, player, 10, ClasspectColorHandler.get(EnumClass.ROGUE));
 					player.displayClientMessage(Component.translatable("status.externalTech.casting", found.getDisplayName()), true);
 				}
 				else
 				{
 					player.displayClientMessage(Component.translatable("status.externalTech.notFound"), true);
-					MSUAbilitechParticles.oneshot(level, player, 3, MSUClassColors.get(EnumClass.ROGUE));
+					MSUAbilitechParticles.oneshot(level, player, 3, ClasspectColorHandler.get(EnumClass.ROGUE));
 				}
 			}
 		}

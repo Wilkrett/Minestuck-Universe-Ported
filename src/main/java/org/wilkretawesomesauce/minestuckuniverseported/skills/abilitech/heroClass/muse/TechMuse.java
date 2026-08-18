@@ -17,11 +17,11 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.MSUAspectAmbientEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
@@ -66,7 +66,7 @@ public class TechMuse extends TechHeroClass
 		if(title.isEmpty())
 			return;
 
-		MSUAbilitechParticles.burst(player.level(), player, 30, MSUClassColors.get(EnumClass.MUSE));
+		MSUAbilitechParticles.burst(player.level(), player, 30, ClasspectColorHandler.get(EnumClass.MUSE));
 
 		GodTierData casterGodTier = player.getData(MSUAttachments.GOD_TIER);
 		int casterKarma = casterGodTier.getStaticKarma() + casterGodTier.getTempKarma();
@@ -87,7 +87,7 @@ public class TechMuse extends TechHeroClass
 			for(Holder<MobEffect> effect : blessing)
 				target.addEffect(new MobEffectInstance(effect, 1200, 9));
 
-			MSUAbilitechParticles.oneshot(target.level(), target, 10, MSUClassColors.get(EnumClass.MUSE));
+			MSUAbilitechParticles.oneshot(target.level(), target, 10, ClasspectColorHandler.get(EnumClass.MUSE));
 		}
 	}
 }

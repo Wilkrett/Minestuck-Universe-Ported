@@ -25,11 +25,12 @@ import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
+import org.wilkretawesomesauce.minestuckuniverseported.entity.ai.EntityAIMindflayerTarget;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.mind.DecisionManager;
 import org.wilkretawesomesauce.minestuckuniverseported.network.MindControlInputPacket;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.network.MindControlSyncPacket;
@@ -39,7 +40,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.network.MindControlSyncPa
  * ("Mindflayer's Spell") - press and aim to possess a target, press again (or run out of food, or
  * stray more than a reasonable range) to release it.
  * <p>
- * <b>Non-player target - real, full puppeting.</b> A real {@link MindflayerGoal} is added to the
+ * <b>Non-player target - real, full puppeting.</b> A real {@link EntityAIMindflayerTarget} is added to the
  * target {@link Mob}'s own goal selector - see that class's own doc comment for how it drives movement/
  * attacks off the controller's aim using genuine pathfinding, actually more capable than this project's
  * other puppeted-entity movement.
@@ -89,7 +90,7 @@ public class TechMindControl extends TechHeroAspect
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 		Entity target = badgeEffects.getTether(techSlot);
 
 		if(state == AbilitechKeyState.PRESS)
@@ -115,7 +116,7 @@ public class TechMindControl extends TechHeroAspect
 				target = newTarget;
 
 				if(newTarget instanceof Mob mob)
-					mob.goalSelector.addGoal(0, new MindflayerGoal(mob, player));
+					mob.goalSelector.addGoal(0, new EntityAIMindflayerTarget(mob, player));
 				else if(newTarget instanceof ServerPlayer)
 					player.addEffect(new MobEffectInstance(MSUMobEffects.MIND_CONTROLLING, -1, 0, true, false));
 			}
@@ -155,14 +156,14 @@ public class TechMindControl extends TechHeroAspect
 
 	private static void release(Player player, int techSlot)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 		Entity target = badgeEffects.getTether(techSlot);
 
 		if(target instanceof Mob mob)
 		{
 			var toRemove = mob.goalSelector.getAvailableGoals().stream()
 					.map(net.minecraft.world.entity.ai.goal.WrappedGoal::getGoal)
-					.filter(goal -> goal instanceof MindflayerGoal flayer && flayer.getController() == player)
+					.filter(goal -> goal instanceof EntityAIMindflayerTarget flayer && flayer.getController() == player)
 					.toList();
 			toRemove.forEach(mob.goalSelector::removeGoal);
 		}
@@ -175,7 +176,7 @@ public class TechMindControl extends TechHeroAspect
 		GodTierData godTier = player.getData(MSUAttachments.GOD_TIER);
 
 		boolean stillControllingAPlayer = false;
-		for(int slot = 0; slot < AbilitechLoadout.SLOTS; slot++)
+		for(int slot = 0; slot < GodTierData.TECH_SLOTS; slot++)
 			if(slot != techSlot && godTier.getTech(slot) instanceof TechMindControl && badgeEffects.getTether(slot) instanceof ServerPlayer)
 				stillControllingAPlayer = true;
 

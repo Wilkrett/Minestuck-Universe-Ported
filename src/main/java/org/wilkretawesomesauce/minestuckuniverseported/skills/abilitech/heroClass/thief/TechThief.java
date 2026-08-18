@@ -14,11 +14,11 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.MSUAspectAmbientEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
@@ -54,7 +54,7 @@ public class TechThief extends TechHeroClass
 
 		if(state != AbilitechKeyState.RELEASED)
 		{
-			MSUAbilitechParticles.aura(level, player, time > 20 ? 5 : 1, MSUClassColors.get(EnumClass.THIEF));
+			MSUAbilitechParticles.aura(level, player, time > 20 ? 5 : 1, ClasspectColorHandler.get(EnumClass.THIEF));
 			return true;
 		}
 
@@ -66,8 +66,8 @@ public class TechThief extends TechHeroClass
 		if(!(target instanceof ServerPlayer targetPlayer) || NeoForge.EVENT_BUS.post(new AbilitechTargetedEvent(player, target, this, techSlot, false)).isCanceled())
 			return false;
 
-		MSUAbilitechParticles.aura(level, player, 20, MSUClassColors.get(EnumClass.THIEF));
-		MSUAbilitechParticles.oneshot(level, target, 20, MSUClassColors.get(EnumClass.THIEF));
+		MSUAbilitechParticles.aura(level, player, 20, ClasspectColorHandler.get(EnumClass.THIEF));
+		MSUAbilitechParticles.oneshot(level, target, 20, ClasspectColorHandler.get(EnumClass.THIEF));
 		targetPlayer.addEffect(new MobEffectInstance(MSUMobEffects.GOD_TIER_LOCK, 2400, 0));
 
 		if(Title.getTitle(targetPlayer).isPresent())

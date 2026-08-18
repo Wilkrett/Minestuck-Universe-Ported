@@ -12,17 +12,17 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
 /**
  * Ported from MinestuckUniverse (1.12.2)'s {@code skills.abilitech.heroClass.TechSeerDodge} ("Foresight
  * Dodge") - passive: any blockable incoming hit is fully negated once per 1200 ticks (a real cooldown,
- * tracked via {@link AbilitechLoadout#getLastSeerDodgeTick}/{@code #setLastSeerDodgeTick}), with an
+ * tracked via {@link BadgeEffects#getLastSeerDodgeTick}/{@code #setLastSeerDodgeTick}), with an
  * evasive hop.
  * <p>
  * <b>Gate</b>: the original's real condition was {@code allowlisted-unblockable OR magic-damage OR
@@ -78,7 +78,7 @@ public class TechSeerDodge extends TechHeroClass
 		if(event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY))
 			return;
 
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 		GodTierData godTier = player.getData(MSUAttachments.GOD_TIER);
 		if(!godTier.isPassiveEnabledFor(MSUSkills.FORESIGHT_DODGE))
 			return;
@@ -88,7 +88,7 @@ public class TechSeerDodge extends TechHeroClass
 			return;
 
 		badgeEffects.setLastSeerDodgeTick(now);
-		MSUAbilitechParticles.oneshot(player.level(), player, 20, MSUClassColors.get(EnumClass.SEER));
+		MSUAbilitechParticles.oneshot(player.level(), player, 20, ClasspectColorHandler.get(EnumClass.SEER));
 		event.setCanceled(true);
 
 		boolean grounded = player.onGround();

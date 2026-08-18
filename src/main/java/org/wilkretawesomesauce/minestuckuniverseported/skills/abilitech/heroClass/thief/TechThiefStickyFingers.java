@@ -11,8 +11,8 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
@@ -82,7 +82,7 @@ public class TechThiefStickyFingers extends TechHeroClass
 		if(!player.isCreative())
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - ENERGY_USE);
 
-		MSUAbilitechParticles.oneshot(level, player, 20, MSUClassColors.get(EnumClass.THIEF));
+		MSUAbilitechParticles.oneshot(level, player, 20, ClasspectColorHandler.get(EnumClass.THIEF));
 
 		return true;
 	}

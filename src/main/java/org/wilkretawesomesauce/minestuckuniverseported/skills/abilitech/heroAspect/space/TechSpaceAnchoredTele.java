@@ -12,15 +12,15 @@ import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 
 /**
  * Ported from MinestuckUniverse (1.12.2)'s {@code skills.abilitech.heroAspect.space.TechSpaceAnchoredTele}
  * ("Anchored Wormhole"). Crouch and press to set a warp point at your feet, or clear it if one is
- * already set - the same shared warp point {@link org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.AbilitechLoadout} now stores for
+ * already set - the same shared warp point {@link org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects} now stores for
  * {@link TechSpaceTargetTele} ("Spatial Warp") too, matching the original's shared
  * {@code IBadgeEffects} field. Press without crouching: if no warp point is set, blink to a random
  * nearby safe spot (real {@code LivingEntity#randomTeleport}, the same Enderman/chorus-fruit
@@ -44,7 +44,7 @@ public class TechSpaceAnchoredTele extends TechHeroAspect
 		if(!(level instanceof ServerLevel serverLevel) || !(player instanceof ServerPlayer serverPlayer))
 			return false;
 
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 
 		if(player.isCrouching())
 		{

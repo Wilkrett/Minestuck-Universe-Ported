@@ -18,8 +18,8 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 
 /**
@@ -104,7 +104,7 @@ public class BadgeOverlord extends Badge
 				Component.translatable("status.overlordAscend", player.getName()).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_PURPLE)), false);
 		player.addEffect(new MobEffectInstance(MSUMobEffects.GOD_TIER_COMEBACK, 200, 3));
 
-		MSUAbilitechParticles.oneshot(player.level(), player, 25, MSUClassColors.get(EnumClass.LORD));
+		MSUAbilitechParticles.oneshot(player.level(), player, 25, ClasspectColorHandler.get(EnumClass.LORD));
 		player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.WITHER_SPAWN, player.getSoundSource(), 1.0F, 1.0F);
 
 		player.setHealth(10);

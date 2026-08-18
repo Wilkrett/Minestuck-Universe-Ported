@@ -7,7 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.client.StreakClientState;
+import org.wilkretawesomesauce.minestuckuniverseported.client.streak.StreakClientState;
 
 /**
  * Broadcasts the real streak-toggle state of an entity to every observer - shaped exactly like

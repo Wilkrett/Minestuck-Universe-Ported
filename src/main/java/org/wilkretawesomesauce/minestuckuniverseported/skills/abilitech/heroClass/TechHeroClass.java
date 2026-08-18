@@ -9,8 +9,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUHeroClass;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.TechBoondollarCost;
 
@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  * {@code PASSIVE} and {@code DEFENSE}/{@code OFFENSE} depending on which of its two registered instances).
  * <p>
  * {@link #canUse}/{@link #getColor} mirror {@code TechHeroAspect}'s own real ports exactly (same
- * {@code GOD_TIER_LOCK} amplifier &ge;1 gate, same real color-table lookup - just {@link MSUClassColors}
+ * {@code GOD_TIER_LOCK} amplifier &ge;1 gate, same real color-table lookup - just {@link ClasspectColorHandler}
  * instead of {@code MSUAspectColors}). {@link #canAppearOnList} checks the real {@link Title#heroClass()}
  * accessor (this project doesn't have a matching {@code isPlayerOfClass} helper the way
  * {@link Title#isPlayerOfAspect} exists for aspects, so this reads {@link Title#getTitle(ServerPlayer)}
@@ -131,11 +131,11 @@ public class TechHeroClass extends TechBoondollarCost
 		return super.canUnlock(level, player) && canAppearOnList(level, player);
 	}
 
-	/** Real port of the original's {@code getColor()} via this project's own real {@link MSUClassColors} table. */
+	/** Real port of the original's {@code getColor()} via this project's own real {@link ClasspectColorHandler} table. */
 	@Override
 	public int getColor()
 	{
-		return MSUClassColors.get(heroClass)[0];
+		return ClasspectColorHandler.get(heroClass)[0];
 	}
 
 }

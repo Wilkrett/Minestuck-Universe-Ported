@@ -5,6 +5,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -14,17 +16,25 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * New "basic command" tech from the Time Aspect design discussion - "Steal Time": hold and aim at an
@@ -103,15 +113,15 @@ public class TechTimeDilation extends TechHeroAspect
 	 * affected) - a "your own perspective is slowing down" visual, not a movement/combat mechanic.
 	 * <p>
 	 * <b>Periodic "lag spike" (added after the user asked for stun/damage/a genuinely laggy-looking
-	 * target, not just a visual)</b>: {@code TimeDilationLagEvents} makes every {@link #PULSE_CYCLE_TICKS}
+	 * target, not just a visual)</b>: {@link LagEvents} makes every {@link #PULSE_CYCLE_TICKS}
 	 * repeat a short, real rubber-band - the affected entity's position is forcibly held at wherever it was
 	 * right before the spike for {@link #FREEZE_DURATION_TICKS}, attacking/interacting is cancelled for that
 	 * same window, and a burst of chip damage lands the instant the spike starts. This is a genuine
 	 * server-authoritative position hold (the one true position everyone, including the affected player's
 	 * own client, sees getting held and then released), not a fake-packet illusion shown only to observers -
-	 * see that class's own doc comment for why faking only-what-observers-see was ruled out. The vignette
-	 * above reuses these same two constants so the screen visibly darkens hardest exactly when the spike
-	 * hits, instead of pulsing on an unrelated rhythm.
+	 * see {@link LagEvents}'s own doc comment for why faking only-what-observers-see was ruled out. The
+	 * vignette above reuses these same two constants so the screen visibly darkens hardest exactly when the
+	 * spike hits, instead of pulsing on an unrelated rhythm.
 	 */
 	public static class TimeDilationEffect extends MobEffect
 	{
@@ -146,7 +156,7 @@ public class TechTimeDilation extends TechHeroAspect
 	 * "vignette" well enough without needing one.
 	 * <p>
 	 * Timing reuses {@link TimeDilationEffect#PULSE_CYCLE_TICKS}/{@link TimeDilationEffect#FREEZE_DURATION_TICKS}
-	 * directly - the same cycle {@code TimeDilationLagEvents} uses server-side to hold position/deal chip
+	 * directly - the same cycle {@link LagEvents} uses server-side to hold position/deal chip
 	 * damage - so the screen visibly darkens hardest at exactly the moment the real "lag spike" hits, then
 	 * fades back down over the rest of the cycle, instead of pulsing on an unrelated rhythm.
 	 */
@@ -195,6 +205,120 @@ public class TechTimeDilation extends TechHeroAspect
 
 			guiGraphics.fillGradient(0, 0, screenWidth, bandHeight, dark, clear);
 			guiGraphics.fillGradient(0, screenHeight - bandHeight, screenWidth, screenHeight, clear, dark);
+		}
+	}
+
+	/**
+	 * The "stun + chip damage" half of {@link TimeDilationEffect}'s lag-spike mechanic - see that class's
+	 * doc comment for the shared timing constants and the overall picture.
+	 * <p>
+	 * <b>Why this holds the entity's real, server-authoritative position instead of faking a delayed one
+	 * only to observers</b>: the original ask was for a target to visually rubber-band like a genuinely
+	 * high-ping player. That specifically means <i>other players watching them</i> should see stale
+	 * position updates while the target's own client and the server's real hit/collision data stay normal -
+	 * exactly the kind of per-observer illusion {@code timeline.vision.PastVisionSession} already builds for
+	 * Retrocognition, <b>except that trick is explicitly documented there as not working for real player
+	 * entities</b> (vanilla's own per-tick tracking sync for a real tracked entity immediately overwrites any
+	 * single fake position packet sent to an observer - there's no NeoForge event to intercept or delay that
+	 * sync, and this project doesn't use Mixin/access transformers to hook it directly). Faking it for
+	 * observers only was therefore not buildable within this project's real constraints, not skipped by
+	 * choice. What's built instead is the more honest version: the position genuinely doesn't advance for
+	 * everyone, including the affected player's own client - which is arguably more authentic to "being the
+	 * laggy one" anyway, since a real laggy player's own corrections are exactly what everyone (themselves
+	 * included) ends up seeing.
+	 * <p>
+	 * {@link #lastFreePosition} tracks, per affected entity, wherever it last was on a tick outside the
+	 * freeze window - continuously refreshed while unfrozen, then held and reapplied every tick for the
+	 * <i>next</i> {@link TimeDilationEffect#FREEZE_DURATION_TICKS} once a new cycle starts. Cleared the
+	 * instant the effect is gone so a stale anchor never lingers.
+	 */
+	@EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME)
+	public static final class LagEvents
+	{
+		private static final Map<UUID, Vec3> lastFreePosition = new HashMap<>();
+
+		private LagEvents()
+		{
+		}
+
+		private static int localCycleTick(LivingEntity entity)
+		{
+			// "+ entity.getId()" gives each simultaneously-dilated entity its own offset into the cycle, so
+			// several targets don't all spike in perfect unison.
+			long gameTime = entity.level().getGameTime();
+			return (int) Math.floorMod(gameTime + entity.getId(), (long) TimeDilationEffect.PULSE_CYCLE_TICKS);
+		}
+
+		/** Whether {@code entity} is inside a freeze window right now - used to gate attack/interact cancellation too. */
+		public static boolean isFrozen(LivingEntity entity)
+		{
+			return entity.hasEffect(MSUMobEffects.TIME_DILATION) && localCycleTick(entity) < TimeDilationEffect.FREEZE_DURATION_TICKS;
+		}
+
+		@SubscribeEvent
+		private static void onEntityTickPost(EntityTickEvent.Post event)
+		{
+			if(event.getEntity().level().isClientSide() || !(event.getEntity() instanceof LivingEntity living))
+				return;
+
+			UUID id = living.getUUID();
+			if(!living.hasEffect(MSUMobEffects.TIME_DILATION))
+			{
+				lastFreePosition.remove(id);
+				return;
+			}
+
+			int local = localCycleTick(living);
+			if(local >= TimeDilationEffect.FREEZE_DURATION_TICKS)
+			{
+				lastFreePosition.put(id, living.position());
+				return;
+			}
+
+			Vec3 anchor = lastFreePosition.get(id);
+			if(anchor != null)
+			{
+				// ServerPlayer#teleportTo(x,y,z) routes through the real connection for a real connected
+				// player (correct and expected here, unlike the MSUFakePlayer gotcha elsewhere in this
+				// project) - this is exactly the same "snap the player back" correction vanilla's own
+				// anti-cheat position checks use, which is why it reads as a rubber-band rather than a bug.
+				if(living instanceof ServerPlayer serverPlayer)
+					serverPlayer.teleportTo(anchor.x, anchor.y, anchor.z);
+				else
+					living.moveTo(anchor.x, anchor.y, anchor.z, living.getYRot(), living.getXRot());
+				living.setDeltaMovement(Vec3.ZERO);
+			}
+
+			if(local == 0 && living.level() instanceof ServerLevel serverLevel)
+				living.hurt(serverLevel.damageSources().magic(), TimeDilationEffect.DAMAGE_PER_PULSE);
+		}
+
+		@SubscribeEvent
+		private static void onAttack(AttackEntityEvent event)
+		{
+			if(isFrozen(event.getEntity()))
+				event.setCanceled(true);
+		}
+
+		@SubscribeEvent
+		private static void onEntityInteract(PlayerInteractEvent.EntityInteract event)
+		{
+			if(isFrozen(event.getEntity()))
+				event.setCanceled(true);
+		}
+
+		@SubscribeEvent
+		private static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event)
+		{
+			if(isFrozen(event.getEntity()))
+				event.setCanceled(true);
+		}
+
+		@SubscribeEvent
+		private static void onRightClickItem(PlayerInteractEvent.RightClickItem event)
+		{
+			if(isFrozen(event.getEntity()))
+				event.setCanceled(true);
 		}
 	}
 }

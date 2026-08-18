@@ -11,9 +11,9 @@ import net.minecraft.world.level.Level;
 import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.Relationship;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.RelationshipManager;
@@ -70,7 +70,7 @@ public class TechBardBloodCrimsonDiscord extends TechHeroClass
 			RelationshipManager.checkForCollapse(serverLevel, rel);
 		}
 
-		MSUAbilitechParticles.oneshot(level, target, 15, MSUAspectColors.get(EnumAspect.BLOOD));
+		MSUAbilitechParticles.oneshot(level, target, 15, AspectColorHandler.get(EnumAspect.BLOOD));
 		player.displayClientMessage(Component.translatable("status.minestuckuniverseported.crimsonDiscordDestabilized"), true);
 
 		return false;

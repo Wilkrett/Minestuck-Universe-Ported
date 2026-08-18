@@ -22,7 +22,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.network.StreakStateSyncPacket;
@@ -54,9 +54,9 @@ import java.util.WeakHashMap;
  * stay up continuously across both the charge <i>and</i> the resulting burst - they only cut off once the
  * released burst's own {@link #activeBurst} entry has actually run out ({@link BurstState#endTick}, a
  * per-player {@code WeakHashMap} tracking each active burst's expiry tick against {@link Level#getGameTime()},
- * the same lightweight self-contained-scratch-state idiom {@code mechanics.doom.DecayEffect}'s own per-entity
+ * the same lightweight self-contained-scratch-state idiom {@code potions.DecayEffect}'s own per-entity
  * hit-count map already uses - {@code onUseTick} is called every server tick for every equipped tech
- * regardless of key state, per {@code AbilitechEvents#onPlayerTick}, so a {@code state == NONE} tick is a
+ * regardless of key state, per {@code SkillKeyStates#onPlayerTick}, so a {@code state == NONE} tick is a
  * real, reliable place to check it).
  * <p>
  * <b>The burst is a one-time {@code setDeltaMovement} kick at release <i>plus</i> a fast-decaying

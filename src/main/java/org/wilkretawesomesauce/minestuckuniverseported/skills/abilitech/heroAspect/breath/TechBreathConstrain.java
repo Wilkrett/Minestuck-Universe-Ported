@@ -9,12 +9,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.WindEngine;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.freedom.FreedomData;
 import org.wilkretawesomesauce.minestuckuniverseported.network.WindRibbonSyncPacket;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.TechHeroAspect;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
@@ -78,7 +79,7 @@ public class TechBreathConstrain extends TechHeroAspect
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 
 		if(state == AbilitechKeyState.NONE || state == AbilitechKeyState.RELEASED)
 		{
@@ -117,7 +118,7 @@ public class TechBreathConstrain extends TechHeroAspect
 		if(time % 20 == 0 && !player.isCreative())
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 1);
 
-		int color = MSUAspectColors.get(EnumAspect.BREATH)[1];
+		int color = AspectColorHandler.get(EnumAspect.BREATH)[1];
 		float compressionFraction = 1.0F - data.getFreedom() / 100F;
 
 		WindEngine.pressureInward(level, target.position().add(0, target.getBbHeight() * 0.5, 0),
@@ -137,7 +138,7 @@ public class TechBreathConstrain extends TechHeroAspect
 	@Override
 	public void onUnequipped(Level level, Player player, int techSlot)
 	{
-		player.getData(MSUAttachments.ABILITECH_LOADOUT).setTether(techSlot, null);
+		player.getData(MSUAttachments.BADGE_EFFECTS).setTether(techSlot, null);
 		clearRibbon(player);
 	}
 

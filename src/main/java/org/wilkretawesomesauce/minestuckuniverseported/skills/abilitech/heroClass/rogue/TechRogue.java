@@ -9,11 +9,11 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ public class TechRogue extends TechHeroClass
 					for(MobEffectInstance effect : appliedEffects)
 					{
 						target.addEffect(effect);
-						MSUAbilitechParticles.oneshot(level, target, 3, MSUClassColors.get(EnumClass.ROGUE));
+						MSUAbilitechParticles.oneshot(level, target, 3, ClasspectColorHandler.get(EnumClass.ROGUE));
 					}
 			if(!player.isCreative())
 				player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 8);
@@ -69,9 +69,9 @@ public class TechRogue extends TechHeroClass
 
 		LivingEntity target = MSUAbilitechRayTrace.getTargetEntity(player);
 		if(time < 57)
-			MSUAbilitechParticles.oneshot(level, player, target != null ? 5 : 1, MSUClassColors.get(EnumClass.ROGUE));
+			MSUAbilitechParticles.oneshot(level, player, target != null ? 5 : 1, ClasspectColorHandler.get(EnumClass.ROGUE));
 		else
-			MSUAbilitechParticles.burst(level, player, 20, MSUClassColors.get(EnumClass.ROGUE));
+			MSUAbilitechParticles.burst(level, player, 20, ClasspectColorHandler.get(EnumClass.ROGUE));
 		if(state != AbilitechKeyState.PRESS)
 			return true;
 
@@ -79,7 +79,7 @@ public class TechRogue extends TechHeroClass
 		{
 			for(MobEffectInstance effect : appliedEffects)
 				target.addEffect(effect);
-			MSUAbilitechParticles.oneshot(level, target, 3, MSUClassColors.get(EnumClass.ROGUE));
+			MSUAbilitechParticles.oneshot(level, target, 3, ClasspectColorHandler.get(EnumClass.ROGUE));
 			if(!player.isCreative())
 				player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 4);
 		}

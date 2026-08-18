@@ -9,12 +9,12 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
 
@@ -35,7 +35,7 @@ public class TechSylphKarmaRestore extends TechHeroClass
 	@Override
 	public boolean onUseTick(Level level, Player player, int techSlot, AbilitechKeyState state, int time)
 	{
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 
 		if(state == AbilitechKeyState.RELEASED)
 			badgeEffects.setTether(techSlot, null);
@@ -73,11 +73,11 @@ public class TechSylphKarmaRestore extends TechHeroClass
 				if(time % (tickMod * 2) == 0 && !player.isCreative())
 					player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 1);
 
-				MSUAbilitechParticles.burst(target.level(), target, 4, MSUClassColors.get(EnumClass.SYLPH));
+				MSUAbilitechParticles.burst(target.level(), target, 4, ClasspectColorHandler.get(EnumClass.SYLPH));
 			}
 		}
 
-		MSUAbilitechParticles.aura(level, player, 2, MSUClassColors.get(EnumClass.SYLPH));
+		MSUAbilitechParticles.aura(level, player, 2, ClasspectColorHandler.get(EnumClass.SYLPH));
 
 		return true;
 	}

@@ -17,7 +17,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.Locale;
  * Real, project-original visual cue (no original 1.12.2 counterpart) for {@code heroAspect.TechTetherBond}'s
  * one-time far-range damage snap: a short-lived, fading, camera-facing {@code textures/foci/<aspect>.png}
  * icon flashed on the target the instant the snap lands, tinted with that aspect's own real color table
- * ({@link MSUAspectColors}, the same source {@code MSUAbilitechParticles}'s aura/burst calls use - each
+ * ({@link AspectColorHandler}, the same source {@code MSUAbilitechParticles}'s aura/burst calls use - each
  * icon is a plain white silhouette, tintable like any of this project's other white-on-transparent icon
  * assets). Icon/color are picked per-impact from whichever {@link EnumAspect} the snap came from - this
  * project's own asset pack already ships one {@code foci/*.png} icon per aspect (confirmed: every
@@ -101,7 +101,7 @@ public final class TetherBondImpactRenderer
 			if(alpha <= 0F)
 				continue;
 
-			int[] colors = MSUAspectColors.get(impact.aspect);
+			int[] colors = AspectColorHandler.get(impact.aspect);
 			int tint = colors != null && colors.length > 0 ? colors[0] : 0xFFFFFF;
 			float r = ((tint >> 16) & 0xFF) / 255F;
 			float g = ((tint >> 8) & 0xFF) / 255F;

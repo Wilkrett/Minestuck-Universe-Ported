@@ -14,12 +14,12 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUMobEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechParticles;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAspectColors;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUAbilitechRayTrace;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.MSUClassColors;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
+import org.wilkretawesomesauce.minestuckuniverseported.util.AspectColorHandler;
+import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import org.wilkretawesomesauce.minestuckuniverseported.util.ClasspectColorHandler;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.AbilitechTargetedEvent;
+import org.wilkretawesomesauce.minestuckuniverseported.events.AbilitechTargetedEvent;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.MSUAspectAmbientEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroClass.TechHeroClass;
 
@@ -80,9 +80,9 @@ public class TechMaid extends TechHeroClass
 
 		LivingEntity target = MSUAbilitechRayTrace.getTargetEntity(player);
 		if(time <= 36)
-			MSUAbilitechParticles.aura(level, player, target == null ? 1 : 5, MSUClassColors.get(EnumClass.MAID));
+			MSUAbilitechParticles.aura(level, player, target == null ? 1 : 5, ClasspectColorHandler.get(EnumClass.MAID));
 		else
-			MSUAbilitechParticles.burst(level, player, 20, MSUClassColors.get(EnumClass.MAID));
+			MSUAbilitechParticles.burst(level, player, 20, ClasspectColorHandler.get(EnumClass.MAID));
 
 		if(state != AbilitechKeyState.PRESS)
 			return true;
@@ -101,7 +101,7 @@ public class TechMaid extends TechHeroClass
 	{
 		if(!(target instanceof ServerPlayer targetPlayer))
 		{
-			MSUAbilitechParticles.oneshot(target.level(), target, 10, MSUAspectColors.get(casterAspect));
+			MSUAbilitechParticles.oneshot(target.level(), target, 10, AspectColorHandler.get(casterAspect));
 			target.addEffect(new MobEffectInstance(MSUAspectAmbientEffects.effectFor(casterAspect), 2400, 3));
 			return;
 		}
@@ -113,7 +113,7 @@ public class TechMaid extends TechHeroClass
 
 		if(targetAspect == EnumAspect.HOPE || targetAspect == EnumAspect.MIND || targetAspect == EnumAspect.VOID)
 		{
-			MSUAbilitechParticles.oneshot(target.level(), target, 10, MSUAspectColors.get(casterAspect));
+			MSUAbilitechParticles.oneshot(target.level(), target, 10, AspectColorHandler.get(casterAspect));
 			target.addEffect(new MobEffectInstance(MSUMobEffects.GOD_TIER_COMEBACK, 1200, 0));
 			return;
 		}
@@ -121,7 +121,7 @@ public class TechMaid extends TechHeroClass
 		int rung = Echeladder.get(targetPlayer).getRung();
 		int amplifier = (int) (rung * MSUAspectAmbientEffects.strengthFor(targetAspect)) + 3;
 		target.addEffect(new MobEffectInstance(MSUAspectAmbientEffects.effectFor(targetAspect), 1500, amplifier));
-		MSUAbilitechParticles.oneshot(target.level(), target, 10, MSUClassColors.get(EnumClass.MAID));
+		MSUAbilitechParticles.oneshot(target.level(), target, 10, ClasspectColorHandler.get(EnumClass.MAID));
 	}
 
 	@Override

@@ -11,7 +11,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.godTier.GodTierData;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.AbilitechLoadout;
+import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills;
 
 /**
@@ -22,7 +22,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills;
  * {@code abilitech.heroAspect.mind.MindControllingEffect}, carrying their own movement input already
  * converted to a world-relative vector (via their own head yaw) exactly like the original did before
  * handing it to the server. The server relays it to whichever player they're actually possessing (found
- * by scanning the sender's own {@link AbilitechLoadout} tethers for an active
+ * by scanning the sender's own {@link BadgeEffects} tethers for an active
  * {@link MSUSkills#MIND_CONTROL} target) via {@link MindControlSyncPacket}.
  */
 public record MindControlInputPacket(float worldX, float worldZ, boolean jump, boolean sneak) implements MSPacket.PlayToServer
@@ -40,9 +40,9 @@ public record MindControlInputPacket(float worldX, float worldZ, boolean jump, b
 	public void execute(IPayloadContext context, ServerPlayer player)
 	{
 		GodTierData godTier = player.getData(MSUAttachments.GOD_TIER);
-		AbilitechLoadout badgeEffects = player.getData(MSUAttachments.ABILITECH_LOADOUT);
+		BadgeEffects badgeEffects = player.getData(MSUAttachments.BADGE_EFFECTS);
 
-		for(int slot = 0; slot < AbilitechLoadout.SLOTS; slot++)
+		for(int slot = 0; slot < GodTierData.TECH_SLOTS; slot++)
 		{
 			if(godTier.getTech(slot) != MSUSkills.MIND_CONTROL)
 				continue;
