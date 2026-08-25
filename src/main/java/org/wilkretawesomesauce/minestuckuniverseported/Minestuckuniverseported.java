@@ -62,6 +62,7 @@ public class Minestuckuniverseported {
                         output.accept(org.wilkretawesomesauce.minestuckuniverseported.juju.MSUJujuRegistry.JUJU_MODUS_ITEM.get());
                         output.accept(org.wilkretawesomesauce.minestuckuniverseported.juju.MSUJujuRegistry.CUE_BALL.get());
                         output.accept(MSUItems.GOLEM_SPAWN_EGG.get());
+                        output.accept(MSUItems.JUKINATOR.get());
                     })
                     .build());
 
@@ -103,10 +104,14 @@ public class Minestuckuniverseported {
         org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills.init();
         org.wilkretawesomesauce.minestuckuniverseported.skills.MSUSkills.init();
 
+        // Force-load the Jukinator-3000's own gamerule registration
+        MSUGameRules.init();
+
         // Register our strife keybindings (client-only event, safe to register unconditionally - it
         // simply never fires on a dedicated server)
         modEventBus.addListener(org.wilkretawesomesauce.minestuckuniverseported.client.MSUKeyMappings::register);
         modEventBus.addListener(org.wilkretawesomesauce.minestuckuniverseported.client.MSUAbilitechKeyMappings::register);
+        modEventBus.addListener(org.wilkretawesomesauce.minestuckuniverseported.client.MSUJukinatorKeyMappings::register);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);

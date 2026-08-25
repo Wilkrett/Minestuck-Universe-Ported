@@ -95,5 +95,8 @@ public final class MSUPayloads
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 		registrar.playToClient(WindBurstPacket.ID, WindBurstPacket.STREAM_CODEC,
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
+
+		registrar.playToClient(OpenJukinatorPacket.ID, OpenJukinatorPacket.STREAM_CODEC,
+				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 	}
 }

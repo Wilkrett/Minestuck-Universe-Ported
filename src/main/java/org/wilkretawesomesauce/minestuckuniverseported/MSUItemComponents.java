@@ -4,6 +4,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import org.wilkretawesomesauce.minestuckuniverseported.item.JukinatorDisc;
 import org.wilkretawesomesauce.minestuckuniverseported.strife.StrifeSpecibusData;
 
 import java.util.UUID;
@@ -60,6 +61,13 @@ public final class MSUItemComponents
 			"skaian_scroll_super", builder -> builder
 					.persistent(com.mojang.serialization.Codec.BOOL)
 					.networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL));
+
+	// The disc currently loaded into a Jukinator-3000 (item.JukinatorItem) - absence of this component
+	// means no disc is loaded, no empty-stack sentinel needed. Wrapped in item.JukinatorDisc rather than a
+	// bare ItemStack - see that class's own doc comment for the real runtime error (confirmed, not
+	// guessed) that made the wrapper necessary: ItemStack itself doesn't implement equals()/hashCode().
+	public static final Supplier<DataComponentType<JukinatorDisc>> STORED_DISC = REGISTRY.registerComponentType(
+			"stored_disc", builder -> builder.persistent(JukinatorDisc.CODEC).networkSynchronized(JukinatorDisc.STREAM_CODEC));
 
 	private MSUItemComponents()
 	{

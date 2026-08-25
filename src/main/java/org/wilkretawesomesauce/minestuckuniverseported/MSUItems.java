@@ -124,6 +124,11 @@ public final class MSUItems
 	public static final DeferredItem<Item> GOLEM_SPAWN_EGG = REGISTER.register("golem_spawn_egg",
 			() -> new GolemSpawnEggItem(new Item.Properties()));
 
+	// The "Jukinator-3000" - real, original design for this project, no 1.12.2 counterpart. See
+	// item.JukinatorItem's own doc comment. Known gap, stated plainly: no texture/model yet.
+	public static final DeferredItem<Item> JUKINATOR = REGISTER.register("jukinator",
+			() -> new org.wilkretawesomesauce.minestuckuniverseported.item.JukinatorItem(new Item.Properties()));
+
 	private MSUItems()
 	{
 	}
