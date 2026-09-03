@@ -72,7 +72,7 @@ public class DoomReleasePool implements INBTSerializable<CompoundTag>
 	}
 
 	/**
-	 * Called once per {@code Config.doomReleaseTickIntervalTicks} by {@code DoomReleaseEvents} -
+	 * Called once per {@code DoomReleaseEvents#RELEASE_TICK_INTERVAL_TICKS} by {@code DoomReleaseEvents} -
 	 * removes (dissipates) any record whose window has passed. Dissipation is silent by design (Scope
 	 * note: a future pass could hook a removal callback here for ambient particle/sound flavor at the
 	 * death site - no forced mechanic yet).

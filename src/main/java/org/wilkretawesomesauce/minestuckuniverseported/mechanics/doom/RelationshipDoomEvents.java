@@ -6,7 +6,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.Relationship;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.relationship.RelationshipManager;
@@ -66,6 +65,25 @@ public final class RelationshipDoomEvents
 	);
 	private static final double FORMING_WEIGHT = 0.15;
 
+	/** Scales {@link #contributionOf} into the Doom a survivor gains when the other side of a relationship dies. */
+	private static final double DEATH_SCALE = 0.5;
+	/** Max Doom a single relationship's death-of-connected-entity trigger can ever grant the survivor. */
+	private static final double DEATH_CAP = 20.0;
+	/** Scales {@link #contributionOf} into the Doom both surviving parties gain when a relationship severs. */
+	private static final double SEVERANCE_SCALE = 0.4;
+	/** Max Doom a single relationship's severance can ever grant each surviving party. */
+	private static final double SEVERANCE_CAP = 15.0;
+	/** Base betrayal-bonus Doom, scaled by trust/strength/stability before {@link #BETRAYAL_CAP} applies. */
+	private static final double BETRAYAL_BASE = 10.0;
+	/** Max betrayal-bonus Doom a single kill can ever grant. */
+	private static final double BETRAYAL_CAP = 25.0;
+	/** How often (in ticks) each online player's relationship count is checked for isolation Doom. 1200 = once a minute. */
+	private static final int ISOLATION_CHECK_INTERVAL_TICKS = 1200;
+	/** A player with this many or fewer current relationships accrues isolation Doom each check. */
+	private static final int ISOLATION_RELATIONSHIP_THRESHOLD = 0;
+	/** How much Doom accrues per {@link #ISOLATION_CHECK_INTERVAL_TICKS} while at/under the isolation threshold. */
+	private static final double ISOLATION_PER_INTERVAL = 0.05;
+
 	/** Duplicated from {@code RelationshipManager#isPositive} (private there) - a 5-entry constant unlikely to change, not worth exposing a new public method for this one caller. */
 	private static final Set<RelationshipType> POSITIVE_TYPES = EnumSet.of(
 			RelationshipType.LOYALTY, RelationshipType.FRIENDSHIP, RelationshipType.FAMILY,
@@ -92,12 +110,12 @@ public final class RelationshipDoomEvents
 		UUID survivorId = rel.other(deadEntityId);
 		if(level.getEntity(survivorId) instanceof LivingEntity survivor)
 		{
-			double gain = Math.min(Config.doomRelationshipDeathCap, contributionOf(rel) * Config.doomRelationshipDeathScale);
+			double gain = Math.min(DEATH_CAP, contributionOf(rel) * DEATH_SCALE);
 			survivor.getData(MSUAttachments.DOOM_DATA).addDoom(gain);
 
 			if(killer != null && killer.getUUID().equals(survivorId) && POSITIVE_TYPES.contains(rel.type))
 			{
-				double betrayalBonus = Math.min(Config.doomBetrayalCap, Config.doomBetrayalBase
+				double betrayalBonus = Math.min(BETRAYAL_CAP, BETRAYAL_BASE
 						* (rel.trust / 100.0) * (rel.strength / 100.0) * (rel.stability / 100.0));
 				killer.getData(MSUAttachments.DOOM_DATA).addDoom(betrayalBonus);
 			}
@@ -107,7 +125,7 @@ public final class RelationshipDoomEvents
 	/** Severance (Stage-4 Instability collapse) - both surviving parties gain Doom, scaled by {@link #contributionOf} as the relationship stood right before it broke. */
 	private static void onRelationshipSevered(ServerLevel level, Relationship rel)
 	{
-		double gain = Math.min(Config.doomRelationshipSeveranceCap, contributionOf(rel) * Config.doomRelationshipSeveranceScale);
+		double gain = Math.min(SEVERANCE_CAP, contributionOf(rel) * SEVERANCE_SCALE);
 		for(UUID id : List.of(rel.entityA, rel.entityB))
 			if(level.getEntity(id) instanceof LivingEntity entity)
 				entity.getData(MSUAttachments.DOOM_DATA).addDoom(gain);
@@ -117,14 +135,14 @@ public final class RelationshipDoomEvents
 	@SubscribeEvent
 	private static void onLevelTick(LevelTickEvent.Post event)
 	{
-		if(!(event.getLevel() instanceof ServerLevel level) || level.getGameTime() % Config.doomIsolationCheckIntervalTicks != 0)
+		if(!(event.getLevel() instanceof ServerLevel level) || level.getGameTime() % ISOLATION_CHECK_INTERVAL_TICKS != 0)
 			return;
 
 		for(ServerPlayer player : level.players())
 		{
 			RelationshipManager.ensureNaturalRelationship(player, level.getGameTime());
-			if(RelationshipManager.getAllFor(player.getUUID()).size() <= Config.doomIsolationRelationshipThreshold)
-				player.getData(MSUAttachments.DOOM_DATA).addDoom(Config.doomIsolationPerInterval);
+			if(RelationshipManager.getAllFor(player.getUUID()).size() <= ISOLATION_RELATIONSHIP_THRESHOLD)
+				player.getData(MSUAttachments.DOOM_DATA).addDoom(ISOLATION_PER_INTERVAL);
 		}
 	}
 }

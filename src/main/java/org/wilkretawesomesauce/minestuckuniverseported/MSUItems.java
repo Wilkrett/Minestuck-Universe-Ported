@@ -6,6 +6,9 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.wilkretawesomesauce.minestuckuniverseported.item.GolemSpawnEggItem;
 import org.wilkretawesomesauce.minestuckuniverseported.item.StrifeCardItem;
+import org.wilkretawesomesauce.minestuckuniverseported.item.armor.ArchmageHatItem;
+import org.wilkretawesomesauce.minestuckuniverseported.item.armor.FrogHatItem;
+import org.wilkretawesomesauce.minestuckuniverseported.item.armor.WizardHatItem;
 
 /**
  * Items registry for this addon. Starts with just what the strife specibus system needs; more of
@@ -48,14 +51,14 @@ public final class MSUItems
 	// also fixes the stacking bug as a side effect, since modern Item.Properties#durability(int) still
 	// implies stacksTo(1) (confirmed via javap - unchanged from 1.12.2's own ItemArmor behavior here).
 	public static final DeferredItem<Item> WIZARD_HAT = REGISTER.register("wizard_hat",
-			() -> new org.wilkretawesomesauce.minestuckuniverseported.item.WizardHatItem(MSUArmorMaterials.WIZARD_HAT, new Item.Properties().durability(40)));
+			() -> new WizardHatItem(MSUArmorMaterials.WIZARD_HAT, new Item.Properties().durability(40)));
 	// Real flat multi-box hat model (client.model.FrogHatModel), not vanilla's plain flat helmet shape -
 	// see items.WizardHatItem's own doc comment for the rendering bug this fixes. Real bug fix: the
 	// original's own frogHat registration (items.MinestuckUniverseItems, read directly) used the plain
 	// no-maxUses MSUArmorBase constructor, i.e. unbreakable via materialCloth's own real maxDamageFactor=-1
 	// trick, same as GOD_TIER_HOOD etc. above - .stacksTo(1) alone, no durability() call, matches that.
 	public static final DeferredItem<Item> FROG_HAT = REGISTER.register("frog_hat",
-			() -> new org.wilkretawesomesauce.minestuckuniverseported.item.FrogHatItem(MSUArmorMaterials.FROG_HAT, new Item.Properties().stacksTo(1)));
+			() -> new FrogHatItem(MSUArmorMaterials.FROG_HAT, new Item.Properties().stacksTo(1)));
 	// Not part of ConsortHatsData's random HAT_SPAWN_POOL - matches the original, where this was reserved
 	// exclusively for util.MSUConsorts' force-equipped skill-shop-seller Consorts, never rolled randomly.
 	// Real conical multi-box hat model (client.model.ArchmageHatModel) - see items.WizardHatItem's own doc
@@ -63,7 +66,7 @@ public final class MSUItems
 	// registration (items.MinestuckUniverseItems, read directly) gave this a real 500-use durability via the
 	// same MSUArmorBase(int maxUses, ...) overload wizardHat uses above - .durability(500) matches exactly.
 	public static final DeferredItem<Item> ARCHMAGE_HAT = REGISTER.register("archmage_hat",
-			() -> new org.wilkretawesomesauce.minestuckuniverseported.item.ArchmageHatItem(MSUArmorMaterials.ARCHMAGE_HAT, new Item.Properties().durability(500)));
+			() -> new ArchmageHatItem(MSUArmorMaterials.ARCHMAGE_HAT, new Item.Properties().durability(500)));
 
 	// Ported from MinestuckUniverse (1.12.2)'s "Needlewand" (items.MinestuckUniverseItems#needlewands) -
 	// see beam.BeamWeaponItem's own doc comment for why this is the only one of several original beam

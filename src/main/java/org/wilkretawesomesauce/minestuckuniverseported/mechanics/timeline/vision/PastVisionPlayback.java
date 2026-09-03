@@ -10,7 +10,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.EntitySnapshot;
@@ -34,6 +33,9 @@ import java.util.UUID;
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class PastVisionPlayback
 {
+	/** How far around the observer's live position the overlay follows, in blocks. */
+	private static final double OVERLAY_RADIUS = 24.0;
+
 	private PastVisionPlayback()
 	{
 	}
@@ -87,7 +89,7 @@ public final class PastVisionPlayback
 
 	private static void tickSession(ServerLevel level, ServerPlayer observer, PastVisionSession session)
 	{
-		double radius = Config.retrocognitionOverlayRadius;
+		double radius = OVERLAY_RADIUS;
 		double radiusSqr = radius * radius;
 		int index = session.getPlaybackIndex();
 

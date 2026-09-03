@@ -1,55 +1,66 @@
 package org.wilkretawesomesauce.minestuckuniverseported.entity.ai;
 
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechRayTrace;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
 /**
- * Puppets a possessed {@link Mob} on behalf of the controlling {@link Player}, added to/removed from the
- * mob's real {@link net.minecraft.world.entity.ai.goal.GoalSelector} by {@code TechMindControl}
- * ("Mindflayer's Spell") for as long as the tether holds. Every tick, it raytraces the controller's own
- * aim (the closest real modern equivalent of the original's raw client mouse-forwarding
- * {@code InputUpdateEvent}/{@code MINDFLAYER_MOVEMENT_INPUT} packet pair) and either walks the mob
- * towards a targeted block or attacks a targeted living entity, using the mob's own real
- * {@link net.minecraft.world.entity.ai.navigation.PathNavigation} - genuine pathfinding, unlike this
- * project's other puppeted-entity movement (e.g. {@code TechTimeParallelAction}'s clone), which has none.
- * Declaring {@link Flag#MOVE}/{@link Flag#LOOK}/{@link Flag#TARGET} lets vanilla's own goal-conflict
- * resolution naturally suppress the mob's other movement/look/target goals while this one is active,
- * without needing to touch them directly.
+ * Ported from MinestuckUniverse (1.12.2)'s {@code entity.ai.EntityAIMindflayerTarget} - added to/removed
+ * from a possessed {@link Mob}'s real {@link net.minecraft.world.entity.ai.goal.GoalSelector} by
+ * {@code TechMindControl} ("Mindflayer's Spell") for as long as the tether holds.
+ * <p>
+ * Deliberately as simple as the original: holds a raw world-relative movement offset ({@link #setMove},
+ * called every tick by {@code network.MindflayerMovementInputPacket} as the controller's own forwarded WASD
+ * input arrives) and nudges the mob toward a point offset from its own current position by that vector -
+ * the original's own {@code updateTask()} intent ({@code entity.getPositionVector().addVector(moveStrafe, 0,
+ * moveForward)}), not a raytrace/attack system (an earlier version of this port invented one that had no
+ * real correspondence to the original and never actually received any movement input at all, since nothing
+ * forwarded the controller's WASD for a non-player target - see this class's own git history).
+ * <p>
+ * <b>Real, deliberate deviation from the original's literal API call</b>: the original drove this via
+ * {@code EntityLiving#getNavigator()#tryMoveToXYZ(...)} (a full pathfind), called fresh every tick toward a
+ * target barely a block away from the mob's current position. A first pass here ported that literally via
+ * {@link net.minecraft.world.entity.ai.navigation.PathNavigation#moveTo}, but that produced visibly jittery,
+ * barely-moving mobs in practice (a real, reported symptom, not guessed) - modern {@code PathNavigation}
+ * recomputes a full A* search on every call, and discarding/replacing that search 20 times a second before
+ * the mob can meaningfully advance along any single one of them starves real movement. Switched to
+ * {@link net.minecraft.world.entity.ai.control.MoveControl#setWantedPosition}, which every {@link Mob}
+ * already ticks unconditionally every tick regardless of goal state, does no pathfinding at all (just steers
+ * straight toward the given point, turning the mob to face it as it goes) - the right tool for "a human is
+ * providing fresh directional input every tick," which needs no route-planning, only immediate response.
+ * <p>
+ * Declaring every {@link Flag} is the modern equivalent of the original's {@code setMutexBits(255)}, letting
+ * vanilla's own goal-conflict resolution suppress every other goal (including the mob's own vanilla combat
+ * AI) while this one is active - matching the original, which never gave mind-controlled mobs any attack
+ * behavior of their own either.
  */
 public class EntityAIMindflayerTarget extends Goal
 {
-	private static final double ATTACK_REACH = 3.0;
-	private static final int ATTACK_COOLDOWN_TICKS = 20;
-
 	private final Mob mob;
-	private final Player controller;
-	private int attackCooldown;
+	private final float speed;
+	private float moveStrafe;
+	private float moveForward;
 
-	public EntityAIMindflayerTarget(Mob mob, Player controller)
+	public EntityAIMindflayerTarget(Mob mob, float speed)
 	{
 		this.mob = mob;
-		this.controller = controller;
-		setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.TARGET));
+		this.speed = speed;
+		setFlags(EnumSet.allOf(Flag.class));
 	}
 
-	public Player getController()
+	/** Called every tick a {@code MindflayerMovementInputPacket} arrives for this mob - see this class's own doc comment. */
+	public void setMove(float moveStrafe, float moveForward)
 	{
-		return controller;
+		this.moveStrafe = moveStrafe;
+		this.moveForward = moveForward;
 	}
 
 	@Override
 	public boolean canUse()
 	{
-		return controller.isAlive() && !controller.isRemoved() && mob.isAlive();
+		return true;
 	}
 
 	@Override
@@ -61,30 +72,10 @@ public class EntityAIMindflayerTarget extends Goal
 	@Override
 	public void tick()
 	{
-		if(attackCooldown > 0)
-			attackCooldown--;
+		if(moveStrafe == 0 && moveForward == 0)
+			return;
 
-		HitResult hit = MSUAbilitechRayTrace.getMouseOver(controller, controller.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE));
-
-		if(hit instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof LivingEntity target && target != mob)
-		{
-			mob.getLookControl().setLookAt(target);
-
-			if(mob.distanceToSqr(target) <= ATTACK_REACH * ATTACK_REACH)
-			{
-				if(attackCooldown <= 0)
-				{
-					mob.doHurtTarget(target);
-					attackCooldown = ATTACK_COOLDOWN_TICKS;
-				}
-			}
-			else
-				mob.getNavigation().moveTo(target, 1.0);
-		}
-		else if(hit instanceof BlockHitResult blockHit)
-		{
-			var pos = blockHit.getBlockPos();
-			mob.getNavigation().moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 1.0);
-		}
+		Vec3 pos = mob.position();
+		mob.getMoveControl().setWantedPosition(pos.x + moveStrafe, pos.y, pos.z + moveForward, speed);
 	}
 }

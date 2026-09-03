@@ -1,4 +1,4 @@
-package org.wilkretawesomesauce.minestuckuniverseported.item;
+package org.wilkretawesomesauce.minestuckuniverseported.item.armor;
 
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.core.Holder;

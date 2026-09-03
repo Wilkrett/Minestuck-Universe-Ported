@@ -5,6 +5,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
@@ -26,6 +27,25 @@ public interface IBadgeEffects
 	void setTether(int slot, @Nullable Entity entity);
 
 	void clearTether(int slot);
+
+	/**
+	 * The original's own dedicated {@code mindflayerEntity} field - deliberately separate from the generic
+	 * per-slot {@link #getTether}, matching the original's real {@code IBadgeEffects} (which has both). A
+	 * single global value, not per-slot: the original only ever supports one active Mindflayer's Spell
+	 * possession per player regardless of which loadout slot it's equipped in.
+	 */
+	@Nullable
+	Entity getMindflayerEntity();
+
+	void setMindflayerEntity(@Nullable Entity entity);
+
+	/** Who is currently possessing this entity via Mindflayer's Spell, if anyone - set on the target's own data, not the controller's. */
+	@Nullable
+	LivingEntity getMindflayedBy();
+
+	void setMindflayedBy(@Nullable LivingEntity controller);
+
+	boolean isMindflayed();
 
 	@Nullable
 	ResourceLocation getExternalTech(int slot);

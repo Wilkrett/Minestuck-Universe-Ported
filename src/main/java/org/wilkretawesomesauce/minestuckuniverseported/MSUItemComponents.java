@@ -69,6 +69,19 @@ public final class MSUItemComponents
 	public static final Supplier<DataComponentType<JukinatorDisc>> STORED_DISC = REGISTRY.registerComponentType(
 			"stored_disc", builder -> builder.persistent(JukinatorDisc.CODEC).networkSynchronized(JukinatorDisc.STREAM_CODEC));
 
+	// The single-stack instance-level half of mechanics.timeline.TimelineTags' own "this doesn't rewind"
+	// idea - see that class's own doc comment for the full accounting (block/entity-type/item-type tags
+	// cover whole categories for free; this covers one specific stack, e.g. "this exact sword", the same
+	// way MSUAttachments#TIMELINE_IMMUNITY used to cover one specific entity before that per-entity
+	// attachment was found to permanently bloat every entity a rewind ever touched). Absent (and therefore
+	// free) on every stack that never opts in - same present-when-true, absent-when-not shape as
+	// SKAIAN_SCROLL_SUPER above. Settable directly through vanilla's own item-component give/data syntax
+	// (e.g. give ... item[minestuckuniverseported:timeline_immune=true]) - no dedicated command needed.
+	public static final Supplier<DataComponentType<Boolean>> TIMELINE_IMMUNE = REGISTRY.registerComponentType(
+			"timeline_immune", builder -> builder
+					.persistent(com.mojang.serialization.Codec.BOOL)
+					.networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL));
+
 	private MSUItemComponents()
 	{
 	}

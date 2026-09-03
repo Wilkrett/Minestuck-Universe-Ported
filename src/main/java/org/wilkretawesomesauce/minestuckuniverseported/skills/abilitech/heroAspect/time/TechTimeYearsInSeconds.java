@@ -28,7 +28,7 @@ import java.util.WeakHashMap;
  * Weakness II and Slowness V for the same duration, the real cost of an AoE strong enough to hit everyone
  * around unfiltered. Gated by a flat {@link #COOLDOWN_TICKS} (1 minute) cooldown, tracked the same
  * tech-local, per-player {@code Map<UUID, Long>} idiom {@code TechKnightBloodBond#bonds}/
- * {@code TechTimeParallelAction#activeClones} already established for scratch state with exactly one
+ * {@code TechTimeZeitgeist#activeClones} already established for scratch state with exactly one
  * real consumer.
  */
 public class TechTimeYearsInSeconds extends TechHeroAspect

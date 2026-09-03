@@ -12,7 +12,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.MSUItemComponents;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
@@ -42,13 +41,15 @@ import java.util.UUID;
  * <p>
  * The given item is stamped with {@code MSUItemComponents.BORROWED_REQUEST_ID} so the Temporal
  * Sendificator can reject it as its own repayment later - see that component's doc comment. Gated by
- * {@link Config#timeRequestCooldownTicks} so this can't be spammed for free progression-appropriate gear.
+ * {@link #COOLDOWN_TICKS} so this can't be spammed for free progression-appropriate gear.
  */
 public class TechFutureRequest extends TechHeroAspect
 {
 	private static final int TIER_HOLD_TICKS = 20;
 	private static final TimeRequestCategory[] CATEGORIES = TimeRequestCategory.values();
 	private static final int MAX_HOLD_TICKS = TIER_HOLD_TICKS * CATEGORIES.length;
+	/** Minimum ticks between successful borrows, so this can't be spammed for free progression-appropriate gear. */
+	private static final int COOLDOWN_TICKS = 1200;
 
 	public TechFutureRequest()
 	{
@@ -78,7 +79,7 @@ public class TechFutureRequest extends TechHeroAspect
 
 		TimeRequestData data = serverPlayer.getData(MSUAttachments.TIME_REQUEST_DATA);
 		long now = serverLevel.getGameTime();
-		if(now - data.getLastRequestGameTime() < Config.timeRequestCooldownTicks)
+		if(now - data.getLastRequestGameTime() < COOLDOWN_TICKS)
 		{
 			serverPlayer.displayClientMessage(Component.translatable("status.minestuckuniverseported.timeRequest.cooldown"), true);
 			return false;

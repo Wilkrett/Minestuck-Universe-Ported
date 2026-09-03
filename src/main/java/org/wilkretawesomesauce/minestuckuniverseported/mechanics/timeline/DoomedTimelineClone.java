@@ -19,7 +19,7 @@ import java.util.UUID;
 /**
  * The "doomed timeline" ghost, spawned by {@link TimelineManager#rewind}: a {@link MSUFakePlayer} that
  * replays the initiating player's own recorded path forward (oldest state first) at
- * {@link org.wilkretawesomesauce.minestuckuniverseported.Config#timelineCloneReplaySpeed} - real time by
+ * {@code TimelineRewindPlayback#CLONE_REPLAY_SPEED} - real time by
  * default, deliberately decoupled from however fast the world-undo itself is playing back.
  * <p>
  * <b>Now implements the "actions" attribution requested</b>: each {@link Step} carries not just the
@@ -99,7 +99,7 @@ public final class DoomedTimelineClone
 	}
 
 	/**
-	 * Spawns the clone into the world - same broadcast-then-add sequence {@code TechTimeParallelAction}
+	 * Spawns the clone into the world - same broadcast-then-add sequence {@code TechTimeZeitgeist}
 	 * (and, originally, the mocap mod itself) uses for a {@link MSUFakePlayer}. Plays the "gears rising"
 	 * effect (see {@code client.particles.TimeGearsRiseParticle}) at the spawn point.
 	 */
@@ -127,7 +127,7 @@ public final class DoomedTimelineClone
 	}
 
 	/**
-	 * Shared helper since both this and {@code TechTimeParallelAction} play the same effect on spawn/despawn.
+	 * Shared helper since both this and {@code TechTimeZeitgeist} play the same effect on spawn/despawn.
 	 * Centered vertically on the entity's bounding box (not its feet) - {@code TimeGearsRiseParticle} is now
 	 * sized to cover a whole player-sized double, so spawning it at feet height would mostly grow upward past
 	 * the model instead of surrounding it.

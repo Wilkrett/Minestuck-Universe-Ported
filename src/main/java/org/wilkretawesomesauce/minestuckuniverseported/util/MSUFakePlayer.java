@@ -7,7 +7,7 @@ package org.wilkretawesomesauce.minestuckuniverseported.util;
 // license text. Original work Copyright (c) mt1006.
 //
 // A network-less ServerPlayer: every packet-handling method is a no-op, and it's wired to a dummy
-// Connection/Channel instead of a real client socket. Used by TechTimeParallelAction and
+// Connection/Channel instead of a real client socket. Used by TechTimeZeitgeist and
 // mechanics.timeline.DoomedTimelineClone to spawn standing/replaying doubles of a player without a full separate
 // entity type.
 import com.mojang.authlib.GameProfile;
@@ -116,7 +116,7 @@ public class MSUFakePlayer extends ServerPlayer
 	/**
 	 * {@code Player#attackStrengthTicker} only ever advances inside {@code Player#tick()}, which is
 	 * disabled above - without this override, any caller that actually invokes {@link #attack(Entity)}
-	 * on a fake player (see {@code TechTimeParallelAction}) would find the cooldown permanently stuck
+	 * on a fake player (see {@code TechTimeZeitgeist}) would find the cooldown permanently stuck
 	 * at 0 (never charges back up between hits), making every attack compute as a near-zero-scale weak
 	 * hit forever, not just immediately after spawning. Always reporting a full charge is the correct
 	 * fix for an entity that never ticks, not a balance choice - whatever rate-limits how often this

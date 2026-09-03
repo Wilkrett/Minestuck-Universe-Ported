@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -96,6 +97,47 @@ public class BadgeEffects implements IBadgeEffects, INBTSerializable<CompoundTag
 	public void clearTether(int slot)
 	{
 		tether[clampSlot(slot)] = null;
+	}
+
+	// The original's own dedicated mindflayerEntity/mindflayedBy fields - kept separate from the generic
+	// per-slot tether above (see IBadgeEffects#getMindflayerEntity's own doc comment for why): a global,
+	// not per-slot, single active possession, matching the original's real capability shape.
+	@Nullable
+	private Entity mindflayerEntity;
+
+	@Override
+	@Nullable
+	public Entity getMindflayerEntity()
+	{
+		return mindflayerEntity;
+	}
+
+	@Override
+	public void setMindflayerEntity(@Nullable Entity entity)
+	{
+		mindflayerEntity = entity;
+	}
+
+	@Nullable
+	private LivingEntity mindflayedBy;
+
+	@Override
+	@Nullable
+	public LivingEntity getMindflayedBy()
+	{
+		return mindflayedBy;
+	}
+
+	@Override
+	public void setMindflayedBy(@Nullable LivingEntity controller)
+	{
+		mindflayedBy = controller;
+	}
+
+	@Override
+	public boolean isMindflayed()
+	{
+		return mindflayedBy != null;
 	}
 
 	private final ResourceLocation[] externalTech = new ResourceLocation[SLOTS];

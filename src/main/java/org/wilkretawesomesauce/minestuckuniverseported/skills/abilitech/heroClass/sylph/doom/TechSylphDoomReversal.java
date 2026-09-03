@@ -7,7 +7,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.badgeEffects.BadgeEffects;
@@ -24,7 +23,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  * Doom... stabilizing doomed situations." The direct inverse of {@code heroClass.maid.doom.TechMaidDoomforge}:
  * hold while aiming at a target to lock onto them (the same real per-slot tether
  * {@code heroClass.sylph.TechSylph}'s own healing hold already established via
- * {@code BadgeEffects#getTether}), removing {@link Config#doomReversalAmountPerSecond} from their
+ * {@code BadgeEffects#getTether}), removing {@link #DOOM_REMOVED_PER_SECOND} from their
  * {@code mechanics.doom.DoomData} every second at 1 food/second cost to the caster - the exact same cost shape as
  * {@code TechSylph} itself.
  * <p>
@@ -33,6 +32,9 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  */
 public class TechSylphDoomReversal extends TechHeroClass
 {
+	/** Doom removed per second from a tethered target. */
+	private static final double DOOM_REMOVED_PER_SECOND = 3.0;
+
 	public TechSylphDoomReversal()
 	{
 		super(Minestuckuniverseported.id("doom_reversal"), EnumClass.SYLPH, EnumAspect.DOOM, 300000, MSUTechType.DEFENSE);
@@ -72,7 +74,7 @@ public class TechSylphDoomReversal extends TechHeroClass
 
 		if(time % 20 == 0)
 		{
-			target.getData(MSUAttachments.DOOM_DATA).removeDoom(Config.doomReversalAmountPerSecond);
+			target.getData(MSUAttachments.DOOM_DATA).removeDoom(DOOM_REMOVED_PER_SECOND);
 			player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - 1);
 			MSUAbilitechParticles.oneshot(level, target, EnumAspect.DOOM, 5);
 		}

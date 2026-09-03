@@ -6,7 +6,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
@@ -18,9 +17,9 @@ import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.loop.T
 /**
  * "Timeloop α" - real class name now matches its in-game display name (user-requested rename from
  * {@code TechTimeLoop}, sibling to {@link TechTimeLoopBeta} and {@link TechTimeLoopOmega}). Creates an
- * {@link TimeLoopZone.StackMode#INDEPENDENT} Time Loop zone - a radius-scoped ({@code Config.timeLoopRadius}),
+ * {@link TimeLoopZone.StackMode#INDEPENDENT} Time Loop zone - a radius-scoped ({@link TimeLoopZone#RADIUS}),
  * repeating rewind of the last {@code chargedTicks} of recorded history, looping for that same duration
- * (capped at {@code Config.timeLoopMaxDurationTicks}). See {@code timeline.loop.TimeLoopZone}'s own doc
+ * (capped at {@link TimeLoopZone#MAX_DURATION_TICKS}). See {@code timeline.loop.TimeLoopZone}'s own doc
  * comment for exactly what does and doesn't get puppeted.
  * <p>
  * Hold-to-charge/release shape copied from {@link TechTimelineRewind} - charge time doubles as the loop's
@@ -39,8 +38,8 @@ public class TechTimeLoopAlpha extends TechHeroAspect
 
 	public TechTimeLoopAlpha()
 	{
-		super(Minestuckuniverseported.id("time_loop"), EnumAspect.TIME, 20000, MSUTechType.UTILITY); // new tech, no original cost to port - picked to fit this project's own cost spread, see class doc comment
-		setIcon("default");
+		super(Minestuckuniverseported.id("time_loop_alpha"), EnumAspect.TIME, 20000, MSUTechType.UTILITY); // new tech, no original cost to port - picked to fit this project's own cost spread, see class doc comment
+		setIcon("time_loop_beta");
 	}
 
 	@Override
@@ -48,7 +47,7 @@ public class TechTimeLoopAlpha extends TechHeroAspect
 	{
 		if(state == AbilitechKeyState.PRESS || state == AbilitechKeyState.HELD)
 		{
-			if(time >= Config.timeLoopMaxDurationTicks)
+			if(time >= TimeLoopZone.MAX_DURATION_TICKS)
 				return false;
 			MSUAbilitechParticles.burst(level, player, EnumAspect.TIME, 6);
 			return true;
@@ -57,7 +56,7 @@ public class TechTimeLoopAlpha extends TechHeroAspect
 		if(state != AbilitechKeyState.RELEASED)
 			return false;
 
-		int chargedTicks = Math.min(time, Config.timeLoopMaxDurationTicks);
+		int chargedTicks = Math.min(time, TimeLoopZone.MAX_DURATION_TICKS);
 		if(chargedTicks < MIN_CHARGE_TICKS)
 			return false;
 

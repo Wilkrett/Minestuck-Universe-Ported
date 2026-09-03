@@ -6,7 +6,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.doom.DoomData;
@@ -22,9 +21,9 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  * 1.12.2 original), Sylph of Doom's Offensive ability: "the Sylph destroys the Doom sustaining an
  * enemy's current state... removing the fatal aspect of an attack... causing an enemy's destructive
  * ability to collapse." Press while aiming at a target instantly removes
- * {@link Config#deathUnmadeRemoveAmount} from their {@code mechanics.doom.DoomData} and clears any Doom Mark they
- * carry ({@code IDoomData#clearMark}) - a real defensive counter to a high-Doom enemy currently
- * benefiting from {@code mechanics.doom.DoomDamageEvents}' damage-amplification curve, and a real way to strip a
+ * {@link #REMOVE_AMOUNT} from their {@code mechanics.doom.DoomData} and clears any Doom Mark they
+ * carry ({@code IDoomData#clearMark}) - a defensive counter to a high-Doom enemy currently
+ * benefiting from {@code mechanics.doom.DoomDamageEvents}' damage-amplification curve, and a way to strip a
  * hostile {@code mechanics.doom.DoomMarkType#DEAD_SHUFFLE} mark off an ally before it can redirect their death-Doom
  * to an enemy caster.
  * <p>
@@ -33,6 +32,9 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUTechType;
  */
 public class TechSylphDoomDeathUnmade extends TechHeroClass
 {
+	/** Doom instantly removed from the target. */
+	private static final double REMOVE_AMOUNT = 100.0;
+
 	public TechSylphDoomDeathUnmade()
 	{
 		super(Minestuckuniverseported.id("death_unmade"), EnumClass.SYLPH, EnumAspect.DOOM, 750000, MSUTechType.DEFENSE, MSUTechType.OFFENSE);
@@ -52,7 +54,7 @@ public class TechSylphDoomDeathUnmade extends TechHeroClass
 			return false;
 
 		DoomData data = target.getData(MSUAttachments.DOOM_DATA);
-		data.removeDoom(Config.deathUnmadeRemoveAmount);
+		data.removeDoom(REMOVE_AMOUNT);
 		data.clearMark();
 
 		MSUAbilitechParticles.oneshot(level, target, EnumAspect.DOOM, 20);

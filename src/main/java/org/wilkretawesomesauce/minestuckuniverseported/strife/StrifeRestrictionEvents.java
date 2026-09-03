@@ -49,7 +49,7 @@ public final class StrifeRestrictionEvents
 	{
 		if(!active())
 			return;
-		// FakePlayer is NeoForge's own fake-player base class - MSUFakePlayer (used by TechTimeParallelAction
+		// FakePlayer is NeoForge's own fake-player base class - MSUFakePlayer (used by TechTimeZeitgeist
 		// and DoomedTimelineClone) extends ServerPlayer directly instead, so it wasn't caught by that check.
 		// Without this, a clone's attacks were silently cancelled here: it never goes through
 		// StrifePortfolioHandler to "arm" a weapon, so isHeldWeapon() below always failed for it. Same

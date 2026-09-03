@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAbilitechParticles;
@@ -34,6 +33,9 @@ import java.util.List;
  */
 public class TechBardBloodCrimsonDiscord extends TechHeroClass
 {
+	/** Instability applied to every one of the target's relationships per burst press. */
+	private static final double BURST_AMOUNT = 15.0;
+
 	public TechBardBloodCrimsonDiscord()
 	{
 		// new tech, no original cost to port - priced the same as its closest sibling in role and weight,
@@ -66,7 +68,7 @@ public class TechBardBloodCrimsonDiscord extends TechHeroClass
 		long tick = serverLevel.getGameTime();
 		for(Relationship rel : relationships)
 		{
-			RelationshipManager.adjustInstability(rel, (float) Config.crimsonDiscordBurstAmount, tick);
+			RelationshipManager.adjustInstability(rel, (float) BURST_AMOUNT, tick);
 			RelationshipManager.checkForCollapse(serverLevel, rel);
 		}
 

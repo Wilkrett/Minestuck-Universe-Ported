@@ -16,11 +16,13 @@ import java.util.UUID;
 
 /**
  * Ticks every active {@link TimeLoopZone}, mirroring {@code mechanics.timeline.TimelineRewindPlayback}'s shape
- * (a {@link LevelTickEvent.Post} driver iterating {@code TimelineData}'s active-effect lists). Each tick,
- * a zone either resets to its window's start (pass start) or replays one step forward - see
- * {@link TimeLoopReplay}. Zones are processed parent-before-child (see {@link #depthOrder}) so a
- * {@code TechTimeLoopBeta} child's reset/replay always lands on top of its parent's for their
- * overlapping area, not in an arbitrary order.
+ * (a {@link LevelTickEvent.Post} driver iterating {@code TimelineData}'s active-effect lists). Each tick, a
+ * zone is in exactly one of three states - reversing (walking every puppeted entity backward through its
+ * own real path, see {@link TimeLoopZone#isReversing()}), the tick forward replay is about to begin
+ * ({@link TimeLoopZone#isPassStart()}), or an ordinary forward-replay step - see {@link TimeLoopReplay} for
+ * what actually happens in each. Zones are processed parent-before-child (see {@link #depthOrder}) so a
+ * {@code TechTimeLoopBeta} child's own step always lands on top of its parent's for their overlapping area,
+ * not in an arbitrary order.
  */
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class TimeLoopPlayback
@@ -42,9 +44,24 @@ public final class TimeLoopPlayback
 
 		for(TimeLoopZone zone : depthOrder(zones))
 		{
-			if(zone.isPassStart())
+			if(zone.isReverseStart())
 			{
-				TimeLoopReplay.resetToWindowStart(level, zone);
+				TimeLoopReplay.resetBlocksToWindowStart(level, zone);
+				TimeLoopReplay.fireRewindGhosts(level, zone);
+			}
+
+			if(zone.isReversing())
+			{
+				// The real, user-requested change: entities actually walk backward through their own
+				// recorded path over TimeLoopZone#getReverseTicks() real ticks, instead of instantly
+				// snapping - see TimeLoopReplay's own doc comment. The clone stays dormant through this;
+				// it's the forward-replay actor, not part of the walk back.
+				TimeLoopReplay.reverseStep(level, zone, zone.reverseTick());
+			}
+			else if(zone.isPassStart())
+			{
+				// Entities are already at the window's start, having just finished reversing there this
+				// exact tick - nothing left to apply. Just arm the clone for the forward pass about to begin.
 				if(zone.getClone() != null)
 					zone.getClone().resetToStart();
 			}

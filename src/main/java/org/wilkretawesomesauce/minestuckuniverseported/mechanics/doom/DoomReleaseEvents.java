@@ -6,7 +6,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 
@@ -22,12 +21,17 @@ import java.util.UUID;
  * doc comment on {@code isSealed}); (2) a {@link DoomMarkType#DEAD_SHUFFLE}-marked victim's Doom
  * redirects straight to the caster, if the caster is still alive and resolvable, bypassing the pool
  * entirely; (3) otherwise the Doom becomes an unbound {@link DoomReleaseRecord} in the level's
- * {@link DoomReleasePool}, harvestable for {@link Config#doomHarvestWindowTicks} before it silently
+ * {@link DoomReleasePool}, harvestable for {@link #HARVEST_WINDOW_TICKS} before it silently
  * dissipates.
  */
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class DoomReleaseEvents
 {
+	/** How long (in ticks) a dying entity's released Doom sits harvestable before dissipating unclaimed. 6000 = 5 minutes. */
+	private static final int HARVEST_WINDOW_TICKS = 6000;
+	/** How often (in ticks) pending released-Doom records are checked for expiry. */
+	private static final int RELEASE_TICK_INTERVAL_TICKS = 20;
+
 	private DoomReleaseEvents()
 	{
 	}
@@ -64,7 +68,7 @@ public final class DoomReleaseEvents
 		}
 
 		DoomReleasePool pool = level.getData(MSUAttachments.DOOM_RELEASE_POOL);
-		pool.release(victim.blockPosition(), amount, level.getGameTime() + Config.doomHarvestWindowTicks, victim.getUUID());
+		pool.release(victim.blockPosition(), amount, level.getGameTime() + HARVEST_WINDOW_TICKS, victim.getUUID());
 		data.setDoom(0);
 	}
 
@@ -73,7 +77,7 @@ public final class DoomReleaseEvents
 	{
 		if(!(event.getLevel() instanceof ServerLevel level))
 			return;
-		if(level.getGameTime() % Config.doomReleaseTickIntervalTicks != 0)
+		if(level.getGameTime() % RELEASE_TICK_INTERVAL_TICKS != 0)
 			return;
 
 		level.getData(MSUAttachments.DOOM_RELEASE_POOL).tick(level.getGameTime());

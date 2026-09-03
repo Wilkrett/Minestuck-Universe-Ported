@@ -197,9 +197,11 @@ public class SkillShopScreen extends Screen
 			Component aspectTag = Component.literal("[").append(aspect.asTextComponent()).append(Component.literal("]"));
 			lines.add(new DescLine(aspectTag.getVisualOrderText(), AspectColorHandler.get(aspect)[0]));
 
-			MSUTechType techType = heroAspectTech.getTechType();
-			Component typeTag = Component.literal("[").append(Component.translatable(techType.unloc)).append(Component.literal("]"));
-			lines.add(new DescLine(typeTag.getVisualOrderText(), techType.color));
+			for(MSUTechType type : heroAspectTech.getTechTypes())
+			{
+				Component typeTag = Component.literal("[").append(Component.translatable(type.unloc)).append(Component.literal("]"));
+				lines.add(new DescLine(typeTag.getVisualOrderText(), type.color));
+			}
 
 			// Purely descriptive classpect "flavor" tags - see TechHeroAspect's own flavor-tagging
 			// constructor doc comment. Empty for every tech that doesn't opt in. Mirrors

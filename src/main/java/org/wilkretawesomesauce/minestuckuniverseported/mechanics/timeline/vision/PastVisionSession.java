@@ -19,7 +19,7 @@ import java.util.UUID;
  * {@code timeline.vision.PastVisionPlayback} for how it's driven.
  * <p>
  * The player stays in their own body the whole time; the overlay radius is recomputed around their
- * live position every tick by {@code PastVisionPlayback} (using {@code Config.retrocognitionOverlayRadius}),
+ * live position every tick by {@code PastVisionPlayback} (using its own {@code OVERLAY_RADIUS}),
  * not fixed at cast time. {@link #overlaidBlocks} and
  * {@link #activeGhosts} track what's currently faked for this specific player's connection, so
  * {@code PastVisionPlayback} can tell what needs to newly appear, update, or resync-and-disappear each

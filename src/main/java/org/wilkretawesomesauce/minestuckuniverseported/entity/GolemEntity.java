@@ -25,7 +25,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -81,6 +80,15 @@ public class GolemEntity extends Monster
 	public static final int STOMP = 4;
 	public static final int DIE = 5;
 
+	/** The golem's max health is its mimicked spawn block's own hardness multiplied by this. */
+	private static final double MAX_HEALTH_MULTIPLIER = 20.0;
+	/** The golem's attack damage is its mimicked spawn block's own hardness multiplied by this. */
+	private static final double DAMAGE_MULTIPLIER = 1.0;
+	/** Minimum ticks between the golem picking a new attack (Throw/Stomp/Roll) while it has a target. */
+	private static final int ATTACK_COOLDOWN_TICKS = 40;
+	/** Experience dropped on killing a golem. */
+	private static final int EXP_DROP = 100;
+
 	private static final EntityDataAccessor<Integer> DATA_ANI_ID = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<BlockState> DATA_MIMIC_BLOCK = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BLOCK_STATE);
 	private static final EntityDataAccessor<Boolean> DATA_MIMIC_RESOLVED = SynchedEntityData.defineId(GolemEntity.class, EntityDataSerializers.BOOLEAN);
@@ -98,7 +106,7 @@ public class GolemEntity extends Monster
 	public GolemEntity(EntityType<? extends GolemEntity> type, Level level)
 	{
 		super(type, level);
-		xpReward = Config.golemExpDrop;
+		xpReward = EXP_DROP;
 	}
 
 	public static AttributeSupplier.Builder createAttributes()
@@ -157,14 +165,14 @@ public class GolemEntity extends Monster
 		entityData.set(DATA_MIMIC_BLOCK, state);
 		entityData.set(DATA_MIMIC_RESOLVED, true);
 
-		double maxHealth = Config.golemMaxHealthMultiplier * mimicHardness;
+		double maxHealth = MAX_HEALTH_MULTIPLIER * mimicHardness;
 		getAttribute(Attributes.MAX_HEALTH).setBaseValue(Math.max(1.0, maxHealth));
 		setHealth(getMaxHealth());
 	}
 
 	private float attackDamage()
 	{
-		return (float) (mimicHardness * Config.golemDamageMultiplier);
+		return (float) (mimicHardness * DAMAGE_MULTIPLIER);
 	}
 
 	// ================================================================================================
@@ -473,7 +481,7 @@ public class GolemEntity extends Monster
 					golem.setAniID(STOMP);
 				else
 					golem.setAniID(ROLL);
-				golem.attackCooldown = Config.golemAttackCooldownTicks;
+				golem.attackCooldown = ATTACK_COOLDOWN_TICKS;
 			}
 			else
 			{

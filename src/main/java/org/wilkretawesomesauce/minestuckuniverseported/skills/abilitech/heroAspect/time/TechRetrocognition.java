@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.capabilities.keyStates.AbilitechKeyState;
@@ -37,6 +36,9 @@ import java.util.List;
  */
 public class TechRetrocognition extends TechHeroAspect
 {
+	/** How much recorded history a vision can draw on, capped by however much is actually available. 6000 = 5 minutes. */
+	private static final int OBSERVE_TICKS = 6000;
+
 	public TechRetrocognition()
 	{
 		super(Minestuckuniverseported.id("retrocognition"), EnumAspect.TIME, 25000, MSUTechType.UTILITY, EnumClass.MAGE, EnumClass.SEER); // new tech, no original cost to port - picked to fit this project's own cost spread, see class doc comment
@@ -54,7 +56,7 @@ public class TechRetrocognition extends TechHeroAspect
 
 		TimelineData data = serverLevel.getData(MSUAttachments.TIMELINE);
 		List<WorldTickSnapshot> history = new ArrayList<>(data.getHistory());
-		int ticks = Math.min(Config.retrocognitionObserveTicks, history.size());
+		int ticks = Math.min(OBSERVE_TICKS, history.size());
 		if(ticks <= 0)
 		{
 			player.displayClientMessage(Component.translatable("status.minestuckuniverseported.timeline.no_history"), true);

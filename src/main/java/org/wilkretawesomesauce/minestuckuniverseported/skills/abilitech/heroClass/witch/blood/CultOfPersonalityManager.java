@@ -13,7 +13,6 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.entity.HopeGolemEntity;
 import org.wilkretawesomesauce.minestuckuniverseported.network.TetherBondSyncPacket;
@@ -144,6 +143,25 @@ public final class CultOfPersonalityManager
 	private static final double COMMAND_MOVE_SPEED = 1.0;
 	/** How close another bonded member must be for a corrupted bond's Fractured Loyalty to blame them instead of the killer. */
 	private static final double FRACTURED_LOYALTY_BLAME_RADIUS = 16.0;
+
+	/** How much a corrupted bond amplifies shared damage by, applied per bonded member - 1.5 = each other member takes 150% of the original hit. */
+	private static final double SCHISM_DAMAGE_AMPLIFY_FACTOR = 1.5;
+	/** How long (in ticks) a corrupted bond's Fractured Loyalty hostility lasts before it's automatically cleared. 200 = 10 seconds. */
+	private static final long SCHISM_HOSTILITY_DURATION_TICKS = 200;
+	/** How long (in ticks) a Corrupted Blood Bond lasts before automatically reverting to normal. 0 = lasts indefinitely. */
+	private static final long SCHISM_CORRUPTION_DURATION_TICKS = 0;
+	/** Radius (in blocks) of the passive Schism Aura. */
+	private static final double SCHISM_AURA_RADIUS = 24.0;
+	/** Multiplies an uncorrupted Blood Bond's own shared-damage fraction for a bonded member within the Schism Aura's radius. */
+	private static final double SCHISM_AURA_WEAKEN_FACTOR = 0.5;
+	/** Chance, checked once per {@link #SCHISM_AURA_DISRUPTION_INTERVAL_TICKS} for every Mob in the Schism Aura's radius, that it loses its current attack target. */
+	private static final double SCHISM_AURA_DISRUPTION_CHANCE = 0.15;
+	/** How often (in ticks) the Schism Aura's Target Coordination Loss check runs. 100 = 5 seconds. */
+	private static final long SCHISM_AURA_DISRUPTION_INTERVAL_TICKS = 100;
+	/** How many strength/stability points a nearby Ownership relationship loses per Target Coordination Loss check while inside the Schism Aura. */
+	private static final double SCHISM_AURA_OWNERSHIP_DECAY = 2.0;
+	/** Chance (Instability / this value) that a bonded member's own Blood Vengeance retaliation fails to fire once its linked FAMILY relationship has any Instability at all. */
+	private static final double CRIMSON_DISCORD_VENGEANCE_FAIL_DIVISOR = 150.0;
 
 	private static final Map<UUID, CultBond> bondsById = new HashMap<>();
 	private static final Map<UUID, UUID> memberToBond = new HashMap<>();
@@ -346,8 +364,8 @@ public final class CultOfPersonalityManager
 		bond.corrupted = true;
 		bond.corruptedBy = prince.getUUID();
 		bond.corruptionTick = level.getGameTime();
-		bond.corruptionExpiryTick = Config.schismCorruptionDurationTicks > 0
-				? bond.corruptionTick + Config.schismCorruptionDurationTicks
+		bond.corruptionExpiryTick = SCHISM_CORRUPTION_DURATION_TICKS > 0
+				? bond.corruptionTick + SCHISM_CORRUPTION_DURATION_TICKS
 				: -1;
 
 		broadcastChain(level, bond);
@@ -413,10 +431,10 @@ public final class CultOfPersonalityManager
 		long now = level.getGameTime();
 		activeSchismAuras.put(prince.getUUID(), now);
 
-		if(now % Config.schismAuraDisruptionIntervalTicks != 0)
+		if(now % SCHISM_AURA_DISRUPTION_INTERVAL_TICKS != 0)
 			return;
 
-		double radius = Config.schismAuraRadius;
+		double radius = SCHISM_AURA_RADIUS;
 		List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class, prince.getBoundingBox().inflate(radius));
 
 		for(LivingEntity entity : nearby)
@@ -425,11 +443,11 @@ public final class CultOfPersonalityManager
 			Relationship ownership = findOwnershipRelationship(entity);
 			if(ownership != null)
 			{
-				RelationshipManager.adjustStrength(ownership, (float) -Config.schismAuraOwnershipDecay, now);
-				RelationshipManager.adjustStability(ownership, (float) -Config.schismAuraOwnershipDecay);
+				RelationshipManager.adjustStrength(ownership, (float) -SCHISM_AURA_OWNERSHIP_DECAY, now);
+				RelationshipManager.adjustStability(ownership, (float) -SCHISM_AURA_OWNERSHIP_DECAY);
 			}
 
-			if(!(entity instanceof Mob mob) || mob.getTarget() == null || level.getRandom().nextDouble() >= Config.schismAuraDisruptionChance)
+			if(!(entity instanceof Mob mob) || mob.getTarget() == null || level.getRandom().nextDouble() >= SCHISM_AURA_DISRUPTION_CHANCE)
 				continue;
 
 			Mob sibling = ownership != null ? findSiblingSummon(nearby, mob, ownership) : null;
@@ -472,7 +490,7 @@ public final class CultOfPersonalityManager
 			return false;
 
 		long now = level.getGameTime();
-		double radiusSqr = Config.schismAuraRadius * Config.schismAuraRadius;
+		double radiusSqr = SCHISM_AURA_RADIUS * SCHISM_AURA_RADIUS;
 
 		Iterator<Map.Entry<UUID, Long>> it = activeSchismAuras.entrySet().iterator();
 		while(it.hasNext())
@@ -557,7 +575,7 @@ public final class CultOfPersonalityManager
 		float shared;
 		if(bond.corrupted)
 		{
-			shared = amount * (float) Config.schismDamageAmplifyFactor;
+			shared = amount * (float) SCHISM_DAMAGE_AMPLIFY_FACTOR;
 		}
 		else
 		{
@@ -566,7 +584,7 @@ public final class CultOfPersonalityManager
 			// above) fully corrupting it outright.
 			shared = amount * SHARE_FRACTION;
 			if(isNearActiveSchismAura(level, hurt))
-				shared *= (float) Config.schismAuraWeakenFactor;
+				shared *= (float) SCHISM_AURA_WEAKEN_FACTOR;
 		}
 
 		// Crimson Discord's own "Blood Bonds rapidly lose effectiveness" as Instability rises - a third,
@@ -638,7 +656,7 @@ public final class CultOfPersonalityManager
 					continue;
 
 				mob.setTarget(blame);
-				hostilityExpiry.put(mob.getUUID(), level.getGameTime() + Config.schismHostilityDurationTicks);
+				hostilityExpiry.put(mob.getUUID(), level.getGameTime() + SCHISM_HOSTILITY_DURATION_TICKS);
 			}
 		}
 		else if(killer != null)
@@ -656,7 +674,7 @@ public final class CultOfPersonalityManager
 
 	private static boolean vengeanceFails(ServerLevel level, float instability)
 	{
-		return instability > 0F && level.getRandom().nextDouble() < instability / Config.crimsonDiscordVengeanceFailDivisor;
+		return instability > 0F && level.getRandom().nextDouble() < instability / CRIMSON_DISCORD_VENGEANCE_FAIL_DIVISOR;
 	}
 
 	/** Average Instability across the bond's own chain-adjacent {@link RelationshipType#FAMILY} relationships (see {@link #link}) - {@code 0} for a bond Crimson Discord has never touched. */
@@ -770,7 +788,7 @@ public final class CultOfPersonalityManager
 		@Nullable
 		public UUID corruptedBy = null;
 		public long corruptionTick = -1;
-		/** {@code -1} means "never expires" - see {@link Config#schismCorruptionDurationTicks}. */
+		/** {@code -1} means "never expires" - see {@link CultOfPersonalityManager#SCHISM_CORRUPTION_DURATION_TICKS}. */
 		public long corruptionExpiryTick = -1;
 
 		private CultBond(UUID witchOwner, long createdTick)

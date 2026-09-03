@@ -4,7 +4,6 @@ import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 
@@ -12,7 +11,7 @@ import java.util.List;
 
 /**
  * Periodically deletes parallel timeline branches that have sat dormant (see {@link BranchLifecycleEvents})
- * for longer than {@link Config#timelineBranchIdlePruneTicks}, via {@link BranchDeleter}.
+ * for longer than {@link #IDLE_PRUNE_TICKS}, via {@link BranchDeleter}.
  * <p>
  * <b>Deletion policy: recursive, not reparenting</b> - a doomed branch collapsing takes its own forks
  * with it, rather than promoting orphans nobody asked to keep (see {@code CLAUDE.md}/the design plan
@@ -29,6 +28,11 @@ import java.util.List;
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class BranchPruneSweep
 {
+	/** How long (in ticks) a dormant, unregistered branch's whole subtree must sit idle before it's pruned. Default 72000 = 1 hour. */
+	private static final int IDLE_PRUNE_TICKS = 72000;
+	/** How often (in ticks) a sweep pass runs. Default 1200 = 1 minute. */
+	private static final int PRUNE_SWEEP_INTERVAL_TICKS = 1200;
+
 	private BranchPruneSweep()
 	{
 	}
@@ -37,7 +41,7 @@ public final class BranchPruneSweep
 	private static void onServerTick(ServerTickEvent.Post event)
 	{
 		MinecraftServer server = event.getServer();
-		if(server.overworld().getGameTime() % Config.timelineBranchPruneSweepInterval == 0)
+		if(server.overworld().getGameTime() % PRUNE_SWEEP_INTERVAL_TICKS == 0)
 			runNow(server);
 	}
 
@@ -63,7 +67,7 @@ public final class BranchPruneSweep
 
 	private static boolean qualifies(TimelineBranch branch, long now)
 	{
-		return !branch.isRegistered() && (now - branch.getLastVisitedGameTime()) >= Config.timelineBranchIdlePruneTicks;
+		return !branch.isRegistered() && (now - branch.getLastVisitedGameTime()) >= IDLE_PRUNE_TICKS;
 	}
 
 	private static boolean subtreeFullyQualifies(TimelineBranchRegistry registry, TimelineBranch branch, long now)

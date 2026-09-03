@@ -4,7 +4,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 
@@ -22,6 +21,13 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 @EventBusSubscriber(modid = Minestuckuniverseported.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class DoomKillEvents
 {
+	/** Flat Doom a killer gains for killing any other LivingEntity, before the per-max-health scaling below. */
+	private static final double KILL_BASE = 1.0;
+	/** Additional Doom a killer gains per point of the victim's max health, capped by {@link #KILL_CAP}. */
+	private static final double KILL_PER_MAX_HEALTH = 0.05;
+	/** Max Doom a single kill can ever grant, regardless of the victim's max health. */
+	private static final double KILL_CAP = 15.0;
+
 	private DoomKillEvents()
 	{
 	}
@@ -36,7 +42,7 @@ public final class DoomKillEvents
 		if(!(event.getSource().getEntity() instanceof LivingEntity killer) || killer == victim)
 			return;
 
-		double gain = Math.min(Config.doomKillCap, Config.doomKillBase + Config.doomKillPerMaxHealth * victim.getMaxHealth());
+		double gain = Math.min(KILL_CAP, KILL_BASE + KILL_PER_MAX_HEALTH * victim.getMaxHealth());
 		killer.getData(MSUAttachments.DOOM_DATA).addDoom(gain);
 	}
 }

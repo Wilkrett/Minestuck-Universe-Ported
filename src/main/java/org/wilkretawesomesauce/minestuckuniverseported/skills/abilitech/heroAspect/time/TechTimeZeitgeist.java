@@ -41,7 +41,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * "Parallel Action" tech, from the Time Aspect design discussion. Press to spawn a double of yourself
+ * "Zeitgeist" tech, from the Time Aspect design discussion. Press to spawn a double of yourself
  * that guards the spot it was summoned at for 10 seconds (200 ticks); press again to dismiss it early.
  * <p>
  * <b>No longer a pure stub</b> - it used to just stand there ("doesn't act on its own yet", a stated,
@@ -92,7 +92,7 @@ import java.util.UUID;
  * of the design doc's Stability/Timeline Debt costs are ported - this still uses the same food-cost
  * model as the other Time techs.
  */
-public class TechTimeParallelAction extends TechHeroAspect
+public class TechTimeZeitgeist extends TechHeroAspect
 {
 	private static final int ENERGY_USE = 10;
 	private static final int DURATION_TICKS = 200;
@@ -119,9 +119,9 @@ public class TechTimeParallelAction extends TechHeroAspect
 		}
 	}
 
-	public TechTimeParallelAction()
+	public TechTimeZeitgeist()
 	{
-		super(Minestuckuniverseported.id("parallel_action"), EnumAspect.TIME, 12000, MSUTechType.UTILITY); // new tech, no original cost to port - picked to fit this project's own cost spread, see class doc comment
+		super(Minestuckuniverseported.id("zeitgeist"), EnumAspect.TIME, 12000, MSUTechType.UTILITY); // new tech, no original cost to port - picked to fit this project's own cost spread, see class doc comment
 		setIcon("default");
 	}
 

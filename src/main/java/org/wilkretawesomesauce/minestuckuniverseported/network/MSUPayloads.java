@@ -54,9 +54,9 @@ public final class MSUPayloads
 		registrar.playToClient(BeamSyncPacket.ID, BeamSyncPacket.STREAM_CODEC,
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 
-		registrar.playToServer(MindControlInputPacket.ID, MindControlInputPacket.STREAM_CODEC,
+		registrar.playToServer(MindflayerMovementInputPacket.ID, MindflayerMovementInputPacket.STREAM_CODEC,
 				(payload, context) -> payload.execute(context, (net.minecraft.server.level.ServerPlayer) context.player()));
-		registrar.playToClient(MindControlSyncPacket.ID, MindControlSyncPacket.STREAM_CODEC,
+		registrar.playToClient(MindflayerMovementSyncPacket.ID, MindflayerMovementSyncPacket.STREAM_CODEC,
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 
 		registrar.playToClient(CloakSyncPacket.ID, CloakSyncPacket.STREAM_CODEC,
@@ -97,6 +97,12 @@ public final class MSUPayloads
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 
 		registrar.playToClient(OpenJukinatorPacket.ID, OpenJukinatorPacket.STREAM_CODEC,
+				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
+
+		registrar.playToServer(TimeLoopRewindDecisionPacket.ID, TimeLoopRewindDecisionPacket.STREAM_CODEC,
+				(payload, context) -> payload.execute(context, (net.minecraft.server.level.ServerPlayer) context.player()));
+
+		registrar.playToClient(RewindGhostPacket.ID, RewindGhostPacket.STREAM_CODEC,
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
 	}
 }

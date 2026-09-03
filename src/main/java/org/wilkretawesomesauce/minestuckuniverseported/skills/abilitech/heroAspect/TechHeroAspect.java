@@ -41,23 +41,42 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.Skill;
  * <p>
  * Always reports {@link MSUHeroClass#HERO} - see that enum's own doc comment for why every tech in this
  * {@code heroAspect} package is tagged that way regardless of aspect.
+ * <p>
+ * <b>{@link #techTypes} is an array, not a single {@link MSUTechType}</b> - a later addition, matching
+ * {@code heroClass.TechHeroClass}'s own real {@code EnumTechType... techTypes} varargs shape (see that
+ * class's own doc comment) once a {@code heroAspect} tech needed more than one tag too
+ * ({@code time.TechTimeLoopBeta} - both {@code PASSIVE} and {@code DEFENSE}, user-requested). The two
+ * original single-{@code MSUTechType} constructors are kept exactly as they were (still resolve
+ * unambiguously against Java's overload rules, since they're distinguished from the new array-accepting
+ * overload by argument shape, not just type) so every existing single-type call site needed no changes.
  */
 public class TechHeroAspect extends TechBoondollarCost
 {
 	protected final EnumAspect heroAspect;
-	protected final MSUTechType techType;
+	protected final MSUTechType[] techTypes;
 	private final EnumClass[] flavorClasses;
 
 	public TechHeroAspect(ResourceLocation id, EnumAspect heroAspect, long cost, MSUTechType techType)
 	{
-		this(id, heroAspect, cost, techType, new EnumClass[0]);
+		this(id, heroAspect, cost, new MSUTechType[]{techType}, new EnumClass[0]);
 	}
 
 	public TechHeroAspect(ResourceLocation id, EnumAspect heroAspect, long cost, MSUTechType techType, EnumClass... flavorClasses)
 	{
+		this(id, heroAspect, cost, new MSUTechType[]{techType}, flavorClasses);
+	}
+
+	/** For a tech tagged with more than one {@link MSUTechType} (e.g. both {@code PASSIVE} and {@code DEFENSE}) - see this class's own doc comment. */
+	public TechHeroAspect(ResourceLocation id, EnumAspect heroAspect, long cost, MSUTechType[] techTypes)
+	{
+		this(id, heroAspect, cost, techTypes, new EnumClass[0]);
+	}
+
+	private TechHeroAspect(ResourceLocation id, EnumAspect heroAspect, long cost, MSUTechType[] techTypes, EnumClass[] flavorClasses)
+	{
 		super(id, cost);
 		this.heroAspect = heroAspect;
-		this.techType = techType;
+		this.techTypes = techTypes;
 		this.flavorClasses = flavorClasses;
 	}
 
@@ -66,9 +85,9 @@ public class TechHeroAspect extends TechBoondollarCost
 		return heroAspect;
 	}
 
-	public MSUTechType getTechType()
+	public MSUTechType[] getTechTypes()
 	{
-		return techType;
+		return techTypes;
 	}
 
 	/** Purely descriptive classpect tags - see the flavor-tagging constructor's own doc comment. Empty by default. */

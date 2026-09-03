@@ -54,15 +54,33 @@ public final class StreakGhostUtils
 	}
 
 	/**
-	 * Redraws {@code entity} at an explicit historical world position with reduced alpha and an optional
-	 * color tint, via {@link net.minecraft.client.renderer.entity.EntityRenderDispatcher#render} - the
-	 * same absolute-position render call {@code client.CloakRenderEvents} already uses, just without
-	 * spawning any throwaway entity (unnecessary here since it's the real entity being redrawn, not a
-	 * different disguise type).
+	 * Redraws {@code entity} at an explicit historical world position (using its own <i>current</i> live
+	 * yaw - what every existing caller here, the rolling sprint-ghost trail, actually wants, matching this
+	 * class's own "current pose, not a true historical snapshot" tradeoff) with reduced alpha and an
+	 * optional color tint. Delegates to the explicit-yaw overload below.
 	 *
 	 * @param tint packed RGB multiplied into the shader color - {@code 0xFFFFFF} leaves it untinted
 	 */
 	public static void renderGhostCopy(Entity entity, double x, double y, double z, float alpha, int tint,
+			PoseStack poseStack, MultiBufferSource bufferSource, int light, float partialTick)
+	{
+		renderGhostCopy(entity, x, y, z, entity.getYRot(), alpha, tint, poseStack, bufferSource, light, partialTick);
+	}
+
+	/**
+	 * Same as above, but with an explicit {@code yaw} instead of always reading the entity's own live
+	 * rotation - for a caller like {@code mechanics.timeline.RewindVisuals}'s rewind-ghost comet, which
+	 * genuinely does have a real historical yaw per sample and wants it actually used, unlike the plain
+	 * sprint-ghost trail. Real known limitation, not silently ignored: {@code pitch} still isn't
+	 * parameterized, because {@link net.minecraft.client.renderer.entity.EntityRenderDispatcher#render}
+	 * itself only ever takes one rotation float (yaw) - head/body pitch is read internally from the
+	 * entity's own live {@code getXRot()}, with no parameter to override it short of temporarily mutating
+	 * the real entity's own rotation fields (a real side-effect risk not taken here) - so a rewind ghost's
+	 * facing direction is historically accurate, its head tilt isn't.
+	 *
+	 * @param tint packed RGB multiplied into the shader color - {@code 0xFFFFFF} leaves it untinted
+	 */
+	public static void renderGhostCopy(Entity entity, double x, double y, double z, float yaw, float alpha, int tint,
 			PoseStack poseStack, MultiBufferSource bufferSource, int light, float partialTick)
 	{
 		if(alpha <= 0F)
@@ -74,7 +92,7 @@ public final class StreakGhostUtils
 
 		RenderSystem.setShaderColor(red, green, blue, alpha);
 		Minecraft.getInstance().getEntityRenderDispatcher()
-				.render(entity, x, y, z, entity.getYRot(), partialTick, poseStack, bufferSource, light);
+				.render(entity, x, y, z, yaw, partialTick, poseStack, bufferSource, light);
 		RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
 	}
 }

@@ -11,6 +11,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.mind.TechMindControl;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeAccelerateSelf;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeDilation;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeLoopBeta;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.voidAspect.TechVoidStep;
 import org.wilkretawesomesauce.minestuckuniverseported.potions.BerserkEffect;
 import org.wilkretawesomesauce.minestuckuniverseported.potions.BleedingEffect;
@@ -49,6 +50,7 @@ public final class MSUMobEffects
 	public static final DeferredHolder<MobEffect, DecayproofEffect> DECAYPROOF = REGISTER.register("decayproof", DecayproofEffect::new);
 	public static final DeferredHolder<MobEffect, TechSling.SlingChargeEffect> SLING_CHARGE = REGISTER.register("sling_charge", TechSling.SlingChargeEffect::new);
 	public static final DeferredHolder<MobEffect, TechVoidStep.VoidStepEffect> VOID_STEP = REGISTER.register("void_step", TechVoidStep.VoidStepEffect::new);
+	public static final DeferredHolder<MobEffect, TechTimeLoopBeta.RewindPromptEffect> TIME_LOOP_REWIND_PROMPT = REGISTER.register("time_loop_rewind_prompt", TechTimeLoopBeta.RewindPromptEffect::new);
 
 	private MSUMobEffects()
 	{

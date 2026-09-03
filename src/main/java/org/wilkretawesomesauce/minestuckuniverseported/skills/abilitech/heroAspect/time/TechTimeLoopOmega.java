@@ -21,7 +21,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.loop.T
  * "Timeloop Ω" - the on-demand tier of the three Timeloop techs (see {@link TechTimeLoopAlpha}, hold-to-
  * charge, and {@link TechTimeLoopBeta}, the passive on-death trigger). No charge at all: press to
  * instantly cast a real {@link TimeLoopZone.StackMode#INDEPENDENT} zone covering exactly the last
- * {@link #REWIND_TICKS} (8 seconds) within {@code Config.timeLoopRadius} (15 blocks by default), for 1
+ * {@link #REWIND_TICKS} (8 seconds) within {@link TimeLoopZone#RADIUS} (15 blocks), for 1
  * hunger - the cheapest and fastest of the three, trading that speed/cost for exclusivity.
  * <p>
  * <b>Real classpect exclusivity, not just a flavor tag</b>: unlike every other {@code heroAspect} tech
@@ -42,7 +42,7 @@ public class TechTimeLoopOmega extends TechHeroAspect
 	public TechTimeLoopOmega()
 	{
 		super(Minestuckuniverseported.id("time_loop_omega"), EnumAspect.TIME, 55000, MSUTechType.DEFENSE, EnumClass.MUSE); // new tech, no original cost to port - picked to fit this project's own cost spread, see class doc comment
-		setIcon("default");
+		setIcon("time_loop_omega");
 	}
 
 	@Override

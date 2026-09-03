@@ -1,0 +1,157 @@
+All Abilitechs - Minestuck Universe Ported
+Format: [Aspect] [Classpect] [Offensive/Defensive/Utility] Name - Description
+"Any Class"/"Any Aspect" means no requirement on that half; a name in parentheses is a cosmetic
+flavor tag only (shown for fictional flavor, does not gate equipping).
+
+=== BLOOD ===
+[Blood] [Any Class] [Offensive] Bleeding Edge - Passive: hits landed while toggled on have a luck-scaled chance to inflict Bleeding, duration scaling with the attacker's own missing health.
+[Blood] [Knight (flavor)] [Offensive] Blood Bond - Hit a target to bond it: deals 1.1x bonus damage on further hits while bonded, and delivers a one-time 5-damage snap if the target leaves 12-block range, which also breaks the bond.
+[Blood] [Any Class] [Defensive] Haemodome - Hold: spawns a stationary one-way ward bubble at the caster's position that can't be entered but can be freely exited.
+[Blood] [Any Class] [Defensive] Reformer's Reach - Passive: strips any mob's current target if it's the caster, zeroes the caster's visibility, and cancels re-targeting attempts within 32 blocks.
+[Blood] [Any Class] [Defensive] Lifeforce Transfusion - Hold aim: every 10 ticks the caster takes 8 armor-bypass self-damage and the target heals 4 HP, or gains a stacking Health Boost once already full.
+[Blood] [Bard] [Offensive] Crimson Discord - Press aim: adds Instability to every relationship the target has, accelerating their bonds' decay; passive Social Decay aura does the same nearby.
+[Blood] [Mage] [Utility] Blood Guidance - Press aim: reinforces every relationship the target has, increasing strength and stability.
+[Blood] [Mage] [Utility] Blood Insight - Press aim: read-only report of the target's current relationships - partner, type, strength%, stability%, instability.
+[Blood] [Mage] [Utility] Blood Memory - Press aim: read-only report of the target's most recent relationship events, newest first.
+[Blood] [Prince] [Offensive] Schism - Press aim: corrupts (or cleanses) a target's active Blood Bond, or corrupts their unstable relationships directly; passive Schism Aura weakens nearby bonds and disrupts mob targeting.
+[Blood] [Witch] [Utility] Cult of Personality - Press aim: chain-links entities into a shared-damage cult bond, lets the caster command bonded mobs, and can cleanse Schism corruption.
+
+=== BREATH ===
+[Breath] [Any Class] [Offensive] Entombing Twister - Hold aim at an entity/block: engulfs it in a sealed bubble that suffocates anything trapped inside.
+[Breath] [Any Class] [Offensive] Stifling Calm - Hold aim at target: gradually lowers their hidden Freedom stat, visibly tightening as it drops.
+[Breath] [Any Class] [Utility] Tempesting Ascension - Hold then release: launches the caster upward/forward and calls down an AoE lightning strike at their feet.
+[Breath] [Any Class] [Offensive] Windsweeping Typhoon - Hold: pushes every nearby entity away with ramping strength while refilling everyone's air supply.
+[Breath] [Any Class] [Utility] Tailwind - Hold aim at target: gradually raises their Freedom, potency scaled by the caster-target relationship; can trigger Liberation or Forced Freedom events.
+[Breath] [Any Class] [Defensive] Vertigo Block - Passive: negates fall damage and flying-into-a-wall damage while toggled on.
+[Breath] [Any Class] [Utility] Supersonic Speed - Passive: constant Speed XI and Jump Boost V while toggled on.
+[Breath] [Any Class] [Utility] Vessel of the Wind - Hold: turns the caster into invisible wind, dampens their steering, glides them forward, and reduces fall damage.
+[Breath] [Mage] [Utility] Breath Insight - Press aim: read-only report of the target's Freedom value/level, who last liberated them, and who they're following.
+[Breath] [Page] [Utility] Free Will - Passive: nearby entities slowly gain Freedom, doubled for existing relationships. Press: instant Freedom burst to everyone nearby, snaps mob leashes, reduces relationship Instability, grants Shared Freedom to pairs freed together.
+
+=== DOOM ===
+[Doom] [Any Class] [Defensive] Survivor's Bind - Passive: a hit that would kill the caster from above 5 HP instead leaves them at 1 HP with brief extra invulnerability.
+[Doom] [Any Class] [Offensive] Chains of Despair - Press: AoE Earthbound (disables flight) on nearby targets; held to ~1s also adds Build Inhibit (disables building).
+[Doom] [Any Class] [Offensive] Withering Whisper - Hold ~1.25s: afflicts every nearby player/hostile with Decay, an escalating armor-bypass drain.
+[Doom] [Any Class] [Offensive] Terminal Demise - Press aim: instantly kills a target below 40% health, and the caster too if their own health is at or below 50%.
+[Doom] [Any Class] [Offensive] Death's Shroud - Hold 5s: executes every nearby player below 20% health, zeroes the caster's food, and unconditionally kills the caster.
+[Doom] [Any Class] [Offensive] Abyss Cage - Hold aim at entity/block: spawns a bubble that ensnares anything that enters it.
+[Doom] [Mage] [Utility] Doom Insight - Press aim: read-only report of the target's Doom value, sealed status, and any Doom Mark.
+[Doom] [Maid] [Offensive] Finality Engine - Hold aim: deals direct damage scaled by the target's own current Doom, capped.
+[Doom] [Maid] [Offensive] Doomforge - Press aim: injects a fixed amount of Doom directly into the target.
+[Doom] [Page] [Offensive] Apocalypse Release - Press: consumes up to a cap of the caster's own stored Doom for AoE damage scaled by the amount consumed.
+[Doom] [Page] [Utility] Doom Reservoir - Passive: periodically auto-harvests Doom from the world's release pool near the caster into their own Doom total.
+[Doom] [Rogue] [Offensive] Grave Exchange - Press aim: marks the target with Dead Shuffle - their Doom accumulates faster and redirects to the caster on their death.
+[Doom] [Rogue] [Utility] Doom Redistribution - Press aim: transfers a fixed amount of Doom between caster and target, direction chosen by sneaking.
+[Doom] [Sylph] [Defensive] Death Unmade - Press aim: instantly removes a chunk of the target's Doom and clears any Doom Mark they carry.
+[Doom] [Sylph] [Defensive] Doom Reversal - Hold aim: removes Doom from the target every second at the caster's own food cost.
+
+=== HEART ===
+[Heart] [Any Class] [Utility] Spiritual Bond - Hold aim: continuously averages the caster's and target's health pools together while linked.
+[Heart] [Any Class] [Utility] Astral Projection - Hold 3s: leaves the body, spawning a decoy, to scout as a spectator; returns automatically after a minute, on next press, or if forced out.
+[Heart] [Any Class] [Utility] Soul Switcher - Hold ~3s then release aim: swaps position/rotation/velocity/health/potion effects/hotbar slot with the target and applies a temporary God Tier lock to them.
+[Heart] [Any Class] [Offensive] Soul Shock - Hold aim, locks on: disables a Mob's AI outright, or forces a Player into an inescapable Soul Shock screen takeover.
+
+=== HOPE ===
+[Hope] [Any Class] [Utility] Divine Cleansing - Press aim: strips every potion effect, buffs and debuffs alike, off the target, or self if no valid target.
+[Hope] [Any Class] [Utility] Willed Alliance - Hold aim at own golem to feed it more hope; otherwise hold 4s to summon a fresh Hope Golem ally.
+[Hope] [Any Class] [Defensive] Answered Prayers - Hold 1s: blesses every nearby player, not self, with a random beneficial effect; hold to 2s to bless self too.
+[Hope] [Any Class] [Offensive] Hopeful Outburst - Hold: pulses chip damage and knockback to everyone nearby in a growing radius, dampening the caster's own movement and nudging them upward.
+
+=== LIFE ===
+[Life] [Any Class] [Defensive] Healing Aura - Press: self Regeneration V for 30s. Charged past 18 ticks: weaker Regeneration IV to every living creature, allies and enemies, within 8 blocks.
+[Life] [Any Class] [Utility] Mating Season - Hold then release: sets every nearby Animal within 8 blocks into breeding mode.
+[Life] [Any Class] [Utility] Chloroball - Hold 1s while standing on air: places a Chloroball block underfoot.
+[Life] [Any Class] [Utility] Song of Fertility - Hold ~0.5s: breeds every nearby Animal within 20 blocks and bonemeals every growable block in a 41-wide cube around the caster.
+[Life] [Any Class] [Defensive] Saving Grace - Hold 3s then release aim: wards the target so their next fatal hit is cancelled, then fully heals them and grants a stacking Absorption buff.
+[Life] [Any Class] [Offensive] Lifeforce Leech - Hold aim, tethered: drains armor-bypass damage from the target every second and heals the caster the same amount.
+
+=== LIGHT ===
+[Light] [Any Class] [Utility] Eternal Glow - Passive: automatically places a light-emitting Glorb block at the caster's feet whenever standing in near-darkness.
+[Light] [Any Class] [Defensive] Hardlight Bubble - Hold: raises an impassable bubble ward around the caster, growing its lifespan the longer it's held.
+[Light] [Any Class] [Utility] Enchanter's Insight - Passive: +50% XP gain from any source, and reveals what an enchanting table's Standard Galactic Alphabet hint actually says.
+[Light] [Any Class] [Utility] Orb of Light - Press: places a small invisible light-emitting block at the caster's feet, if the space is air.
+[Light] [Any Class] [Utility] Lightbound's Wisdom - Press: marks every nearby player Glowing for 30s; charged past 18 ticks marks every living entity in range instead.
+[Light] [Any Class] [Utility] Skaian Insight - Passive: a 5x drop-chance multiplier for Jujus/Skaian Scrolls when a kill is made with this tech equipped.
+[Light] [Any Class] [Offensive] Storm of the Striker - Press aim: marks the target Glowing for 1 minute; held 15 ticks calls down AoE lightning damage on every currently-Glowing entity, clearing their Glowing after.
+
+=== MIND ===
+[Mind] [Any Class] [Utility] Illusory Cloak - Press aim at a non-player entity: disguises the caster as that entity type; aim at an already-cloaked player to copy their disguise. Reduces visibility while cloaked.
+[Mind] [Any Class] [Offensive] Sensory Break - Press aim: reverses the target's movement controls for 20 seconds, resistible at high Resolve.
+[Mind] [Any Class] [Offensive] Mindflayer's Spell - Press aim: possesses the target - a Mob gets a real AI-driving goal, a Player gets forced camera-look plus puppeted movement; press again to release.
+[Mind] [Any Class] [Utility] Godhood's Justice - Passive: every minute, nudges the caster's Static Karma one step toward zero.
+[Mind] [Any Class] [Offensive] Calculated Strike - Hold to charge, release to lock in a damage multiplier spent on the caster's next landed hit.
+[Mind] [Mage] [Utility] Mind Insight - Press aim: read-only report of the target's Certainty/Hesitation/Adaptability/Resolve and current committed decision.
+[Mind] [Maid] [Utility] Construct Golem - Hold to charge: summons a Golem ally near the caster and forms an instant Ownership relationship with it.
+
+=== RAGE ===
+[Rage] [Any Class] [Offensive] Enraged Berserk - Press: grants the caster Berserk for 60 seconds.
+[Rage] [Any Class] [Offensive] Frenzied Mayhem - Hold 1s then release: sends every nearby creature within 16 blocks berserk against anything nearby, itself included.
+[Rage] [Any Class] [Utility] Anger Management - Quick tap: toggles one targeted creature's hostility toward players/Iron Golems; hold 2s to toggle every nearby creature at once.
+[Rage] [Any Class] [Offensive] Vengeful Outburst - Hold ~0.5s then release: hits every non-allied nearby player/hostile with armor-bypass damage scaled by the caster's own Karma.
+
+=== SPACE ===
+[Space] [Any Class] [Utility] Anchored Wormhole - Crouch+press to set/clear a warp point at the caster's feet; press without crouching to teleport there (cross-dimension) or to a random nearby safe spot if none is set.
+[Space] [Any Class] [Utility] Kinetic Grab - Press aim at a light creature, never a player: tethers and drags it toward wherever the caster looks; release to fling it with real velocity.
+[Space] [Any Class] [Utility] Matter Manipulator - Tap to set two block corners; release once both are set to collapse the selected region into a carryable item, clearing the source blocks.
+[Space] [Any Class] [Utility] Spatial Manipulator - Press aim at a creature to grow it, or shrink it while crouching down to disappearing; press aim at an SBURB machine to relocate it instead.
+[Space] [Any Class] [Utility] Spatial Warp - Crouch+press to set/clear the shared warp point; press aim at an entity to blink it to that point or a random nearby safe spot.
+[Space] [Any Class] [Utility] Wormhole Trotter - Press: teleports the caster forward to wherever they're looking; range and food cost scale with hunger.
+
+=== TIME ===
+[Time] [Any Class] [Utility] Future Request - Hold to select one of 5 category tiers, release to borrow a progression-appropriate item "from your future self" on a cooldown.
+[Time] [Mage, Seer (flavor)] [Utility] Retrocognition - Press: starts a non-destructive past-vision session, reconstructing recent recorded world history around the caster without pulling them out of their body.
+[Time] [Any Class] [Utility] Accelerate - Hold to charge (afterimage effect), release for a burst of Speed and Haste plus a forward dash scaled by charge duration.
+[Time] [Any Class] [Utility] Flow Accelerator - Hold aim at a block: forces its scheduled tick, crop growth, redstone, fluid flow, to run early.
+[Time] [Any Class] [Offensive] Time Dilation - Hold aim: slows the target's movement/attack speed with periodic stun-and-chip-damage lag spikes, while buffing the caster's own Speed/Haste.
+[Time] [Any Class] [Utility] Timeloop α - Hold/release: creates an independent Time Loop zone that repeatedly rewinds a recorded window of recent history within a radius.
+[Time] [Any Class] [Defensive] Timeloop β - Passive: the instant the caster would die, cancels the death, heals them to full, and casts a nested Time Loop zone around them.
+[Time] [Muse] [Defensive] Timeloop Ω - Press: instantly casts an independent Time Loop zone for 1 food, the cheapest and fastest of the three Timeloop techs.
+[Time] [Any Class] [Utility] Zeitgeist - Press: spawns a fighting double of the caster that guards its spawn point for 10 seconds; press again to dismiss.
+[Time] [Any Class] [Defensive] Temporal Recall - Continuously records a rolling 5-second position/rotation/health history; hold exactly 20 ticks to snap back to the start of that window.
+[Time] [Any Class] [Utility] Celestial Shift - Hold to speed up world time; sneak while holding to rewind it instead.
+[Time] [Any Class] [Offensive] Slow - Hold aim: applies Slowness and Mining Fatigue to the target for as long as held.
+[Time] [Any Class] [Offensive] Chronofreeze - Hold 40+ ticks then release aim: freezes the target with a Time Stop effect.
+[Time] [Any Class] [Utility] Rapid Rewind - Hold aim: "rewinds" the target - babies zombies, de-ages other ageable mobs, partially repairs damaged items, un-cooks a dropped raw chicken.
+[Time] [Any Class] [Utility] Accelerando - Hold aim, tethered, keeps tracking even off-screen: gives the target one extra world-tick per real tick while held and in range.
+[Time] [Mage (flavor)] [Offensive] Years in Seconds - Press: applies Time Dilation to every other nearby living entity, while afflicting the caster with Weakness and Slowness for the same duration; 1-minute cooldown.
+[Time] [Lord (flavor)] [Utility] Timeline Branch - Quick tap: forks a new parallel timeline branch and moves the caster into it. Held longer: returns to the parent branch, or, held longest, jumps straight to Alpha.
+[Time] [Any Class] [Utility] Timeline Rewind - Hold to charge, release to undo recorded world history (blocks and nearby entities) within a radius, scaled by charge duration.
+
+=== VOID ===
+[Void] [Any Class] [Utility] Grasp of the Void - Press: opens the Item Void storage GUI. Passively funnels about-to-despawn or fell-out-of-world items into the void instead of losing them.
+[Void] [Any Class] [Offensive] Return to Dust - Press aim at a non-player entity: erases it outright; players and decoys are always exempt.
+[Void] [Any Class] [Utility] Voidstep - Passive: phases the caster through every block while toggled on, at 1 food per 2 seconds.
+[Void] [Any Class] [Offensive] Vacuum Siphon - Hold: pulls every nearby entity toward the caster with strength that ramps up over 8 seconds, then auto-cuts off.
+
+=== CLASS-ONLY (no Aspect requirement) ===
+[Any Aspect] [Bard] [Utility] Bardic Dissonance - Press: every nearby entity gets a 50/50 roll between a doubled-strength negative-aspect debuff or a copy of the caster's own ambient aspect buffs.
+[Any Aspect] [Bard, God Tier ascended only] [Utility] Magic Metronome - Hold: picks a random other usable tech and drives it on the caster's behalf for the duration of the hold.
+[Any Aspect] [Heir] [Defensive] Heir's Will - Passive: reflects the attacker's own aspect-based negative debuff back at them when the Heir takes damage or dies.
+[Any Aspect] [Heir] [Offensive] Universal Reverse - Passive: reflects the attacker's own aspect-based negative debuff back at them when the Heir's own attack lands.
+[Any Aspect] [Knight] [Defensive] Guardian's Halt - Hold: freezes every non-living entity nearby, dropped items, arrows, minecarts, thrown potions, in place for up to 60 ticks.
+[Any Aspect] [Knight] [Defensive] Knight's Ward - Quick tap: Resistance III to the raytraced target and self; held to 40 ticks escalates into an AoE Resistance III pulse to everyone nearby.
+[Any Aspect] [Lord] [Offensive] Lord's Decree - Charge then release: doubled-strength negative-aspect debuff across a 48-block radius, excluding nearby allies/same-Karma players; World Ender badge adds bonus per-aspect effects.
+[Any Aspect] [Mage, God Tier ascended only] [Utility] Mage's Awareness - Hold: reveals the caster's own Karma alignment via a color-shifting particle aura, confirmed by a status message past 50 ticks.
+[Any Aspect] [Mage] [Utility] Arcane Study - Passive: auto-catches whichever ability last targeted the caster into this slot, then lets the caster drive that borrowed ability on demand.
+[Any Aspect] [Maid] [Defensive] Maid's Favor - Quick tap: blesses the raytraced target with an ambient aspect buff; held to 39 ticks escalates to everyone nearby. Special-cases Hope/Mind/Void targets with a God Tier Comeback effect instead.
+[Any Aspect] [Maid] [Defensive] Irradiant Servitude - Passive: continuously refreshes the caster's own ambient aspect buffs onto every nearby animal and player within 3 blocks.
+[Any Aspect] [Muse] [Defensive] Muse's Requiem - Passive: if the caster dies with this toggled on, every connected player with opposite-signed Karma is blessed with the dying caster's ambient aspect buffs.
+[Any Aspect] [Page, God Tier ascended, skill level 10+] [Utility] Perseverant Awakening - No active effect; an empty-body unlock-gate tech, matching the original 1:1.
+[Any Aspect] [Prince] [Offensive] Ruling Slash - Passive: attacking another player of the exact same Title aspect deals triple damage.
+[Any Aspect] [Prince] [Offensive] Prince's Wrath - Hold to charge, release aim: strikes the target for damage scaled by charge time, 1x-3x of a 10 base.
+[Any Aspect] [Rogue] [Defensive] Rogue's Contribution - Quick tap: copies every one of the caster's own active potion effects onto the raytraced target; held to 60 ticks escalates to everyone nearby.
+[Any Aspect] [Rogue] [Utility] Roguelike Adaptability - Tap aim at another player: borrows the first usable tech on their loadout into this slot, then drives it.
+[Any Aspect] [Seer, God Tier ascended only] [Utility] Seer's Prediction - Hold aim at another player: slowly reveals their Karma alignment via a particle aura, confirmed past 100 ticks.
+[Any Aspect] [Seer] [Defensive] Foresight Dodge - Passive: fully negates one blockable incoming hit per 60 seconds with an evasive hop.
+[Any Aspect] [Sylph] [Defensive] Sylph's Mend - Hold aim, tethered: heals 2 HP and 1 hunger point to the target every second, at 1 food/second cost to the caster.
+[Any Aspect] [Sylph, God Tier ascended only] [Defensive] Karmic Restoration - Hold aim at another player, tethered: nudges their Static/Temp Karma one step toward zero at a caster-Karma-scaled rate.
+[Any Aspect] [Thief] [Offensive] Thief's Filch - Hold 20+ ticks then release aim at another player: applies God Tier Lock to them and copies their currently-active ambient aspect buffs onto the caster.
+[Any Aspect] [Thief] [Utility] Hermes' Dash - Press: a server-authoritative forward dash impulse.
+[Any Aspect] [Thief] [Utility] Sticky Fingers - Press: transfers durability, enchantments, and potion contents from the main-hand item to the off-hand item.
+[Any Aspect] [Witch] [Offensive] Witch's Inhibition - Hold 20+ ticks then release aim at any living target: applies a short God Tier Lock, no buff theft, unlike Thief's version.
+[Any Aspect] [Witch] [Offensive] Wicked Trap - Hold: plants, and can extend, an AreaEffectCloud trap loaded with the caster's own negative-aspect debuff at the raytraced block/entity.
+
+=== STANDALONE (no Aspect/Class requirement) ===
+[Any Aspect] [Any Class, requires holding a Dragon Gel] [Offensive] Draconic Aura - Hold: gradually heals the caster at hunger cost; while active, any damage taken triggers an AoE retaliation nova and locks the caster out of God Tier techs for 30s.
+[Any Aspect] [Any Class, requires holding a Return Medallion] [Utility] Return Jump - Hold 10 ticks: teleports the caster back to their own Land dimension, at the recorded entry point.
+[Any Aspect] [Any Class] [Offensive] Sylladex Sling - Hold to charge (zoom in), release to launch the top item of the caster's Captchalogue Modus forward as a damaging projectile.

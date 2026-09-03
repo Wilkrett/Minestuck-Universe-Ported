@@ -18,7 +18,6 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.entity.HopeGolemEntity;
 
@@ -97,7 +96,7 @@ import java.util.function.BiConsumer;
  * {@link #checkForCollapse} breaks the relationship - "the relationship collapses naturally", the doc's own
  * words, never a direct delete call from outside - and triggers the "Domino Effect"
  * ({@link #applyDominoEffect} - nearby <i>other</i> relationships gain a flat instability bump,
- * {@link Config#crimsonDiscordDominoBump}, matching the doc's own "+10" worked example). What "breaks" means
+ * {@link #CRIMSON_DISCORD_DOMINO_BUMP}, matching the doc's own "+10" worked example). What "breaks" means
  * depends on type, not just a blanket {@link #removeRelationshipRecord}: {@link RelationshipType#HOSTILE}
  * is pacified in place ({@link #pacifyHostileRelationship}) and {@link RelationshipType#KINSHIP} is curdled
  * into outright Hostile ({@link #corruptKinshipToHostile}) - see those two types' own paragraphs below for
@@ -105,7 +104,7 @@ import java.util.function.BiConsumer;
  * {@link #sowDiscord} is the part that doesn't require a pre-existing relationship at all: it manufactures
  * brand-new {@link RelationshipType#RIVALRY} relationships between random nearby {@link net.minecraft.world.entity.Mob}
  * pairs that had no connection whatsoever, which then climb Instability at the same rate as everything
- * else and eventually force the two into real combat once they cross {@link Config#crimsonDiscordFightThreshold} -
+ * else and eventually force the two into real combat once they cross {@link #CRIMSON_DISCORD_FIGHT_THRESHOLD} -
  * "make entities around you start to hate each other, even if there's no bond", not just decay of things
  * that already existed.
  * {@link #addCollapseListener} lets {@code CultOfPersonalityManager} react to a {@link RelationshipType#FAMILY}
@@ -143,11 +142,11 @@ import java.util.function.BiConsumer;
  * fights the same target" from the earlier Foundation doc actually happen organically, not just decay of
  * relationships some other system already created), and separately detects "Fighting Together"
  * ({@link #recentAttackersByVictim} - two different attackers hitting the same victim within
- * {@link Config#relationshipFightingTogetherWindowTicks} reinforces a relationship <i>between the
+ * {@link #RELATIONSHIP_FIGHTING_TOGETHER_WINDOW_TICKS} reinforces a relationship <i>between the
  * attackers</i>, not either of them and the victim); {@link #onLivingDeath}'s existing Betrayal handling
  * now also reduces affinity/stability and raises conflict, not just zeroing strength; {@link #onLevelTick}
  * additionally implements "Spending Time Together" (passive familiarity growth for already-related pairs
- * currently within {@link Config#relationshipNearbyRadius} of each other). <b>"Helping" (healing/saving/
+ * currently within {@link #RELATIONSHIP_NEARBY_RADIUS} of each other). <b>"Helping" (healing/saving/
  * giving resources/protecting) is still not wired up</b> - same real API gap as before (no generic
  * "who healed/saved/gave to whom" event exists in NeoForge to attribute it from), unchanged by this pass.
  * <p>
@@ -219,7 +218,7 @@ public final class RelationshipManager
 	private static final List<DeathListener> deathListeners = new ArrayList<>();
 	/** Guards a relationship from re-entering {@link #checkForCollapse} while its own collapse is still being processed - see this class's own "Infinite Domino Effect loops" doc section. */
 	private static final Set<UUID> currentlyCollapsing = new HashSet<>();
-	/** Victim id -> recent attackers (pruned to {@link Config#relationshipFightingTogetherWindowTicks} on each read) - backs "Fighting Together" detection in {@link #onLivingDamage}. */
+	/** Victim id -> recent attackers (pruned to {@link #RELATIONSHIP_FIGHTING_TOGETHER_WINDOW_TICKS} on each read) - backs "Fighting Together" detection in {@link #onLivingDamage}. */
 	private static final Map<UUID, List<AttackRecord>> recentAttackersByVictim = new HashMap<>();
 	/** Special-origin types {@link #deriveType} never auto-reassigns - see that method's own doc comment. */
 	private static final Set<RelationshipType> SPECIAL_ORIGIN_TYPES = EnumSet.of(
@@ -229,6 +228,43 @@ public final class RelationshipManager
 	private static final double HOSTILE_NEARBY_PLAYER_RADIUS = 32.0;
 	/** How far a real vanilla {@code Mob} will look for other mobs of its own exact {@code EntityType} to form a baseline {@link RelationshipType#KINSHIP} bond with - see {@link #ensureNaturalRelationship}'s own doc comment. */
 	private static final double KINSHIP_NEARBY_RADIUS = 16.0;
+
+	/** Radius (in blocks) of the passive Crimson Discord aura. */
+	private static final double CRIMSON_DISCORD_AURA_RADIUS = 24.0;
+	/** How much Instability (and, at half this rate, Stability) every relationship touching a nearby entity gains per Crimson Discord aura pulse. */
+	private static final double CRIMSON_DISCORD_INSTABILITY_GAIN_PER_PULSE = 3.0;
+	/** How often (in ticks) the Crimson Discord aura pulses. 100 = 5 seconds. */
+	private static final long CRIMSON_DISCORD_PULSE_INTERVAL_TICKS = 100;
+	/** How much Instability every tracked relationship loses per {@link #CRIMSON_DISCORD_NATURAL_DECAY_INTERVAL_TICKS} when nothing is actively raising it. */
+	private static final double CRIMSON_DISCORD_NATURAL_DECAY_AMOUNT = 2.0;
+	/** How often (in ticks) Instability naturally decays, and how often every tracked relationship gets checked for Stage 4 collapse. 200 = 10 seconds. */
+	private static final long CRIMSON_DISCORD_NATURAL_DECAY_INTERVAL_TICKS = 200;
+	/** Radius (in blocks) around a just-collapsed relationship's own members within which other relationships are hit by the Domino Effect. */
+	private static final double CRIMSON_DISCORD_DOMINO_RADIUS = 12.0;
+	/** How much Instability the Domino Effect adds to each nearby relationship when one collapses. */
+	private static final double CRIMSON_DISCORD_DOMINO_BUMP = 10.0;
+	/** How many brand-new RIVALRY relationships the Crimson Discord aura seeds per pulse between random nearby Mob pairs with no existing relationship. */
+	private static final int CRIMSON_DISCORD_NEW_RIVALRIES_PER_PULSE = 2;
+	/** Once a RIVALRY relationship's Instability reaches this, both mobs are set hostile toward each other for real. */
+	private static final double CRIMSON_DISCORD_FIGHT_THRESHOLD = 40.0;
+	/** How recently two different attackers must have both hit the same victim to be treated as "Fighting Together". 100 = 5 seconds. */
+	private static final long RELATIONSHIP_FIGHTING_TOGETHER_WINDOW_TICKS = 100;
+	/** How much Trust, Familiarity, and Strength two entities gain toward each other when "Fighting Together" triggers. */
+	private static final double RELATIONSHIP_FIGHTING_TOGETHER_GAIN = 3.0;
+	/** How much Conflict a relationship gains whenever one side damages the other. */
+	private static final double RELATIONSHIP_DAMAGE_CONFLICT_GAIN = 4.0;
+	/** How much Familiarity a relationship gains alongside {@link #RELATIONSHIP_DAMAGE_CONFLICT_GAIN} whenever one side damages the other. */
+	private static final double RELATIONSHIP_DAMAGE_FAMILIARITY_GAIN = 2.0;
+	/** How much Affinity a positive relationship loses on Betrayal. */
+	private static final double RELATIONSHIP_BETRAYAL_AFFINITY_LOSS = 60.0;
+	/** How much Conflict a positive relationship gains on Betrayal. */
+	private static final double RELATIONSHIP_BETRAYAL_CONFLICT_GAIN = 40.0;
+	/** How much Stability a positive relationship loses on Betrayal. */
+	private static final double RELATIONSHIP_BETRAYAL_STABILITY_LOSS = 30.0;
+	/** Radius (in blocks) within which two already-related entities count as "nearby" for passive Familiarity growth. */
+	private static final double RELATIONSHIP_NEARBY_RADIUS = 8.0;
+	/** How much Familiarity two already-related, currently-nearby entities gain per sweep. */
+	private static final double RELATIONSHIP_NEARBY_FAMILIARITY_GAIN = 1.0;
 
 	private RelationshipManager()
 	{
@@ -544,7 +580,7 @@ public final class RelationshipManager
 		}
 	}
 
-	/** Nearby other relationships (see {@link Config#crimsonDiscordDominoRadius}) gain {@link Config#crimsonDiscordDominoBump} Instability - the doc's own "Domino Effect", a broken relationship destabilizing its neighbors. Deliberately never re-checks those neighbors for collapse itself - see this class's own "Infinite Domino Effect loops" doc section. */
+	/** Nearby other relationships (see {@link #CRIMSON_DISCORD_DOMINO_RADIUS}) gain {@link #CRIMSON_DISCORD_DOMINO_BUMP} Instability - the doc's own "Domino Effect", a broken relationship destabilizing its neighbors. Deliberately never re-checks those neighbors for collapse itself - see this class's own "Infinite Domino Effect loops" doc section. */
 	private static void applyDominoEffect(ServerLevel level, Relationship broken)
 	{
 		List<Vec3> origins = new ArrayList<>();
@@ -555,7 +591,7 @@ public final class RelationshipManager
 		if(origins.isEmpty())
 			return;
 
-		double radiusSqr = Config.crimsonDiscordDominoRadius * Config.crimsonDiscordDominoRadius;
+		double radiusSqr = CRIMSON_DISCORD_DOMINO_RADIUS * CRIMSON_DISCORD_DOMINO_RADIUS;
 		long now = level.getGameTime();
 
 		for(Relationship other : new ArrayList<>(byId.values()))
@@ -582,7 +618,7 @@ public final class RelationshipManager
 			}
 
 			if(near)
-				adjustInstability(other, (float) Config.crimsonDiscordDominoBump, now);
+				adjustInstability(other, (float) CRIMSON_DISCORD_DOMINO_BUMP, now);
 		}
 	}
 
@@ -603,8 +639,8 @@ public final class RelationshipManager
 	/**
 	 * Called every tick from {@code TechBardBloodCrimsonDiscord#onPassiveTick} while the Bard has Crimson
 	 * Discord toggled on - the design doc's own "Passive Effect: Social Decay". Throttled to once per
-	 * {@link Config#crimsonDiscordPulseIntervalTicks}: every <i>existing</i> relationship touching a nearby
-	 * entity gains {@link Config#crimsonDiscordInstabilityGainPerPulse} Instability and loses the same
+	 * {@link #CRIMSON_DISCORD_PULSE_INTERVAL_TICKS}: every <i>existing</i> relationship touching a nearby
+	 * entity gains {@link #CRIMSON_DISCORD_INSTABILITY_GAIN_PER_PULSE} Instability and loses the same
 	 * amount of stability, then is immediately checked for collapse. A relationship whose <i>both</i> sides
 	 * are in range is only ever processed once per pulse (not doubled). {@link #sowDiscord} is the other
 	 * half - manufacturing brand-new animosity between nearby entities that had no relationship at all.
@@ -612,10 +648,10 @@ public final class RelationshipManager
 	public static void pulseCrimsonDiscordAura(ServerLevel level, ServerPlayer bard)
 	{
 		long now = level.getGameTime();
-		if(now % Config.crimsonDiscordPulseIntervalTicks != 0)
+		if(now % CRIMSON_DISCORD_PULSE_INTERVAL_TICKS != 0)
 			return;
 
-		double radius = Config.crimsonDiscordAuraRadius;
+		double radius = CRIMSON_DISCORD_AURA_RADIUS;
 		List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class, bard.getBoundingBox().inflate(radius));
 
 		Set<UUID> processed = new HashSet<>();
@@ -626,8 +662,8 @@ public final class RelationshipManager
 				if(!processed.add(rel.id))
 					continue;
 
-				adjustInstability(rel, (float) Config.crimsonDiscordInstabilityGainPerPulse, now);
-				adjustStability(rel, (float) -Config.crimsonDiscordInstabilityGainPerPulse * 0.5F);
+				adjustInstability(rel, (float) CRIMSON_DISCORD_INSTABILITY_GAIN_PER_PULSE, now);
+				adjustStability(rel, (float) -CRIMSON_DISCORD_INSTABILITY_GAIN_PER_PULSE * 0.5F);
 				checkForCollapse(level, rel);
 			}
 		}
@@ -638,14 +674,14 @@ public final class RelationshipManager
 	/**
 	 * <b>"Even entities with no existing bond should start to turn on each other"</b> - the half of Crimson
 	 * Discord that isn't just decaying pre-existing relationships. Each pulse, seeds up to
-	 * {@link Config#crimsonDiscordNewRivalriesPerPulse} brand-new {@link RelationshipType#RIVALRY}
+	 * {@link #CRIMSON_DISCORD_NEW_RIVALRIES_PER_PULSE} brand-new {@link RelationshipType#RIVALRY}
 	 * relationships between random nearby {@link Mob} pairs that don't already have <i>any</i> relationship
 	 * (never overwrites an existing one, positive or otherwise - that's Schism's job, not this). A freshly
 	 * seeded rivalry then climbs at the exact same rate as every other relationship in range - the next
 	 * pulse's own loop above picks it up automatically, since it's now "a relationship touching a nearby
 	 * entity" like any other - so this doesn't skip the doc's own "slowly" pacing, it just gives previously
 	 * unconnected strangers something to escalate. Once a rivalry's Instability reaches
-	 * {@link Config#crimsonDiscordFightThreshold}, both mobs are actually set hostile toward each other for
+	 * {@link #CRIMSON_DISCORD_FIGHT_THRESHOLD}, both mobs are actually set hostile toward each other for
 	 * real (not just a hidden number) - if one kills the other, the usual death cleanup
 	 * ({@link #onLivingDeath}) removes the relationship same as any other.
 	 */
@@ -662,7 +698,7 @@ public final class RelationshipManager
 			int attempts = 0;
 			int maxAttempts = mobs.size() * 2;
 
-			while(seeded < Config.crimsonDiscordNewRivalriesPerPulse && attempts < maxAttempts)
+			while(seeded < CRIMSON_DISCORD_NEW_RIVALRIES_PER_PULSE && attempts < maxAttempts)
 			{
 				attempts++;
 				Mob a = mobs.get(level.getRandom().nextInt(mobs.size()));
@@ -679,7 +715,7 @@ public final class RelationshipManager
 		{
 			for(Relationship rel : getAllFor(mob.getUUID()))
 			{
-				if(rel.type != RelationshipType.RIVALRY || rel.instability < Config.crimsonDiscordFightThreshold)
+				if(rel.type != RelationshipType.RIVALRY || rel.instability < CRIMSON_DISCORD_FIGHT_THRESHOLD)
 					continue;
 
 				if(level.getEntity(rel.other(mob.getUUID())) instanceof Mob other)
@@ -691,7 +727,7 @@ public final class RelationshipManager
 		}
 	}
 
-	/** Piggybacks on the same sweep as Crimson Discord's own natural Instability decay - Instability collapse-checking/decay, and (real, project-original addition) "Spending Time Together": already-related pairs currently within {@link Config#relationshipNearbyRadius} of each other passively gain Familiarity. */
+	/** Piggybacks on the same sweep as Crimson Discord's own natural Instability decay - Instability collapse-checking/decay, and (real, project-original addition) "Spending Time Together": already-related pairs currently within {@link #RELATIONSHIP_NEARBY_RADIUS} of each other passively gain Familiarity. */
 	@SubscribeEvent
 	private static void onLevelTick(LevelTickEvent.Post event)
 	{
@@ -699,10 +735,10 @@ public final class RelationshipManager
 			return;
 
 		long now = level.getGameTime();
-		if(now % Config.crimsonDiscordNaturalDecayIntervalTicks != 0)
+		if(now % CRIMSON_DISCORD_NATURAL_DECAY_INTERVAL_TICKS != 0)
 			return;
 
-		double nearbyRadiusSqr = Config.relationshipNearbyRadius * Config.relationshipNearbyRadius;
+		double nearbyRadiusSqr = RELATIONSHIP_NEARBY_RADIUS * RELATIONSHIP_NEARBY_RADIUS;
 
 		for(Relationship rel : new ArrayList<>(byId.values()))
 		{
@@ -711,12 +747,12 @@ public final class RelationshipManager
 				continue;
 
 			if(rel.instability > 0F)
-				adjustInstability(rel, (float) -Config.crimsonDiscordNaturalDecayAmount, now);
+				adjustInstability(rel, (float) -CRIMSON_DISCORD_NATURAL_DECAY_AMOUNT, now);
 
 			if(level.getEntity(rel.entityA) instanceof LivingEntity a && level.getEntity(rel.entityB) instanceof LivingEntity b
 					&& a.distanceToSqr(b) <= nearbyRadiusSqr)
 			{
-				adjustFamiliarity(rel, (float) Config.relationshipNearbyFamiliarityGain);
+				adjustFamiliarity(rel, (float) RELATIONSHIP_NEARBY_FAMILIARITY_GAIN);
 			}
 		}
 	}
@@ -849,8 +885,8 @@ public final class RelationshipManager
 		{
 			RelationshipType initialType = attacker instanceof Enemy ? RelationshipType.HOSTILE : RelationshipType.FORMING;
 			Relationship hostile = getOrCreate(victim.getUUID(), attacker.getUUID(), initialType, now, DEFAULT_STRENGTH, DEFAULT_STABILITY);
-			adjustConflict(hostile, (float) Config.relationshipDamageConflictGain);
-			adjustFamiliarity(hostile, (float) Config.relationshipDamageFamiliarityGain);
+			adjustConflict(hostile, (float) RELATIONSHIP_DAMAGE_CONFLICT_GAIN);
+			adjustFamiliarity(hostile, (float) RELATIONSHIP_DAMAGE_FAMILIARITY_GAIN);
 			deriveType(hostile);
 		}
 
@@ -942,7 +978,7 @@ public final class RelationshipManager
 
 	/**
 	 * "Fighting Together": if another attacker already hit the same victim within
-	 * {@link Config#relationshipFightingTogetherWindowTicks}, reinforces a relationship <i>between the two
+	 * {@link #RELATIONSHIP_FIGHTING_TOGETHER_WINDOW_TICKS}, reinforces a relationship <i>between the two
 	 * attackers themselves</i> (not either attacker and the victim - that's the generic Damage handling
 	 * above). {@link #recentAttackersByVictim} is pruned to the same window on every call, so it never
 	 * grows past however many distinct attackers actually hit that one victim recently.
@@ -950,7 +986,7 @@ public final class RelationshipManager
 	private static void detectFightingTogether(ServerLevel level, UUID victimId, UUID attackerId, long now)
 	{
 		List<AttackRecord> records = recentAttackersByVictim.computeIfAbsent(victimId, k -> new ArrayList<>());
-		records.removeIf(record -> now - record.tick() > Config.relationshipFightingTogetherWindowTicks);
+		records.removeIf(record -> now - record.tick() > RELATIONSHIP_FIGHTING_TOGETHER_WINDOW_TICKS);
 
 		for(AttackRecord prior : records)
 		{
@@ -958,7 +994,7 @@ public final class RelationshipManager
 				continue;
 
 			Relationship allies = getOrCreate(attackerId, prior.attackerId(), RelationshipType.FORMING, now, DEFAULT_STRENGTH, DEFAULT_STABILITY);
-			float gain = (float) Config.relationshipFightingTogetherGain;
+			float gain = (float) RELATIONSHIP_FIGHTING_TOGETHER_GAIN;
 			adjustTrust(allies, gain);
 			adjustFamiliarity(allies, gain);
 			adjustStrength(allies, gain, now);
@@ -993,9 +1029,9 @@ public final class RelationshipManager
 			if(rel != null && isPositive(rel.type))
 			{
 				rel.strength = 0F;
-				adjustAffinity(rel, (float) -Config.relationshipBetrayalAffinityLoss);
-				adjustConflict(rel, (float) Config.relationshipBetrayalConflictGain);
-				adjustStability(rel, (float) -Config.relationshipBetrayalStabilityLoss);
+				adjustAffinity(rel, (float) -RELATIONSHIP_BETRAYAL_AFFINITY_LOSS);
+				adjustConflict(rel, (float) RELATIONSHIP_BETRAYAL_CONFLICT_GAIN);
+				adjustStability(rel, (float) -RELATIONSHIP_BETRAYAL_STABILITY_LOSS);
 				recordEvent(rel, "Killed by " + killer.getName().getString(), level.getGameTime());
 			}
 		}

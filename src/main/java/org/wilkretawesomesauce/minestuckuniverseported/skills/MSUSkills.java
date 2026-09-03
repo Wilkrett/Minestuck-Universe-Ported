@@ -76,7 +76,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeLoopBeta;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeLoopOmega;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeYearsInSeconds;
-import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeParallelAction;
+import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeZeitgeist;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeRecall;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeShift;
 import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspect.time.TechTimeSlow;
@@ -177,7 +177,7 @@ public final class MSUSkills
 	public static final Abilitech TIME_ACCELERATE_SELF = MSUAbilitechRegistry.register(new TechTimeAccelerateSelf());
 	public static final Abilitech TIME_SLOW = MSUAbilitechRegistry.register(new TechTimeSlow());
 	public static final Abilitech TIME_DILATION = MSUAbilitechRegistry.register(new TechTimeDilation());
-	public static final Abilitech TIME_PARALLEL_ACTION = MSUAbilitechRegistry.register(new TechTimeParallelAction());
+	public static final Abilitech TIME_ZEITGEIST = MSUAbilitechRegistry.register(new TechTimeZeitgeist());
 	public static final Abilitech TIMELINE_REWIND = MSUAbilitechRegistry.register(new TechTimelineRewind());
 	public static final Abilitech RETROCOGNITION = MSUAbilitechRegistry.register(new TechRetrocognition());
 	public static final Abilitech TIMELINE_BRANCH = MSUAbilitechRegistry.register(new TechTimelineBranch());

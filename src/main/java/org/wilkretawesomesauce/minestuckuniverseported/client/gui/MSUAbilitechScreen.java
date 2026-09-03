@@ -294,9 +294,11 @@ public class MSUAbilitechScreen extends Screen
 			Component aspectTag = Component.literal("[").append(heroAspectTech.getHeroAspect().asTextComponent()).append(Component.literal("]"));
 			lines.add(new DescLine(aspectTag.getVisualOrderText(), aspectColor(heroAspectTech.getHeroAspect())));
 
-			MSUTechType techType = heroAspectTech.getTechType();
-			Component typeTag = Component.literal("[").append(Component.translatable(techType.unloc)).append(Component.literal("]"));
-			lines.add(new DescLine(typeTag.getVisualOrderText(), techType.color));
+			for(MSUTechType type : heroAspectTech.getTechTypes())
+			{
+				Component typeTag = Component.literal("[").append(Component.translatable(type.unloc)).append(Component.literal("]"));
+				lines.add(new DescLine(typeTag.getVisualOrderText(), type.color));
+			}
 
 			// Purely descriptive classpect "flavor" tags - see TechHeroAspect's own flavor-tagging
 			// constructor doc comment. Empty for every tech that doesn't opt in.

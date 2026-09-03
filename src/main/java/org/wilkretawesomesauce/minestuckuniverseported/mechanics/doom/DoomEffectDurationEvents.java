@@ -6,7 +6,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 
@@ -14,7 +13,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
  * MVP natural-effect hook (2/2) - "accelerated decay"/"greater susceptibility to destruction" applied
  * to harmful potion effects specifically: a high-Doom entity's harmful ({@link MobEffectCategory#HARMFUL})
  * effects last longer, on the same saturating curve as {@link DoomDamageEvents}'s damage amplifier
- * (never more than {@link Config#doomEffectDurationExtendMax}, no matter how high Doom climbs).
+ * (never more than {@link #DURATION_EXTEND_MAX}, no matter how high Doom climbs).
  * Original design for this project, no 1.12.2 counterpart.
  * <p>
  * <b>Verified against this project's pinned NeoForge source that {@link MobEffectInstance} exposes no
@@ -34,6 +33,10 @@ import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 public final class DoomEffectDurationEvents
 {
 	private static final ThreadLocal<Boolean> REWRITING = ThreadLocal.withInitial(() -> false);
+	/** Asymptotic cap on how much high Doom can extend a harmful effect's duration - 0.5 means never more than +50%. */
+	private static final double DURATION_EXTEND_MAX = 0.5;
+	/** The Doom value at which half of {@link #DURATION_EXTEND_MAX}'s bonus is reached (a saturating curve, not linear). */
+	private static final double DURATION_HALF_POINT = 500.0;
 
 	private DoomEffectDurationEvents()
 	{
@@ -59,7 +62,7 @@ public final class DoomEffectDurationEvents
 		if(doom <= 0)
 			return;
 
-		double multiplier = 1.0 + Config.doomEffectDurationExtendMax * (doom / (doom + Config.doomEffectDurationHalfPoint));
+		double multiplier = 1.0 + DURATION_EXTEND_MAX * (doom / (doom + DURATION_HALF_POINT));
 		if(multiplier <= 1.0)
 			return;
 

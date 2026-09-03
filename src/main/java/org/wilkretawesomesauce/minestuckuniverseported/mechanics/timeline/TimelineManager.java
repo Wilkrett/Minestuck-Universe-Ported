@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUFakePlayer;
 
@@ -39,9 +38,23 @@ import java.util.UUID;
  * the initiator personally touches - it's the closest approximation of "the canon timeline is untouched,
  * only the Time user's immediate vicinity actually time-travels" that's achievable without literally
  * forking the world.
+ * <p>
+ * <b>Immune objects</b> (Braid's "this doesn't rewind" idea - see {@link TimelineTags}) are excluded from
+ * {@link #applySnapshot} entirely: a tagged block type never gets its old state re-applied, a tagged/marked
+ * entity never gets its past snapshot re-applied. Both are still recorded into history normally - only
+ * restoration is skipped.
  */
 public final class TimelineManager
 {
+	/**
+	 * How many Doom Points (DP) are added per tick rewound/traveled/looped - also used by
+	 * {@code timeline.loop.TimeLoopCaster}, since a Time Loop cast is squarely part of this same
+	 * timeline-manipulation DP family, not the separate Time Request DP.
+	 * <p>
+	 * Placeholder mechanic - DP is currently just tracked with no attached consequences.
+	 */
+	public static final double DOOM_POINTS_PER_TICK = 0.05;
+
 	private TimelineManager()
 	{
 	}
@@ -66,7 +79,7 @@ public final class TimelineManager
 		// TimelineBranchRegistry's doc comment for why branches exist at all; DP is meant to eventually
 		// punish messing with a *branch*, not the one canonical timeline everyone shares.
 		if(level.dimension() != Level.OVERWORLD)
-			data.addDoomPoints(steps.size() * Config.timelineDoomPointsPerTick);
+			data.addDoomPoints(steps.size() * DOOM_POINTS_PER_TICK);
 
 		return steps.size();
 	}
@@ -87,7 +100,7 @@ public final class TimelineManager
 		TimelineData data = level.getData(MSUAttachments.TIMELINE);
 		data.incrementRewinds();
 		if(level.dimension() != Level.OVERWORLD)
-			data.addDoomPoints(steps.size() * Config.timelineDoomPointsPerTick);
+			data.addDoomPoints(steps.size() * DOOM_POINTS_PER_TICK);
 
 		return steps.size();
 	}
@@ -117,11 +130,16 @@ public final class TimelineManager
 	static void applySnapshot(ServerLevel level, WorldTickSnapshot snapshot, ServerPlayer initiator)
 	{
 		for(Map.Entry<BlockPos, WorldTickSnapshot.BlockChangeRecord> entry : snapshot.blockChanges().entrySet())
-			level.setBlock(entry.getKey(), entry.getValue().oldState(), Block.UPDATE_ALL);
+		{
+			WorldTickSnapshot.BlockChangeRecord record = entry.getValue();
+			if(!record.oldState().is(TimelineTags.IMMUNE_BLOCKS) && !record.newState().is(TimelineTags.IMMUNE_BLOCKS))
+				level.setBlock(entry.getKey(), record.oldState(), Block.UPDATE_ALL);
+		}
 
 		for(Map.Entry<UUID, EntitySnapshot> entry : snapshot.entitySnapshots().entrySet())
 		{
-			if(level.getEntity(entry.getKey()) instanceof LivingEntity entity && !(entity instanceof ServerPlayer other && other != initiator))
+			if(level.getEntity(entry.getKey()) instanceof LivingEntity entity && !(entity instanceof ServerPlayer other && other != initiator)
+					&& !entity.getType().is(TimelineTags.IMMUNE_ENTITY_TYPES) && !entity.getTags().contains(TimelineTags.IMMUNE_ENTITY_TAG))
 				entry.getValue().applyTo(entity);
 		}
 	}

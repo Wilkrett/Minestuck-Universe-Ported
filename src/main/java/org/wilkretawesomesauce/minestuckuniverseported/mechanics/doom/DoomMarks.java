@@ -1,7 +1,6 @@
 package org.wilkretawesomesauce.minestuckuniverseported.mechanics.doom;
 
 import net.minecraft.world.entity.LivingEntity;
-import org.wilkretawesomesauce.minestuckuniverseported.Config;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUAttachments;
 
 import java.util.UUID;
@@ -15,6 +14,9 @@ import java.util.UUID;
  */
 public final class DoomMarks
 {
+	/** Default Doom-accumulation-rate multiplier applied by {@link #applyDeadShuffleMark}. */
+	private static final double MARK_ACCRUAL_MULTIPLIER = 2.0;
+
 	private DoomMarks()
 	{
 	}
@@ -26,6 +28,6 @@ public final class DoomMarks
 	 */
 	public static void applyDeadShuffleMark(LivingEntity target, UUID casterId)
 	{
-		target.getData(MSUAttachments.DOOM_DATA).applyMark(casterId, DoomMarkType.DEAD_SHUFFLE, Config.doomMarkAccrualMultiplier);
+		target.getData(MSUAttachments.DOOM_DATA).applyMark(casterId, DoomMarkType.DEAD_SHUFFLE, MARK_ACCRUAL_MULTIPLIER);
 	}
 }

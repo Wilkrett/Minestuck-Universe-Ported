@@ -55,7 +55,6 @@ public class Minestuckuniverseported {
                         output.accept(MSUItems.FROG_HAT.get());
                         output.accept(MSUItems.ARCHMAGE_HAT.get());
                         output.accept(MSUItems.NEEDLEWAND.get());
-                        output.accept(MSUItems.MANIPULATED_MATTER.get());
                         output.accept(MSUItems.ABILITECHNOSYNTH.get());
                         output.accept(MSUItems.TEMPORAL_SENDIFICATOR.get());
                         output.accept(MSUItems.MOONSTONE.get());

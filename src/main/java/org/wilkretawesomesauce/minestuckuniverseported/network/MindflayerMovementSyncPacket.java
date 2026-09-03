@@ -11,22 +11,22 @@ import org.wilkretawesomesauce.minestuckuniverseported.skills.abilitech.heroAspe
 
 /**
  * Server -&gt; possessed-target half of {@code abilitech.heroAspect.mind.TechMindControl}'s real
- * movement puppeting - relays the controller's own {@link MindControlInputPacket} down to whichever
+ * movement puppeting - relays the controller's own {@link MindflayerMovementInputPacket} down to whichever
  * player is actually being possessed, exactly like the original's server-side handler for
  * {@code MSUPacket.Type.MINDFLAYER_MOVEMENT_INPUT} fed the target's own client its forced movement
  * state. {@code active=false} (sent the instant the tether is released or the ability runs out of food)
  * tells the target's client to stop overriding its own input.
  */
-public record MindControlSyncPacket(boolean active, float worldX, float worldZ, boolean jump, boolean sneak) implements MSPacket.PlayToClient
+public record MindflayerMovementSyncPacket(boolean active, float worldX, float worldZ, boolean jump, boolean sneak) implements MSPacket.PlayToClient
 {
-	public static final Type<MindControlSyncPacket> ID = new Type<>(Minestuckuniverseported.id("mind/control_sync"));
-	public static final StreamCodec<RegistryFriendlyByteBuf, MindControlSyncPacket> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.BOOL, MindControlSyncPacket::active,
-			ByteBufCodecs.FLOAT, MindControlSyncPacket::worldX,
-			ByteBufCodecs.FLOAT, MindControlSyncPacket::worldZ,
-			ByteBufCodecs.BOOL, MindControlSyncPacket::jump,
-			ByteBufCodecs.BOOL, MindControlSyncPacket::sneak,
-			MindControlSyncPacket::new
+	public static final Type<MindflayerMovementSyncPacket> ID = new Type<>(Minestuckuniverseported.id("mind/control_sync"));
+	public static final StreamCodec<RegistryFriendlyByteBuf, MindflayerMovementSyncPacket> STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.BOOL, MindflayerMovementSyncPacket::active,
+			ByteBufCodecs.FLOAT, MindflayerMovementSyncPacket::worldX,
+			ByteBufCodecs.FLOAT, MindflayerMovementSyncPacket::worldZ,
+			ByteBufCodecs.BOOL, MindflayerMovementSyncPacket::jump,
+			ByteBufCodecs.BOOL, MindflayerMovementSyncPacket::sneak,
+			MindflayerMovementSyncPacket::new
 	);
 
 	@Override
