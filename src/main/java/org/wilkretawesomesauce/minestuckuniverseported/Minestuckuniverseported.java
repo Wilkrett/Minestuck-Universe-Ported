@@ -58,7 +58,6 @@ public class Minestuckuniverseported {
                         output.accept(MSUItems.ABILITECHNOSYNTH.get());
                         output.accept(MSUItems.TEMPORAL_SENDIFICATOR.get());
                         output.accept(MSUItems.MOONSTONE.get());
-                        output.accept(org.wilkretawesomesauce.minestuckuniverseported.juju.MSUJujuRegistry.JUJU_MODUS_ITEM.get());
                         output.accept(org.wilkretawesomesauce.minestuckuniverseported.juju.MSUJujuRegistry.CUE_BALL.get());
                         output.accept(MSUItems.GOLEM_SPAWN_EGG.get());
                         output.accept(MSUItems.JUKINATOR.get());

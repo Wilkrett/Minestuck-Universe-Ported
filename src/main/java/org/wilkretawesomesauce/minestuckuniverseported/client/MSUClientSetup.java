@@ -15,7 +15,6 @@ import org.wilkretawesomesauce.minestuckuniverseported.MSUMenuTypes;
 import org.wilkretawesomesauce.minestuckuniverseported.util.MSUParticles;
 import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import org.wilkretawesomesauce.minestuckuniverseported.client.gui.ItemVoidScreen;
-import org.wilkretawesomesauce.minestuckuniverseported.client.gui.JujuScreen;
 import org.wilkretawesomesauce.minestuckuniverseported.client.gui.TemporalSendificatorScreen;
 import org.wilkretawesomesauce.minestuckuniverseported.client.model.ArchmageHatModel;
 import org.wilkretawesomesauce.minestuckuniverseported.client.model.BubbleModel;
@@ -79,7 +78,6 @@ public final class MSUClientSetup
 	{
 		event.register(MSUMenuTypes.TEMPORAL_SENDIFICATOR.get(), TemporalSendificatorScreen::new);
 		event.register(MSUMenuTypes.ITEM_VOID.get(), ItemVoidScreen::new);
-		event.register(MSUMenuTypes.JUJU.get(), JujuScreen::new);
 	}
 
 	@SubscribeEvent

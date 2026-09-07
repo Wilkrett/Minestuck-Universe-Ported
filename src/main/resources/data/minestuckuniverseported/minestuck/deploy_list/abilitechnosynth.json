@@ -4,7 +4,7 @@
       "cost": [
         {
           "grist": {
-            "minestuck:build": 5000
+            "minestuck:build": 2000
           }
         }
       ],

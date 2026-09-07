@@ -10,7 +10,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.network.OpenSkillShopPack
 
 /**
  * {@code /msu debug shop} - opens the real Skill Shop screen for the commanding player (moved under a real
- * {@code debug} sub-literal alongside itemvoid/juju/streak/unlock - a later, separate user-requested
+ * {@code debug} sub-literal alongside itemvoid/streak/unlock - a later, separate user-requested
  * restructure from the one described below). Real trigger point for Consort dialogue: {@code Trigger}
  * (Minestuck's own dialogue-trigger type) is a <b>sealed</b> interface (confirmed the hard way -
  * {@code javac} rejects any external implementation, since only the variants listed in its own

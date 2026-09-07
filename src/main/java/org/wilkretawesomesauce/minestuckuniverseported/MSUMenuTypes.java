@@ -7,7 +7,6 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.wilkretawesomesauce.minestuckuniverseported.inventory.TemporalSendificatorMenu;
 import org.wilkretawesomesauce.minestuckuniverseported.gui.itemvoid.ItemVoidMenu;
-import org.wilkretawesomesauce.minestuckuniverseported.juju.JujuMenu;
 
 /**
  * This addon's first real {@link MenuType} registry - see {@code block.TemporalSendificatorBlock}'s doc
@@ -24,9 +23,6 @@ public final class MSUMenuTypes
 
 	public static final DeferredHolder<MenuType<?>, MenuType<ItemVoidMenu>> ITEM_VOID =
 			REGISTER.register("item_void", () -> new MenuType<>(ItemVoidMenu::new, FeatureFlags.VANILLA_SET));
-
-	public static final DeferredHolder<MenuType<?>, MenuType<JujuMenu>> JUJU =
-			REGISTER.register("juju", () -> new MenuType<>(JujuMenu::new, FeatureFlags.VANILLA_SET));
 
 	private MSUMenuTypes()
 	{

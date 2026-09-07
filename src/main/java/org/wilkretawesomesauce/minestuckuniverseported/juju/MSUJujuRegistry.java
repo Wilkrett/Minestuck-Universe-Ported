@@ -1,8 +1,6 @@
 package org.wilkretawesomesauce.minestuckuniverseported.juju;
 
 import com.mojang.serialization.MapCodec;
-import com.mraof.minestuck.inventory.captchalogue.ModusType;
-import com.mraof.minestuck.inventory.captchalogue.ModusTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.storage.loot.predicates.LootItemConditionType;
@@ -14,21 +12,17 @@ import org.wilkretawesomesauce.minestuckuniverseported.Minestuckuniverseported;
 import java.util.function.Supplier;
 
 /**
- * Registration hub for everything {@code juju.JujuModus} needs: the {@link ModusType} itself (registered
- * into Minestuck's own real {@code ModusTypes.REGISTER} - confirmed a real {@code DeferredRegister} an
- * addon can register into, not something exclusive to Minestuck's own built-in moduses), its physical card
- * item, the Juju collectible item ("Cue Ball", ported from the original's real
- * {@code MinestuckUniverseItems.cueBall}), and the {@link JujuLootCondition} type.
+ * Registration hub for the Juju collectible item ("Cue Ball", ported from the original's real
+ * {@code MinestuckUniverseItems.cueBall}) and the {@link JujuLootCondition} type. The Juju Modus item/
+ * {@code ModusType} and its link/unlink/stash mechanic (formerly {@code juju.JujuModus}/{@code JujuMenu}/
+ * {@code command.JujuCommand}) were removed by explicit request - Cue Ball and its drop-once-per-world
+ * loot condition are unrelated to that mechanic and stay.
  */
 public final class MSUJujuRegistry
 {
 	public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Minestuckuniverseported.MODID);
 
-	public static final DeferredHolder<Item, Item> JUJU_MODUS_ITEM = ITEMS.register("juju_modus", () -> new Item(new Item.Properties()));
 	public static final DeferredHolder<Item, Item> CUE_BALL = ITEMS.register("cue_ball", () -> new Item(new Item.Properties()));
-
-	public static final DeferredHolder<ModusType<?>, ModusType<JujuModus>> JUJU_MODUS_TYPE =
-			ModusTypes.REGISTER.register("juju", () -> new ModusType<>(JujuModus::new, JUJU_MODUS_ITEM::get));
 
 	public static final DeferredRegister<LootItemConditionType> LOOT_CONDITIONS =
 			DeferredRegister.create(Registries.LOOT_CONDITION_TYPE, Minestuckuniverseported.MODID);
