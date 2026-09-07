@@ -141,7 +141,14 @@ public class TechMindControl extends TechHeroAspect
 
 					if(newTarget instanceof Mob mob)
 					{
-						mob.goalSelector.addGoal(2, new EntityAIMindflayerTarget(mob, 1.0F));
+						// Priority 1, not the original's literal 2 - deliberately outranks a typical vanilla
+						// mob's own melee-attack goal (also usually priority 2, e.g. Husk's ZombieAttackGoal),
+						// which at equal priority isn't guaranteed to lose the tie to this goal. Without this,
+						// a possessed mob could keep landing its own real vanilla attacks on the controller
+						// throughout the hold - a real, reported contributor to a NaN-health "can never die
+						// again" bug (see network.MindflayerMovementInputPacket's own doc comment history/
+						// mechanics.doom.DoomDamageEvents's real fix) via Doom accrued from those hits.
+						mob.goalSelector.addGoal(1, new EntityAIMindflayerTarget(mob, 1.0F));
 						mob.setTarget(null);
 					}
 					else if(newTarget instanceof ServerPlayer possessed)

@@ -54,6 +54,9 @@ public final class FreedomDoomEvents
 			return;
 
 		float multiplier = 1.0F + LOW_FREEDOM_DOOM_AMPLIFY_MAX * (1.0F - freedom / FreedomData.DEFAULT);
-		event.setAmount(event.getAmount() * multiplier);
+		// Same real fix as DoomDamageEvents#onIncomingDamageAmplify - never let amplification push an
+		// already-huge amount (e.g. vanilla's own Float.MAX_VALUE /kill sentinel) into actual Infinity, which
+		// produces NaN health once vanilla's own armor/absorption math gets hold of it.
+		event.setAmount((float) Math.min((double) event.getAmount() * multiplier, (double) Float.MAX_VALUE));
 	}
 }

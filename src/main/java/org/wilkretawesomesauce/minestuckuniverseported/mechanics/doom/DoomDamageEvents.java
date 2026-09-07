@@ -58,7 +58,16 @@ public final class DoomDamageEvents
 			return;
 
 		double multiplier = 1.0 + DAMAGE_AMPLIFY_MAX * (doom / (doom + DAMAGE_AMPLIFY_HALF_POINT));
-		event.setAmount((float)(event.getAmount() * multiplier));
+		double amplified = event.getAmount() * multiplier;
+		// Real bug fix: narrowing a double past Float.MAX_VALUE down to float rounds to Infinity (not an
+		// error, just IEEE 754 narrowing-conversion behavior) - harmless on its own, but vanilla's own
+		// armor/absorption math (Player#actuallyHurt) computes an internal Infinity-minus-Infinity when fed
+		// literally-Infinite damage, producing NaN health that can never register as dead again (isDeadOrDying()
+		// checks health <= 0, which is always false for NaN) - a real, reported "can't die anymore" bug, only
+		// reachable via vanilla's own Float.MAX_VALUE /kill sentinel amplified by nonzero Doom. Clamping here
+		// keeps every downstream consumer (including vanilla's own) working with a merely-huge, still-finite
+		// number instead.
+		event.setAmount((float) Math.min(amplified, (double) Float.MAX_VALUE));
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOW)
