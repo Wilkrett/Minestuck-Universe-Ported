@@ -13,6 +13,7 @@ import org.wilkretawesomesauce.minestuckuniverseported.entity.GolemFallingBlockE
 import org.wilkretawesomesauce.minestuckuniverseported.entity.HopeGolemEntity;
 import org.wilkretawesomesauce.minestuckuniverseported.entity.MSUThrowableEntity;
 import org.wilkretawesomesauce.minestuckuniverseported.entity.TornadoEntity;
+import org.wilkretawesomesauce.minestuckuniverseported.entity.UninhabitedBodyEntity;
 
 public final class MSUEntityTypes
 {
@@ -81,6 +82,13 @@ public final class MSUEntityTypes
 					.clientTrackingRange(10)
 					.updateInterval(20)
 					.build(Minestuckuniverseported.id("tornado").toString()));
+
+	/** Original design for this project, no 1.12.2 counterpart - see {@link UninhabitedBodyEntity}'s own doc comment. Sized like a normal player. */
+	public static final DeferredHolder<EntityType<?>, EntityType<UninhabitedBodyEntity>> UNINHABITED_BODY = REGISTER.register("uninhabited_body",
+			() -> EntityType.Builder.of(UninhabitedBodyEntity::new, MobCategory.MISC)
+					.sized(0.6F, 1.8F)
+					.clientTrackingRange(10)
+					.build(Minestuckuniverseported.id("uninhabited_body").toString()));
 
 	private MSUEntityTypes()
 	{

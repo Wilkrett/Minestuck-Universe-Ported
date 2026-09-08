@@ -104,5 +104,8 @@ public final class MSUPayloads
 
 		registrar.playToClient(RewindGhostPacket.ID, RewindGhostPacket.STREAM_CODEC,
 				com.mraof.minestuck.network.MSPacket.PlayToClient::execute);
+
+		registrar.playToServer(SoulHostInputPacket.ID, SoulHostInputPacket.STREAM_CODEC,
+				(payload, context) -> payload.execute(context, (net.minecraft.server.level.ServerPlayer) context.player()));
 	}
 }

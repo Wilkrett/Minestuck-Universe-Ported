@@ -135,5 +135,17 @@ public class Minestuckuniverseported {
         // so its own attribute map is just IronGolem's, unmodified.
         event.put(MSUEntityTypes.HOPE_GOLEM.get(), net.minecraft.world.entity.animal.IronGolem.createAttributes().build());
         event.put(MSUEntityTypes.GOLEM.get(), org.wilkretawesomesauce.minestuckuniverseported.entity.GolemEntity.createAttributes().build());
+        // UninhabitedBodyEntity is a physical player body in every mechanical sense (see its own doc
+        // comment), but it's still a real Mob underneath - Player.createAttributes() alone crashed on
+        // spawn (Mob's own constructor builds a PathNavigation that reads Attributes.FOLLOW_RANGE, which
+        // Player.createAttributes() doesn't define, players never needing PathNavigation themselves).
+        // Mob.createMobAttributes() as the base instead guarantees every attribute Mob's own machinery
+        // needs, with player-matching values layered on top for the ones that actually matter here.
+        event.put(MSUEntityTypes.UNINHABITED_BODY.get(), net.minecraft.world.entity.Mob.createMobAttributes()
+                .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 20.0)
+                .add(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, 0.1)
+                .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, 1.0)
+                .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED, 4.0)
+                .build());
     }
 }

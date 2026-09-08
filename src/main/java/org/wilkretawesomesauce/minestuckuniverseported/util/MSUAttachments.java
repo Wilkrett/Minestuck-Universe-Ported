@@ -18,6 +18,8 @@ import org.wilkretawesomesauce.minestuckuniverseported.mechanics.doom.DoomData;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.freedom.FreedomData;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.mind.DecisionData;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.doom.DoomReleasePool;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.soul.BodyRegistryData;
+import org.wilkretawesomesauce.minestuckuniverseported.mechanics.soul.PlayerSoul;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineBranchRegistry;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.TimelineData;
 import org.wilkretawesomesauce.minestuckuniverseported.mechanics.timeline.request.TimeRequestData;
@@ -135,6 +137,19 @@ public final class MSUAttachments
 	// comment). Deliberately NOT copyOnDeath(), same reasoning as FREEDOM_DATA above.
 	public static final Supplier<AttachmentType<DecisionData>> DECISION_DATA = REGISTER.register(
 			"decision_data", () -> AttachmentType.serializable(DecisionData::new).build());
+
+	// Attaches to a Player - the persistent Soul (see mechanics.soul.PlayerSoul's own doc comment).
+	// copyOnDeath() for the same reason as STRIFE_PORTFOLIO/ABILITECH_LOADOUT/GOD_TIER above: a soul
+	// mid-projection shouldn't silently reset to "normal" just because the real ServerPlayer instance was
+	// swapped out by a respawn.
+	public static final Supplier<AttachmentType<PlayerSoul>> PLAYER_SOUL = REGISTER.register(
+			"player_soul", () -> AttachmentType.serializable(PlayerSoul::new).copyOnDeath().build());
+
+	// Attaches to a Level, same as TIMELINE/DOOM_RELEASE_POOL above - only ever fetched from the Overworld,
+	// mirroring TimelineBranchRegistry's "one shared registry, not one per dimension" convention. See
+	// mechanics.soul.BodyRegistryData's own doc comment.
+	public static final Supplier<AttachmentType<BodyRegistryData>> BODY_REGISTRY = REGISTER.register(
+			"body_registry", () -> AttachmentType.serializable(BodyRegistryData::new).build());
 
 	private MSUAttachments()
 	{

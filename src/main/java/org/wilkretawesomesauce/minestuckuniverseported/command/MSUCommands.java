@@ -42,7 +42,8 @@ public final class MSUCommands
 						.then(AbilitechUnlockCommand.getArgumentBuilder())
 						.then(SkillShopCommand.getArgumentBuilder())
 						.then(DoomDebugCommand.getArgumentBuilder())
-						.then(TornadoDebugCommand.getArgumentBuilder()))
+						.then(TornadoDebugCommand.getArgumentBuilder())
+						.then(SoulDebugCommand.getArgumentBuilder()))
 				.then(GodTierDebugCommand.getArgumentBuilder())
 				.then(AbilitechUserCommand.getArgumentBuilder()));
 	}
